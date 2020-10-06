@@ -12,7 +12,6 @@ import java.util.Set;
 import io.github.f2bb.api.ImplementationHiddenException;
 import io.github.f2bb.classpath.AbstractorClassLoader;
 import io.github.f2bb.util.AsmUtil;
-import io.github.f2bb.util.DLogger;
 import io.github.f2bb.util.ReflectUtil;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
