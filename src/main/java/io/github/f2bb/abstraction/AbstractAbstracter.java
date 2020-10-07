@@ -27,6 +27,7 @@ import org.objectweb.asm.Opcodes;
 
 // todo in java abstracter, ignore requests to abstract inner classes
 public abstract class AbstractAbstracter extends ClassVisitor implements Opcodes {
+	public static final String OBJECT = org.objectweb.asm.Type.getInternalName(Object.class);
 	protected final AbstractorClassLoader loader;
 	protected final Class<?> cls;
 	protected final TypeToken<?> token;

@@ -23,6 +23,7 @@ public class AbstractorClassLoader extends URLClassLoader {
 	}
 
 	public String remap(String sign) {
+		if(sign == null) return null;
 		SignatureReader reader = new SignatureReader(sign);
 		SignatureWriter writer = new SignatureWriter();
 		reader.accept(this.remapper.createSignatureRemapper(writer));

@@ -33,6 +33,7 @@ public class AbstractorRemapper extends Remapper {
 		return Util.map(internalNames, this::mapType, String[]::new);
 	}
 
+	// expose class
 	@Override
 	public SignatureVisitor createSignatureRemapper(SignatureVisitor signatureVisitor) {
 		return super.createSignatureRemapper(signatureVisitor);
