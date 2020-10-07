@@ -11,6 +11,7 @@ import io.github.f2bb.abstraction.AbstractAbstracter;
 import io.github.f2bb.classpath.AbstractorClassLoader;
 import io.github.f2bb.reflect.ReifiedType;
 import io.github.f2bb.util.AsmUtil;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -57,7 +58,18 @@ public class ApiAsmInterfaceAbstracter extends AbstractAbstracter {
 					this.loader.remap(descriptor),
 					this.loader.remap(signature),
 					null);
-			AsmUtil.visitStub(visitor);
+
+			return new MethodVisitor(ASM9) {
+				@Override
+				public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+					return visitor.visitAnnotation(descriptor, visible);
+				}
+
+				@Override
+				public void visitParameter(String name, int access) {
+					visitor.visitParameter(name, access);
+				}
+			};
 		}
 		return null;
 	}
@@ -65,22 +77,30 @@ public class ApiAsmInterfaceAbstracter extends AbstractAbstracter {
 	@Override
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
 		if ((ACC_PUBLIC & access) != 0) {
+			FieldVisitor get, set = null;
 			if ((access & ACC_FINAL) == 0) {
-				AsmUtil.generateSetter(super::visitMethod,
+				set = AsmUtil.generateSetter(super::visitMethod,
 						this.name,
 						access,
 						name,
 						this.loader.remap(descriptor),
 						this.loader.remap(signature),
-						false);
+						true);
 			}
-			AsmUtil.generateGetter(super::visitMethod,
+			get = AsmUtil.generateGetter(super::visitMethod,
 					this.name,
 					access,
 					name,
 					this.loader.remap(descriptor),
 					this.loader.remap(signature),
-					false);
+					true);
+			// todo visit setter as well
+			return new FieldVisitor(ASM9) {
+				@Override
+				public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+					return get.visitAnnotation(descriptor, visible);
+				}
+			};
 		}
 		return null;
 	}
