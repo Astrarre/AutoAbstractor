@@ -83,11 +83,11 @@ public abstract class AbstractAbstracter extends ClassVisitor implements Opcodes
 		return builder.toString();
 	}
 
-	public String createMethodSignature(@Nullable TypeVariable<Method>[] variables, Type[] parameters, Type ret) {
+	public String createMethodSignature(@Nullable TypeVariable<?>[] variables, Type[] parameters, Type ret) {
 		StringBuilder builder = new StringBuilder();
 		if (variables != null && variables.length > 0) {
 			builder.append('<');
-			for (TypeVariable<Method> variable : variables) {
+			for (TypeVariable<?> variable : variables) {
 				builder.append(this.toSignature(this.token.resolveType(variable).getType(), true));
 			}
 			builder.append('>');
@@ -132,7 +132,7 @@ public abstract class AbstractAbstracter extends ClassVisitor implements Opcodes
 	protected Type reify(Type type) {
 		return this.token.resolveType(type).getType();
 	}
-	protected Type raw(Type type) {
+	protected Class<?> raw(Type type) {
 		return this.token.resolveType(type).getRawType();
 	}
 

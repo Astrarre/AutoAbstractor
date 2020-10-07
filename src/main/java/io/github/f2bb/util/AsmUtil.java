@@ -20,7 +20,7 @@ public class AsmUtil implements Opcodes {
 	}
 
 	public static FieldVisitor generateGetter(VisitMethod supply, String owner, int access, String name, String descriptor, String signature, boolean impl) {
-		MethodVisitor visitor = supply.visitMethod(access, "get" + name(descriptor) + Character.toUpperCase(name.charAt(0)) + name.substring(1), "()" + descriptor, signature == null ? null : "()" + signature, null);
+		MethodVisitor visitor = supply.visitMethod(access, getEtterName("get", descriptor, name), "()" + descriptor, signature == null ? null : "()" + signature, null);
 		if(impl) {
 			if (Modifier.isStatic(access)) {
 				visitor.visitFieldInsn(GETSTATIC, owner, name, descriptor);
@@ -40,8 +40,12 @@ public class AsmUtil implements Opcodes {
 		};
 	}
 
+	public static String getEtterName(String prefix, String desc, String name) {
+		return prefix + name(desc) + Character.toUpperCase(name.charAt(0)) + name.substring(1);
+	}
+
 	public static FieldVisitor generateSetter(VisitMethod supply, String owner, int access, String name, String descriptor, String signature, boolean impl) {
-		MethodVisitor visitor = supply.visitMethod(access, "set" + name(descriptor) + Character.toUpperCase(name.charAt(0)) + name.substring(1), "(" + descriptor + ")V", signature == null ? null : "(" + signature + ")V", null);
+		MethodVisitor visitor = supply.visitMethod(access, getEtterName("set", descriptor, name), "(" + descriptor + ")V", signature == null ? null : "(" + signature + ")V", null);
 		Type type = Type.getType(descriptor);
 		if(impl) {
 			if (Modifier.isStatic(access)) {
