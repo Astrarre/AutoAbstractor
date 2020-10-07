@@ -9,8 +9,7 @@ public class ImplementationHiddenException extends RuntimeException {
 	 * f2bb intentionally hides the implementation of the class to prevent you from doing dumb things, and to hide all the errors that would be shown if you weren't in a workspace that included
 	 * minecraft
 	 */
-	public static void create() {
-		// todo add instructions for gradle
+	public static ImplementationHiddenException create() {
 		throw new ImplementationHiddenException("Someone didn't set up their dependencies correctly");
 	}
 

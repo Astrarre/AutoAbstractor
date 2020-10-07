@@ -8,6 +8,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.omg.CORBA.INTERNAL;
 
 public class AsmUtil implements Opcodes {
 	public static String prefixName(String prefix, String name) {
@@ -17,6 +18,12 @@ public class AsmUtil implements Opcodes {
 
 	public interface VisitMethod {
 		MethodVisitor visitMethod(final int access, final String name, final String descriptor, final String signature, final String[] exceptions);
+	}
+
+	public static MethodVisitor visitStub(MethodVisitor visitor) {
+		visitor.visitMethodInsn(INVOKESTATIC, ImplementationHiddenException.INTERNAL, "create", "()L" + ImplementationHiddenException.INTERNAL + ';', false);
+		visitor.visitInsn(ATHROW);
+		return visitor;
 	}
 
 	public static FieldVisitor generateGetter(VisitMethod supply, String owner, int access, String name, String descriptor, String signature, boolean impl) {
@@ -29,7 +36,7 @@ public class AsmUtil implements Opcodes {
 				visitor.visitFieldInsn(GETFIELD, owner, name, descriptor);
 			}
 		} else {
-			visitor.visitMethodInsn(INVOKESTATIC, ImplementationHiddenException.INTERNAL, "create", "()V", false);
+			visitStub(visitor);
 		}
 		visitor.visitInsn(Type.getType(descriptor).getOpcode(IRETURN));
 		return new FieldVisitor(ASM9) {
@@ -57,7 +64,7 @@ public class AsmUtil implements Opcodes {
 				visitor.visitFieldInsn(PUTFIELD, owner, name, descriptor);
 			}
 		} else {
-			visitor.visitMethodInsn(INVOKESTATIC, ImplementationHiddenException.INTERNAL, "create", "()V", false);
+			visitStub(visitor);
 		}
 		visitor.visitInsn(Type.getType(descriptor).getOpcode(IRETURN));
 		visitor.visitParameter(name, ACC_FINAL);
