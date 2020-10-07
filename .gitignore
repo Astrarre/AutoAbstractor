@@ -4,3 +4,8 @@
 /build/classes/java/main/
 /build/classes/java/test/
 /run/
+/.idea/
+*.ipr
+*.iws
+*.iml
+*.classpath
