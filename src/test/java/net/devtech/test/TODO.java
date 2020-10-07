@@ -1,6 +1,9 @@
 package net.devtech.test;
 
 public class TODO {
+	// todo for curseforge, make a mod called "Iridis API Index" or include it in "Iridis Loader", and make it just have an index of version -> curseforge links
+	// so when a mod requires X api, it automatically installs all the bridge versions and stuff
+
 	// todo deal with array casting problem
 	// todo atleast make warning for array methods n stuff
 	// todo realize that delegates don't work because interfaces exist

@@ -1,5 +1,6 @@
 package io.github.f2bb.classpath;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -44,7 +45,7 @@ public class AbstractorClassLoader extends URLClassLoader {
 		return cls == null || !this.isMinecraft(cls) || this.canAbstractClass(cls);
 	}
 
-	// todo
+
 	public boolean canAbstractClass(Class<?> cls) {
 		return true;
 	}
@@ -53,11 +54,18 @@ public class AbstractorClassLoader extends URLClassLoader {
 		return true;
 	}
 
+	// todo check for any references to unabstracted classes
+	// todo filter out private and package-private
 	public boolean canAbstractField(Field field) {
 		return true;
 	}
 
+
 	public boolean canAbstractMethod(Method method) {
+		return true;
+	}
+
+	public boolean canAbstractConstructor(Constructor<?> constructor) {
 		return true;
 	}
 
@@ -70,7 +78,7 @@ public class AbstractorClassLoader extends URLClassLoader {
 	}
 
 	public boolean isMinecraft(Class<?> type) {
-		return type.getClassLoader() == minecraft;
+		return type.getClassLoader() == this.minecraft;
 	}
 
 	@Override

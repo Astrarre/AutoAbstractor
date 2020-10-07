@@ -2,6 +2,8 @@ package io.github.f2bb.abstraction;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -15,9 +17,12 @@ import java.util.Set;
 
 import com.google.common.reflect.TypeToken;
 import io.github.f2bb.classpath.AbstractorClassLoader;
+import io.github.f2bb.reflect.ReifiedType;
 import io.github.f2bb.util.AsmUtil;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 // todo in java abstracter, ignore requests to abstract inner classes
@@ -35,6 +40,28 @@ public abstract class AbstractAbstracter extends ClassVisitor implements Opcodes
 		this.loader = loader;
 		this.cls = cls;
 		this.token = TypeToken.of(cls);
+	}
+
+	public abstract Optional<Resource> write();
+
+	public abstract static class Resource {
+		public abstract String getPath();
+
+		public abstract void write(OutputStream stream) throws IOException;
+	}
+
+	@Override
+	public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+		return null;
+	}
+
+	@Override
+	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+		return null;
+	}
+
+	public static String getInternalName(Class<?> cls) {
+		return org.objectweb.asm.Type.getInternalName(cls);
 	}
 
 	public String toSignature(Type[] typeParameters, Type superClass, Collection<Type> interfaces) {
@@ -130,10 +157,11 @@ public abstract class AbstractAbstracter extends ClassVisitor implements Opcodes
 		}
 		return arr;
 	}
-	public Set<Type> reify(Set<Class<?>> faces) {
-		Set<Type> reified = new HashSet<>();
+
+	public Set<ReifiedType> reify(Set<Class<?>> faces) {
+		Set<ReifiedType> reified = new HashSet<>();
 		for (Class<?> face : faces) {
-			reified.add(this.reify(face));
+			reified.add(new ReifiedType(this.reify(face), face));
 		}
 		return reified;
 	}
@@ -155,14 +183,6 @@ public abstract class AbstractAbstracter extends ClassVisitor implements Opcodes
 			}
 		} while (!this.loader.isValidClass(cls));
 		return faces;
-	}
-
-	public abstract Optional<Resource> write();
-
-	public abstract static class Resource {
-		abstract String getPath();
-
-		abstract void write(OutputStream stream) throws IOException;
 	}
 
 	public String toSignature(Type type, boolean shouldBound) {
