@@ -34,7 +34,7 @@ public class ImplAsmInterfaceAbstracter extends ApiAsmInterfaceAbstracter {
 		return null;
 	}
 
-	public void invokeMethod(int access, String name, String desc, MethodVisitor visitor, int instanceOpcode) {
+		public void invokeMethod(int access, String name, String desc, MethodVisitor visitor, int instanceOpcode) {
 		Type type = Type.getMethodType(desc);
 		Type[] types = type.getArgumentTypes();
 		int inc;

@@ -50,4 +50,8 @@ public class A<O extends Runnable, T> extends AbstractSet<O> implements Consumer
 
 	public class CL<L extends Array & Runnable & Function<Runnable, ? extends L>> extends A<Runnable, ? extends L>.B<Integer, L> {
 	}
+
+	public static class Test {
+
+	}
 }

@@ -1,6 +1,8 @@
 package io.github.f2bb.util;
 
 import java.lang.reflect.Modifier;
+import java.util.Iterator;
+import java.util.logging.Logger;
 
 import io.github.f2bb.api.ImplementationHiddenException;
 import org.objectweb.asm.AnnotationVisitor;
@@ -8,9 +10,47 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.omg.CORBA.INTERNAL;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InnerClassNode;
 
 public class AsmUtil implements Opcodes {
+	public static final String OBJECT = Type.getDescriptor(Object.class);
+	private static final Logger LOGGER = Logger.getLogger("AsmUtil");
+	public static int getTrueAccess(ClassNode node) {
+		if(node.name.contains("$")) { // prolly inner class
+			for (InnerClassNode cls : node.innerClasses) {
+				if(cls.name.equals(node.name)) {
+					return cls.access;
+				}
+			}
+			LOGGER.warning("Class " + node.name + " contains '$' in it's name, but has no inner class attribute to give away the real access flags of the class!");
+		}
+		return node.access;
+	}
+
+	public static Iterable<String> splitName(String name) {
+		return () -> new Iterator<String>() {
+			private String next = name;
+
+			@Override
+			public boolean hasNext() {
+				return this.next != null;
+			}
+
+			@Override
+			public String next() {
+				String orig = this.next;
+				int i = orig.lastIndexOf('$');
+				if (i < 0) {
+					this.next = null;
+				} else {
+					this.next = orig.substring(0, i);
+				}
+				return orig;
+			}
+		};
+	}
+
 	public static String prefixName(String prefix, String name) {
 		int i = name.lastIndexOf('/') + 1;
 		return name.substring(0, i) + prefix + name.substring(i);

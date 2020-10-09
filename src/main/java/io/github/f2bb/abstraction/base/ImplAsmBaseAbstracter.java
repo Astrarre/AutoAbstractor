@@ -8,17 +8,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
-import com.sun.deploy.util.ArrayUtil;
-import com.sun.xml.internal.ws.util.StreamUtils;
 import io.github.f2bb.abstraction.AbstractAbstracter;
 import io.github.f2bb.abstraction.AbstractBaseAbstracter;
-import io.github.f2bb.abstraction.inter.ApiAsmInterfaceAbstracter;
 import io.github.f2bb.classpath.AbstractorClassLoader;
 import io.github.f2bb.reflect.ReifiedType;
 import io.github.f2bb.util.AsmUtil;
@@ -26,6 +21,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
+// todo filter out all declaring class != minecraft
 // todo you're missing all the casts
 public class ImplAsmBaseAbstracter extends AbstractBaseAbstracter {
 	public ImplAsmBaseAbstracter(AbstractorClassLoader loader, Class<?> cls) {
@@ -37,7 +33,7 @@ public class ImplAsmBaseAbstracter extends AbstractBaseAbstracter {
 		// generate class signature
 		String signature = this.toSignature(this.cls.getTypeParameters(),
 		                                    this.prefixSign("Base", superClass.raw, superClass.type),
-		                                    interfaces.stream().map(ReifiedType::getType).collect(Collectors.toList())) + this.prefixSign("I", this.cls, this.cls);
+		                                    interfaces.stream().map(ReifiedType::getType).collect(Collectors.toList())) + this.prefixSign("I", this.cls, this.cls); // todo this needs to output the type variables
 		super.visit(version, access, AsmUtil.prefixName("Base", name), // name
 		            signature, // signature
 		            this.prefix("Base", superClass.raw), // super
