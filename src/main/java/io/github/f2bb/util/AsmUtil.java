@@ -14,7 +14,8 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InnerClassNode;
 
 public class AsmUtil implements Opcodes {
-	public static final String OBJECT = Type.getDescriptor(Object.class);
+	public static final String OBJECT_NAME = Type.getInternalName(Object.class);
+	public static final String OBJECT_DESC = Type.getDescriptor(Object.class);
 	private static final Logger LOGGER = Logger.getLogger("AsmUtil");
 	public static int getTrueAccess(ClassNode node) {
 		if(node.name.contains("$")) { // prolly inner class
