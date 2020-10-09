@@ -10,24 +10,11 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InnerClassNode;
 
 public class AsmUtil implements Opcodes {
 	public static final String OBJECT_NAME = Type.getInternalName(Object.class);
 	public static final String OBJECT_DESC = Type.getDescriptor(Object.class);
 	private static final Logger LOGGER = Logger.getLogger("AsmUtil");
-	public static int getTrueAccess(ClassNode node) {
-		if(node.name.contains("$")) { // prolly inner class
-			for (InnerClassNode cls : node.innerClasses) {
-				if(cls.name.equals(node.name)) {
-					return cls.access;
-				}
-			}
-			LOGGER.warning("Class " + node.name + " contains '$' in it's name, but has no inner class attribute to give away the real access flags of the class!");
-		}
-		return node.access;
-	}
 
 	public static Iterable<String> splitName(String name) {
 		return () -> new Iterator<String>() {
@@ -76,10 +63,11 @@ public class AsmUtil implements Opcodes {
 				visitor.visitVarInsn(ALOAD, 0);
 				visitor.visitFieldInsn(GETFIELD, owner, name, descriptor);
 			}
+			visitor.visitInsn(Type.getType(descriptor).getOpcode(IRETURN));
 		} else {
 			visitStub(visitor);
 		}
-		visitor.visitInsn(Type.getType(descriptor).getOpcode(IRETURN));
+
 		return new FieldVisitor(ASM9) {
 			@Override
 			public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {

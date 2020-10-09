@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.sun.org.apache.xpath.internal.Arg;
-import io.github.f2bb.utils.Abstracter;
+import io.github.f2bb.Abstracter;
+import io.github.f2bb.utils.AbstracterImpl;
 import io.github.f2bb.utils.types.Arguments;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.AnnotationVisitor;
@@ -22,7 +22,13 @@ import org.objectweb.asm.tree.ClassNode;
 public class ClassView {
 	public final Optional<ClassView> viewer;
 	public final ClassNode node;
+	/**
+	 * the type arguments for all of the classes this class extends/implements
+	 */
 	public final List<Arguments> args;
+	/**
+	 * a mapping from type variable -> type parameter from this class's viewer's view
+	 */
 	public final Map<String, String> typeParameterMap;
 
 	public ClassView(Abstracter abstracter, @Nullable ClassView viewer, ClassNode node, int index) {

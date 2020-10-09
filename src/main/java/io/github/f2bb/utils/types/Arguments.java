@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.github.f2bb.Abstracter;
 import io.github.f2bb.util.AsmUtil;
-import io.github.f2bb.utils.Abstracter;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
