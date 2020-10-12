@@ -1,268 +1,219 @@
 package io.github.f2bb.abstraction;
 
+import static io.github.f2bb.util.AbstracterUtil.get;
+import static io.github.f2bb.util.AbstracterUtil.map;
+
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.logging.Logger;
+import java.util.zip.ZipOutputStream;
 
 import com.google.common.reflect.TypeToken;
-import io.github.f2bb.classpath.AbstractorClassLoader;
-import io.github.f2bb.reflect.ReifiedType;
-import io.github.f2bb.util.AsmUtil;
-import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
+import com.squareup.javapoet.ArrayTypeName;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeVariableName;
+import io.github.f2bb.loader.AbstracterLoader;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-// todo in java abstracter, ignore requests to abstract inner classes
-public abstract class AbstractAbstracter extends ClassVisitor implements Opcodes {
-	public static final String OBJECT = org.objectweb.asm.Type.getInternalName(Object.class);
-	protected final AbstractorClassLoader loader;
+@SuppressWarnings ("UnstableApiUsage")
+public abstract class AbstractAbstracter implements Opcodes {
+	protected static final Logger LOGGER = Logger.getLogger("Abstract");
+	protected final AbstracterLoader loader;
 	protected final Class<?> cls;
 	protected final TypeToken<?> token;
 
-	protected AbstractAbstracter(AbstractorClassLoader loader, Class<?> cls) {
-		this(null, loader, cls);
-	}
-
-	public AbstractAbstracter(ClassVisitor classVisitor, AbstractorClassLoader loader, Class<?> cls) {
-		super(ASM9, classVisitor);
+	protected AbstractAbstracter(AbstracterLoader loader, Class<?> cls) {
 		this.loader = loader;
 		this.cls = cls;
 		this.token = TypeToken.of(cls);
 	}
 
-	public abstract Optional<Resource> write();
+	/**
+	 * write the files to the output stream
+	 */
+	public abstract void write(ZipOutputStream out) throws IOException;
 
-	public abstract static class Resource {
-		public abstract String getPath();
-
-		public abstract void write(OutputStream stream) throws IOException;
-	}
-
-	@Override
-	public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-		return null;
-	}
-
-	@Override
-	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-		return null;
-	}
-
-	public static String getInternalName(Class<?> cls) {
-		return org.objectweb.asm.Type.getInternalName(cls);
-	}
-
-	public String toSignature(Type[] typeParameters, Type superClass, Collection<Type> interfaces) {
-		StringBuilder builder = new StringBuilder();
-		if (typeParameters.length > 0) {
-			builder.append('<');
-			for (Type var : typeParameters) {
-				builder.append(this.toSignature(var, true));
-			}
-			builder.append('>');
-		}
-
-		if (superClass != null) {
-			builder.append(this.toSignature(superClass, false));
-		}
-		for (Type anInterface : interfaces) {
-			builder.append(this.toSignature(anInterface, false));
-		}
-		return builder.toString();
-	}
-
-	public String createMethodSignature(@Nullable TypeVariable<?>[] variables, Type[] parameters, Type ret) {
-		StringBuilder builder = new StringBuilder();
-		if (variables != null && variables.length > 0) {
-			builder.append('<');
-			for (TypeVariable<?> variable : variables) {
-				builder.append(this.toSignature(this.token.resolveType(variable).getType(), true));
-			}
-			builder.append('>');
-		}
-		builder.append('(');
-		for (Type parameter : parameters) {
-			builder.append(this.toSignature(this.token.resolveType(parameter).getType(), false));
-		}
-		builder.append(')');
-		System.out.println("\t" + ret);
-		builder.append(this.toSignature(this.token.resolveType(ret).getType(), false));
-		return builder.toString();
-	}
-
-	public String prefixSign(String prefix, Class<?> raw, java.lang.reflect.Type type) {
-		if (this.loader.isMinecraft(raw)) {
-			String sign = this.toSignature(type, false);
-			int yes = sign.indexOf('<');
-			if (yes == -1) {
-				yes = Integer.MAX_VALUE;
-			}
-			int i = sign.lastIndexOf('/', yes) + 1;
-			return sign.substring(0, i) + prefix + sign.substring(i);
-		}
-		return this.toSignature(type, false);
-	}
-
-	public String prefix(String prefix, Class<?> name) {
-		if (this.loader.isMinecraft(name)) {
-			return AsmUtil.prefixName(prefix, org.objectweb.asm.Type.getInternalName(name));
-		}
-		return org.objectweb.asm.Type.getInternalName(name);
-	}
-
-	public String prefix(String prefix, String name) {
-		if (this.loader.isMinecraft(name.replace('/', '.'))) {
-			return AsmUtil.prefixName(prefix, name);
-		}
-		return name;
-	}
-
-	protected Type reify(Type type) {
+	public Type resolve(Type type) {
 		return this.token.resolveType(type).getType();
 	}
-	protected Class<?> raw(Type type) {
+
+	public Class<?> raw(Type type) {
 		return this.token.resolveType(type).getRawType();
 	}
 
-	protected Class<?> getValidSuper() {
-		Class<?> cls = this.cls;
-		do {
-			cls = cls.getSuperclass();
-		} while (!this.loader.isValidClass(cls));
-		return cls;
+	public TypeToken<?> resolved(Type type) {
+		return this.token.resolveType(type);
 	}
 
-	public Type[] raw(Type[] arr) {
-		for (int i = 0; i < arr.length; i++) {
-			arr[i] = this.raw(arr[i]);
-		}
-		return arr;
-	}
-
-	public Type[] reify(Type[] arr) {
-		for (int i = 0; i < arr.length; i++) {
-			arr[i] = this.reify(arr[i]);
-		}
-		return arr;
-	}
-
-	public Set<ReifiedType> reify(Set<Class<?>> faces) {
-		Set<ReifiedType> reified = new HashSet<>();
-		for (Class<?> face : faces) {
-			reified.add(new ReifiedType(this.reify(face), face));
-		}
-		return reified;
-	}
-
-	public Set<Class<?>> getInterfaces(Class<?> cls) {
-		Set<Class<?>> faces = new HashSet<>();
-		do {
-			for (Class<?> i : cls.getInterfaces()) {
-				if (this.loader.isValidClass(i)) {
-					faces.add(i);
+	public TypeName from(Type type) {
+		if (type instanceof Class<?>) {
+			Class<?> cls = (Class<?>) type;
+			if (this.loader.isMinecraft(cls)) {
+				String name = this.loader.getAbstractedName(cls);
+				int pkgIndex = Math.max(name.lastIndexOf('/'), 0);
+				String pkg = name.substring(0, pkgIndex);
+				int innerIndex = name.indexOf('$', pkgIndex);
+				if (innerIndex > 0) {
+					return ClassName.get(pkg.replace('/', '.'),
+							name.substring(pkgIndex + 1, innerIndex),
+							name.substring(innerIndex + 1).split("\\$"));
 				} else {
-					faces.addAll(this.getInterfaces(i));
+					return ClassName.get(pkg.replace('/', '.'), name.substring(pkgIndex + 1));
 				}
 			}
-
-			cls = cls.getSuperclass();
-			if (cls == null) {
-				break;
-			}
-		} while (!this.loader.isValidClass(cls));
-		return faces;
+			return ClassName.get(cls);
+		} else if (type instanceof GenericArrayType) {
+			return ArrayTypeName.of(this.from(((GenericArrayType) type).getGenericComponentType()));
+		} else if (type instanceof ParameterizedType) {
+			ParameterizedType ptn = (ParameterizedType) type;
+			return ParameterizedTypeName.get((ClassName) this.from(ptn.getRawType()),
+					map(ptn.getActualTypeArguments(), this::from, TypeName[]::new));
+		} else if (type instanceof TypeVariable<?>) {
+			TypeVariable<?> tvn = (TypeVariable<?>) type;
+			return TypeVariableName.get(tvn.getName(), map(tvn.getBounds(), this::from, TypeName[]::new));
+		} else if (type instanceof WildcardType) {
+			WildcardType wtn = (WildcardType) type;
+			return get(map(wtn.getLowerBounds(), this::from), map(wtn.getUpperBounds(), this::from));
+		}
+		throw new IllegalArgumentException("What " + type);
 	}
 
-	public String toSignature(Type type, boolean shouldBound) {
-		if (type instanceof TypeVariable) {
-			TypeVariable<?> variable = (TypeVariable<?>) type;
-			StringBuilder builder = new StringBuilder();
-			if (shouldBound) {
-				builder.append(variable.getName());
-				Type[] bounds = variable.getBounds();
-				for (Type bound : bounds) {
-					builder.append(':');
-					if (bound != Object.class || bounds.length == 1) {
-						builder.append(this.toSignature(bound, false));
-					}
-				}
-			} else {
-				builder.append('T').append(variable.getName()).append(';');
-			}
-			return builder.toString();
+	public String toSignature(Type type) {
+		return this.toSignature(type, true);
+	}
+
+	public String toSignature(Type type, boolean interfaceDesc) {
+		if (type instanceof Class<?>) {
+			Class<?> c = (Class<?>) type;
+			return interfaceDesc ? this.loader.getAbstractedDescriptor(c) : org.objectweb.asm.Type.getDescriptor(c);
 		} else if (type instanceof GenericArrayType) {
-			return "[" + this.toSignature(((GenericArrayType) type).getGenericComponentType(), false);
+			return '[' + this.toSignature(((GenericArrayType) type).getGenericComponentType(), interfaceDesc);
 		} else if (type instanceof ParameterizedType) {
-			ParameterizedType par = (ParameterizedType) type;
-			StringBuilder builder = new StringBuilder();
-			builder.append(this.toSignature(par.getRawType(), shouldBound));
-			// cut off semicolon
-			int last = builder.length() - 1;
-			if (builder.charAt(last) == ';') {
-				builder.setLength(last);
-			}
-			Type[] actual = par.getActualTypeArguments();
-			if (actual.length != 0) {
+			ParameterizedType pt = (ParameterizedType) type;
+			String raw = this.toSignature(pt.getRawType(), interfaceDesc);
+			Type[] args = pt.getActualTypeArguments();
+			if (args.length > 0) {
+				StringBuilder builder = new StringBuilder(raw);
+				// cut of ';'
+				builder.setLength(builder.length() - 1);
+
 				builder.append('<');
-				for (Type t : actual) {
-					builder.append(this.toSignature(t, false));
+				for (Type arg : args) {
+					builder.append(this.toSignature(arg, interfaceDesc));
 				}
 				builder.append('>');
+				builder.append(';');
+				raw = builder.toString();
 			}
-			builder.append(';');
-			return builder.toString();
-		} else if (type instanceof Class) {
-			return this.prefix("I", (Class<?>) type);
+			return raw;
+		} else if (type instanceof TypeVariable<?>) {
+			return "T" + ((TypeVariable<?>) type).getName() + ";";
 		} else if (type instanceof WildcardType) {
-			StringBuilder builder = new StringBuilder();
 			WildcardType wt = (WildcardType) type;
-			Type[] upper = wt.getUpperBounds();
-			if (upper.length > 0) {
-				if (upper.length == 1 && upper[0] == Object.class) {
-					builder.append('*');
-				} else {
-					builder.append('+');
-					for (Type t : upper) {
-						builder.append(this.toSignature(t, false));
-					}
-				}
+			Type[] array = wt.getLowerBounds();
+			StringBuilder builder;
+			if (array.length > 0) {
+				builder = new StringBuilder("-");
 			} else {
-				Type[] lower = wt.getLowerBounds();
-				if (lower.length > 0) {
-					builder.append('-');
-					for (Type t : lower) {
-						builder.append(this.toSignature(t, false));
-					}
-				}
+				builder = new StringBuilder("+");
+				array = wt.getUpperBounds();
+			}
+
+			for (Type l : array) {
+				builder.append(this.toSignature(l, interfaceDesc));
 			}
 			return builder.toString();
 		}
-		throw new UnsupportedOperationException("Unkown type " + type + " " + type.getClass());
+		throw new IllegalArgumentException(String.valueOf(type));
 	}
 
-	public String toSignature(Type[] typeParameters, String superClass, Collection<Type> interfaces) {
-		StringBuilder builder = new StringBuilder();
-		if (typeParameters.length > 0) {
+	public StringBuilder typeVarsAsString(TypeVariable<?>[] variables) {
+		if (variables.length > 0) {
+			StringBuilder builder = new StringBuilder();
 			builder.append('<');
-			for (Type var : typeParameters) {
-				builder.append(this.toSignature(var, true));
+			for (TypeVariable<?> variable : variables) {
+				builder.append(variable.getName());
+				for (Type bound : variable.getBounds()) {
+					builder.append(':').append(this.toSignature(bound));
+				}
 			}
 			builder.append('>');
+			return builder;
 		}
-		builder.append('L').append(superClass).append(';');
+		return new StringBuilder();
+	}
+
+	public String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType, boolean map) {
+		StringBuilder builder = this.typeVarsAsString(variables);
+		builder.append('(');
+		for (TypeToken parameter : parameters) {
+			builder.append(this.toSignature(parameter.getType(), map));
+		}
+		builder.append(')');
+		builder.append(this.toSignature(returnType.getType(), map));
+		return builder.toString();
+	}
+
+	public String methodDescriptor(TypeToken<?>[] parameters, TypeToken<?> returnType) {
+		StringBuilder builder = new StringBuilder();
+		builder.append('(');
+		for (TypeToken parameter : parameters) {
+			builder.append(this.toSignature(parameter.getRawType()));
+		}
+		builder.append(')');
+		builder.append(this.toSignature(returnType.getRawType()));
+		return builder.toString();
+	}
+
+	public String classSignature(TypeVariable<?>[] variables, Type superClass, Type[] interfaces) {
+		StringBuilder builder = this.typeVarsAsString(variables);
+		builder.append(this.toSignature(superClass));
 		for (Type anInterface : interfaces) {
-			builder.append(this.toSignature(anInterface, false));
+			builder.append(this.toSignature(anInterface));
 		}
 		return builder.toString();
+	}
+
+	public void invoke(MethodVisitor visitor, Method method, boolean special) {
+		Class<?> dec = method.getDeclaringClass();
+		this.invoke(visitor, method.getModifiers(), org.objectweb.asm.Type.getInternalName(dec), method.getName(),
+				org.objectweb.asm.Type.getMethodDescriptor(method), special ? INVOKESPECIAL : INVOKEVIRTUAL, dec.isInterface());
+	}
+
+	public void invoke(MethodVisitor visitor,
+			int access,
+			String owner,
+			String name,
+			String desc,
+			int instanceOpcode,
+			boolean isInterface) {
+		if (isInterface && instanceOpcode == INVOKEVIRTUAL) {
+			instanceOpcode = INVOKEINTERFACE;
+		}
+
+		org.objectweb.asm.Type methodDesc = org.objectweb.asm.Type.getMethodType(desc);
+		int index = 0;
+		int opcode;
+		if (!Modifier.isStatic(access)) {
+			visitor.visitVarInsn(ALOAD, index++);
+			opcode = instanceOpcode;
+		} else {
+			opcode = INVOKESTATIC;
+		}
+
+		for (org.objectweb.asm.Type type : methodDesc.getArgumentTypes()) {
+			visitor.visitVarInsn(type.getOpcode(ILOAD), index++);
+		}
+		visitor.visitMethodInsn(opcode, owner, name, desc, isInterface);
+		visitor.visitInsn(methodDesc.getReturnType().getOpcode(IRETURN));
 	}
 }

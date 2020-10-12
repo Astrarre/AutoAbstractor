@@ -1,10 +1,13 @@
 package io.github.f2bb.util;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Iterator;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
-import io.github.f2bb.api.ImplementationHiddenException;
+import com.google.common.reflect.TypeToken;
+import io.github.f2bb.ex.ImplementationHiddenException;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -54,8 +57,14 @@ public class AsmUtil implements Opcodes {
 		return visitor;
 	}
 
-	public static FieldVisitor generateGetter(VisitMethod supply, String owner, int access, String name, String descriptor, String signature, boolean impl) {
-		MethodVisitor visitor = supply.visitMethod(access, getEtterName("get", descriptor, name), "()" + descriptor, signature == null ? null : "()" + signature, null);
+	public static MethodVisitor generateGetter(VisitMethod supply, Function<java.lang.reflect.Type, String> sign, TypeToken<?> token, Field field, boolean impl) {
+		int access = field.getModifiers();
+		String owner = Type.getInternalName(field.getType());
+		String descriptor = Type.getDescriptor(token.getRawType());
+		String name = field.getName();
+		String signature = sign.apply(token.getType());
+
+		MethodVisitor visitor = supply.visitMethod(access | ACC_FINAL, getEtterName("get", descriptor, name), "()" + descriptor, signature == null ? null : "()" + signature, null);
 		if(impl) {
 			if (Modifier.isStatic(access)) {
 				visitor.visitFieldInsn(GETSTATIC, owner, name, descriptor);
@@ -68,20 +77,21 @@ public class AsmUtil implements Opcodes {
 			visitStub(visitor);
 		}
 
-		return new FieldVisitor(ASM9) {
-			@Override
-			public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-				return visitor.visitAnnotation(descriptor, visible);
-			}
-		};
+		return visitor;
 	}
 
 	public static String getEtterName(String prefix, String desc, String name) {
 		return prefix + name(desc) + Character.toUpperCase(name.charAt(0)) + name.substring(1);
 	}
 
-	public static FieldVisitor generateSetter(VisitMethod supply, String owner, int access, String name, String descriptor, String signature, boolean impl) {
-		MethodVisitor visitor = supply.visitMethod(access, getEtterName("set", descriptor, name), "(" + descriptor + ")V", signature == null ? null : "(" + signature + ")V", null);
+	public static MethodVisitor generateSetter(VisitMethod supply, Function<java.lang.reflect.Type, String> sign, TypeToken<?> token, Field field, boolean impl) {
+		int access = field.getModifiers();
+		String owner = Type.getInternalName(field.getType());
+		String descriptor = Type.getDescriptor(token.getRawType());
+		String name = field.getName();
+		String signature = sign.apply(token.getType());
+
+		MethodVisitor visitor = supply.visitMethod(access | ACC_FINAL, getEtterName("set", descriptor, name), "(" + descriptor + ")V", signature == null ? null : "(" + signature + ")V", null);
 		Type type = Type.getType(descriptor);
 		if(impl) {
 			if (Modifier.isStatic(access)) {
@@ -95,14 +105,9 @@ public class AsmUtil implements Opcodes {
 		} else {
 			visitStub(visitor);
 		}
-		visitor.visitInsn(Type.getType(descriptor).getOpcode(IRETURN));
+		visitor.visitInsn(RETURN);
 		visitor.visitParameter(name, ACC_FINAL);
-		return new FieldVisitor(ASM9) {
-			@Override
-			public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-				return visitor.visitAnnotation(descriptor, visible);
-			}
-		};
+		return visitor;
 	}
 
 	private static String name(String desc) {

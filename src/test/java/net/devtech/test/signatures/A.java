@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.github.f2bb.util.Util;
 
 public class A<O extends Runnable, T> extends AbstractSet<O> implements Consumer<T> {
 	@Override
