@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 import com.google.common.reflect.TypeToken;
+import io.github.f2bb.ex.DoNotOverride;
 import io.github.f2bb.ex.ImplementationHiddenException;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -15,6 +16,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 public class AsmUtil implements Opcodes {
+	public static final String DO_NOT_OVERRIDE = Type.getDescriptor(DoNotOverride.class);
 	public static final String OBJECT_NAME = Type.getInternalName(Object.class);
 	public static final String OBJECT_DESC = Type.getDescriptor(Object.class);
 	private static final Logger LOGGER = Logger.getLogger("AsmUtil");
@@ -76,10 +78,13 @@ public class AsmUtil implements Opcodes {
 		} else {
 			visitStub(visitor);
 		}
-
+		visitor.visitAnnotation(DO_NOT_OVERRIDE, true);
 		return visitor;
 	}
 
+	public static String getEtterName(String prefix, Class<?> desc, String name) {
+		return prefix + name(Type.getDescriptor(desc)) + Character.toUpperCase(name.charAt(0)) + name.substring(1);
+	}
 	public static String getEtterName(String prefix, String desc, String name) {
 		return prefix + name(desc) + Character.toUpperCase(name.charAt(0)) + name.substring(1);
 	}
@@ -107,6 +112,7 @@ public class AsmUtil implements Opcodes {
 		}
 		visitor.visitInsn(RETURN);
 		visitor.visitParameter(name, ACC_FINAL);
+		visitor.visitAnnotation(DO_NOT_OVERRIDE, true);
 		return visitor;
 	}
 

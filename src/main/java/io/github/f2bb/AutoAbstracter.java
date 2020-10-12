@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipOutputStream;
 
-import io.github.f2bb.abstraction.base.AsmImplBaseAbstracter;
+import io.github.f2bb.abstraction.AbstractAbstracter;
+import io.github.f2bb.abstraction.base.AsmBaseAbstracter;
+import io.github.f2bb.abstraction.base.JavaBaseAbstracter;
 import io.github.f2bb.loader.AbstracterLoaderImpl;
 
 public class AutoAbstracter {
@@ -22,11 +24,14 @@ public class AutoAbstracter {
 		classpath.add(new File("fodder.jar").toURI().toURL());
 
 		AbstracterLoaderImpl loader = new AbstracterLoaderImpl(classpath.toArray(new URL[0]));
-		AsmImplBaseAbstracter abstracter = new AsmImplBaseAbstracter(loader,
+		AbstractAbstracter javaAbstracter = new JavaBaseAbstracter(loader,
 				loader.getClass("net.minecraft.block.Block"));
+		AbstractAbstracter asmAbstracter = new AsmBaseAbstracter(loader,
+				loader.getClass("net.minecraft.block.Block"), false);
 
 		ZipOutputStream out = new ZipOutputStream(new FileOutputStream("output.jar"));
-		abstracter.write(out);
+		javaAbstracter.write(out);
+		asmAbstracter.write(out);
 		out.close();
 	}
 }

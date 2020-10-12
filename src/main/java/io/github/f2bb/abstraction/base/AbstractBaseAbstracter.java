@@ -23,7 +23,6 @@ import io.github.f2bb.abstraction.AbstractAbstracter;
 import io.github.f2bb.loader.AbstracterLoader;
 import org.objectweb.asm.Type;
 
-// todo no raw type impl, instead just tack on the raw string at the end
 @SuppressWarnings ("UnstableApiUsage")
 public abstract class AbstractBaseAbstracter extends AbstractAbstracter {
 	// public is handled by interface abstraction

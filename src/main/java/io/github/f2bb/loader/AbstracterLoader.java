@@ -30,6 +30,10 @@ public interface AbstracterLoader extends Opcodes {
 	 */
 	boolean isBaseAbstracted(Class<?> cls);
 
+	default boolean isValid(Class<?> cls) {
+		return this.isAbstracted(cls) || !this.isMinecraft(cls);
+	}
+
 	Remapper getRemapper();
 
 	default String getAbstractedName(Class<?> cls) {

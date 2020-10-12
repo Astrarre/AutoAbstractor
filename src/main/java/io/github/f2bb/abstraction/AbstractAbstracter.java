@@ -54,7 +54,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return this.token.resolveType(type);
 	}
 
-	public TypeName from(Type type) {
+	public TypeName toTypeName(Type type) {
 		if (type instanceof Class<?>) {
 			Class<?> cls = (Class<?>) type;
 			if (this.loader.isMinecraft(cls)) {
@@ -70,19 +70,23 @@ public abstract class AbstractAbstracter implements Opcodes {
 					return ClassName.get(pkg.replace('/', '.'), name.substring(pkgIndex + 1));
 				}
 			}
-			return ClassName.get(cls);
+			if (!cls.isPrimitive()) {
+				return ClassName.get(cls);
+			} else {
+				return TypeName.get(cls);
+			}
 		} else if (type instanceof GenericArrayType) {
-			return ArrayTypeName.of(this.from(((GenericArrayType) type).getGenericComponentType()));
+			return ArrayTypeName.of(this.toTypeName(((GenericArrayType) type).getGenericComponentType()));
 		} else if (type instanceof ParameterizedType) {
 			ParameterizedType ptn = (ParameterizedType) type;
-			return ParameterizedTypeName.get((ClassName) this.from(ptn.getRawType()),
-					map(ptn.getActualTypeArguments(), this::from, TypeName[]::new));
+			return ParameterizedTypeName.get((ClassName) this.toTypeName(ptn.getRawType()),
+					map(ptn.getActualTypeArguments(), this::toTypeName, TypeName[]::new));
 		} else if (type instanceof TypeVariable<?>) {
 			TypeVariable<?> tvn = (TypeVariable<?>) type;
-			return TypeVariableName.get(tvn.getName(), map(tvn.getBounds(), this::from, TypeName[]::new));
+			return TypeVariableName.get(tvn.getName(), map(tvn.getBounds(), this::toTypeName, TypeName[]::new));
 		} else if (type instanceof WildcardType) {
 			WildcardType wtn = (WildcardType) type;
-			return get(map(wtn.getLowerBounds(), this::from), map(wtn.getUpperBounds(), this::from));
+			return get(map(wtn.getLowerBounds(), this::toTypeName), map(wtn.getUpperBounds(), this::toTypeName));
 		}
 		throw new IllegalArgumentException("What " + type);
 	}
@@ -152,7 +156,10 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return new StringBuilder();
 	}
 
-	public String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType, boolean map) {
+	public String methodSignature(TypeVariable<?>[] variables,
+			TypeToken<?>[] parameters,
+			TypeToken<?> returnType,
+			boolean map) {
 		StringBuilder builder = this.typeVarsAsString(variables);
 		builder.append('(');
 		for (TypeToken parameter : parameters) {
@@ -185,8 +192,13 @@ public abstract class AbstractAbstracter implements Opcodes {
 
 	public void invoke(MethodVisitor visitor, Method method, boolean special) {
 		Class<?> dec = method.getDeclaringClass();
-		this.invoke(visitor, method.getModifiers(), org.objectweb.asm.Type.getInternalName(dec), method.getName(),
-				org.objectweb.asm.Type.getMethodDescriptor(method), special ? INVOKESPECIAL : INVOKEVIRTUAL, dec.isInterface());
+		this.invoke(visitor,
+				method.getModifiers(),
+				org.objectweb.asm.Type.getInternalName(dec),
+				method.getName(),
+				org.objectweb.asm.Type.getMethodDescriptor(method),
+				special ? INVOKESPECIAL : INVOKEVIRTUAL,
+				dec.isInterface());
 	}
 
 	public void invoke(MethodVisitor visitor,
@@ -203,6 +215,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 		org.objectweb.asm.Type methodDesc = org.objectweb.asm.Type.getMethodType(desc);
 		int index = 0;
 		int opcode;
+		// todo casts
 		if (!Modifier.isStatic(access)) {
 			visitor.visitVarInsn(ALOAD, index++);
 			opcode = instanceOpcode;

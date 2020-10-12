@@ -17,12 +17,16 @@ import io.github.f2bb.util.AsmUtil;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 @SuppressWarnings ("UnstableApiUsage")
-public class AsmImplBaseAbstracter extends AbstractBaseAbstracter {
-	public AsmImplBaseAbstracter(AbstracterLoader loader, Class<?> toAbstract) {
+public class AsmBaseAbstracter extends AbstractBaseAbstracter {
+	private final boolean impl;
+
+	public AsmBaseAbstracter(AbstracterLoader loader, Class<?> toAbstract, boolean impl) {
 		super(loader, toAbstract);
+		this.impl = impl;
 	}
 
 	protected ClassNode node;
@@ -36,15 +40,14 @@ public class AsmImplBaseAbstracter extends AbstractBaseAbstracter {
 				// todo instance inner classes
 				this.cls.getModifiers(),
 				this.loader.getBaseAbstractedName(this.cls),
-				/*this.classSignature(this.cls.getTypeParameters(),
+				this.impl ? null : this.classSignature(this.cls.getTypeParameters(),
 						this.resolve(sup),
-						map(interfaces, this::resolve, java.lang.reflect.Type[]::new)) + this.getInterfaceSign(),*/
-				null,
+						map(interfaces, this::resolve, java.lang.reflect.Type[]::new)) + this.getInterfaceSign(),
 				Type.getInternalName(sup),
-				add(map(interfaces, this.loader::getAbstractedName, String[]::new), this.loader.getAbstractedName(this.cls)));
+				add(map(interfaces, this.loader::getAbstractedName, String[]::new),
+						this.loader.getAbstractedName(this.cls)));
 		this.node = node;
 		super.write(out);
-		// todo write to output
 		out.putNextEntry(new ZipEntry(node.name + ".class"));
 		ClassWriter writer = new ClassWriter(ASM9);
 		node.accept(writer);
@@ -54,17 +57,19 @@ public class AsmImplBaseAbstracter extends AbstractBaseAbstracter {
 
 	@Override
 	public void visitBridge(Method method, String target) {
-		int access = method.getModifiers();
-		MethodNode node = new MethodNode(access | ACC_FINAL,
-				method.getName(),
-				Type.getMethodDescriptor(method),
-				null /*sign*/,
-				null);
-		if (!Modifier.isAbstract(access)) {
-			// triangular method
-			this.invoke(node, method, false);
+		if (this.impl) {
+			int access = method.getModifiers();
+			MethodNode node = new MethodNode(access | ACC_FINAL,
+					method.getName(),
+					Type.getMethodDescriptor(method),
+					null /*sign*/,
+					null);
+			if (!Modifier.isAbstract(access)) {
+				// triangular method
+				this.invoke(node, method, false);
+			}
+			this.node.methods.add(node);
 		}
-		this.node.methods.add(node);
 	}
 
 	@Override
@@ -72,11 +77,16 @@ public class AsmImplBaseAbstracter extends AbstractBaseAbstracter {
 		TypeToken<?>[] params = map(method.getGenericParameterTypes(), this::resolved, TypeToken[]::new);
 		TypeToken<?> returnType = this.resolved(method.getGenericReturnType());
 		String desc = this.methodDescriptor(params, returnType);
+		String sign = this.impl ? null : this.methodSignature(method.getTypeParameters(), params, returnType, true);
 		int access = method.getModifiers();
-		MethodNode node = new MethodNode(access, method.getName(), desc, null, null);
+		MethodNode node = new MethodNode(access, method.getName(), desc, sign, null);
 		if (!Modifier.isAbstract(access)) {
-			// triangular method
-			this.invoke(node, method, true);
+			if(this.impl) {
+				// triangular method
+				this.invoke(node, method, true);
+			} else {
+				AsmUtil.visitStub(node);
+			}
 		}
 
 		this.node.methods.add(node);
@@ -85,17 +95,22 @@ public class AsmImplBaseAbstracter extends AbstractBaseAbstracter {
 
 	@Override
 	public void visitFieldGetter(TypeToken<?> token, Field field) {
-		AsmUtil.generateGetter(this.node::visitMethod, this::toSignature, token, field, true);
+		AsmUtil.generateGetter(this.node::visitMethod, this::toSignature, token, field, this.impl);
 	}
 
 	@Override
 	public void visitFieldSetter(TypeToken<?> token, Field field) {
-		AsmUtil.generateSetter(this.node::visitMethod, this::toSignature, token, field, true);
+		AsmUtil.generateSetter(this.node::visitMethod, this::toSignature, token, field, this.impl);
 	}
 
-	// no need to implement, virtual field lookups go brr
 	@Override
-	public void visitEmptyField(TypeToken<?> token, Field field) {}
+	public void visitEmptyField(TypeToken<?> token, Field field) {
+		if(!this.impl) {
+			FieldNode node = new FieldNode(field.getModifiers(), field.getName(), Type.getDescriptor(field.getType()),
+					this.toSignature(token.getType()), null);
+			this.node.fields.add(node);
+		}
+	}
 
 	public String getInterfaceSign() {
 		String name = "T" + this.loader.getAbstractedName(this.cls);
