@@ -1,4 +1,4 @@
-package io.github.f2bb;
+package io.github.f2bb.old;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipOutputStream;
 
-import io.github.f2bb.abstraction.AbstractAbstracter;
-import io.github.f2bb.abstraction.base.AsmBaseAbstracter;
-import io.github.f2bb.abstraction.base.JavaBaseAbstracter;
-import io.github.f2bb.loader.AbstracterLoaderImpl;
+import io.github.f2bb.old.abstraction.AbstractAbstracter;
+import io.github.f2bb.old.abstraction.base.AsmBaseAbstracter;
+import io.github.f2bb.old.abstraction.base.JavaBaseAbstracter;
+import io.github.f2bb.old.loader.AbstracterLoaderImpl;
 
 public class AutoAbstracter {
 	public static void main(String[] args) throws IOException, ClassNotFoundException {

@@ -1,4 +1,4 @@
-package io.github.f2bb.util;
+package io.github.f2bb.old.util;
 
 public class MutableBoolean {
 	private boolean bool;

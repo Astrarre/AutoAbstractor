@@ -42,5 +42,4 @@ dependencies {
     compileOnly files('run/output.jar')
     testImplementation files('run/output.jar')
     testImplementation files('run/fodder.jar')
-
 }

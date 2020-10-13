@@ -1,6 +1,6 @@
-package io.github.f2bb.abstraction.base;
+package io.github.f2bb.old.abstraction.base;
 
-import static io.github.f2bb.util.AbstracterUtil.map;
+import static io.github.f2bb.old.util.AbstracterUtil.map;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -16,15 +16,14 @@ import javax.lang.model.element.Modifier;
 
 import com.google.common.reflect.TypeToken;
 import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
-import io.github.f2bb.ex.DoNotOverride;
-import io.github.f2bb.ex.ImplementationHiddenException;
-import io.github.f2bb.loader.AbstracterLoader;
-import io.github.f2bb.util.AbstracterUtil;
-import io.github.f2bb.util.AsmUtil;
+import io.github.f2bb.abstracter.ex.DoNotOverride;
+import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
+import io.github.f2bb.old.loader.AbstracterLoader;
+import io.github.f2bb.old.util.AbstracterUtil;
+import io.github.f2bb.old.util.AsmUtil;
 
 public class JavaBaseAbstracter extends AbstractBaseAbstracter {
 	public JavaBaseAbstracter(AbstracterLoader loader, Class<?> toAbstract) {
@@ -45,7 +44,7 @@ public class JavaBaseAbstracter extends AbstractBaseAbstracter {
 		this.builder.addSuperinterface(this.toTypeName(this.cls));
 		// todo fucking inner classes
 		super.write(out);
-		out.putNextEntry(new ZipEntry(this.loader.getBaseAbstractedName(this.cls) + ".java"));
+		out.putNextEntry(new ZipEntry(this.abstractionType.getBaseAbstractedName(this.cls) + ".java"));
 		OutputStreamWriter writer = new OutputStreamWriter(out);
 		writer.write(this.builder.build().toString());
 		writer.flush();

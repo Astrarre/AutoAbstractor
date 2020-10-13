@@ -1,19 +1,20 @@
-package io.github.f2bb.abstraction.base;
+package io.github.f2bb.old.abstraction.base;
 
-import static io.github.f2bb.util.AbstracterUtil.add;
-import static io.github.f2bb.util.AbstracterUtil.map;
+import static io.github.f2bb.old.util.AbstracterUtil.add;
+import static io.github.f2bb.old.util.AbstracterUtil.map;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import com.google.common.reflect.TypeToken;
-import io.github.f2bb.loader.AbstracterLoader;
-import io.github.f2bb.util.AsmUtil;
+import io.github.f2bb.old.loader.AbstracterLoader;
+import io.github.f2bb.old.util.AsmUtil;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -24,8 +25,8 @@ import org.objectweb.asm.tree.MethodNode;
 public class AsmBaseAbstracter extends AbstractBaseAbstracter {
 	private final boolean impl;
 
-	public AsmBaseAbstracter(AbstracterLoader loader, Class<?> toAbstract, boolean impl) {
-		super(loader, toAbstract);
+	public AsmBaseAbstracter(Class<?> toAbstract, boolean impl) {
+		super(toAbstract);
 		this.impl = impl;
 	}
 
@@ -34,18 +35,18 @@ public class AsmBaseAbstracter extends AbstractBaseAbstracter {
 	@Override
 	public void write(ZipOutputStream out) throws IOException {
 		ClassNode node = new ClassNode();
-		Class<?> sup = this.findSuper();
-		Class<?>[] interfaces = this.getInterfaces();
+		TypeToken<?> sup = this.abstractionType.getSuperClass();
+		List<TypeToken<?>> interfaces = this.abstractionType.getInterfaces();
 		node.visit(V1_8,
 				// todo instance inner classes
 				this.cls.getModifiers(),
-				this.loader.getBaseAbstractedName(this.cls),
+				this.abstractionType.getBaseAbstractedName(this.cls),
 				this.impl ? null : this.classSignature(this.cls.getTypeParameters(),
 						this.resolve(sup),
 						map(interfaces, this::resolve, java.lang.reflect.Type[]::new)) + this.getInterfaceSign(),
 				Type.getInternalName(sup),
-				add(map(interfaces, this.loader::getAbstractedName, String[]::new),
-						this.loader.getAbstractedName(this.cls)));
+				add(map(interfaces, this.abstractionType::getAbstractedName, String[]::new),
+						this.abstractionType.getAbstractedName(this.cls)));
 		this.node = node;
 		super.write(out);
 		out.putNextEntry(new ZipEntry(node.name + ".class"));
@@ -113,7 +114,7 @@ public class AsmBaseAbstracter extends AbstractBaseAbstracter {
 	}
 
 	public String getInterfaceSign() {
-		String name = "T" + this.loader.getAbstractedName(this.cls);
+		String name = "T" + this.abstractionType.getAbstractedName(this.cls);
 		TypeVariable<?>[] variables = this.cls.getTypeParameters();
 		if (variables.length > 0) {
 			StringBuilder builder = new StringBuilder(name);

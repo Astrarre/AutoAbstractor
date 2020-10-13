@@ -1,6 +1,6 @@
-package io.github.f2bb.abstraction.iface;
+package io.github.f2bb.old.abstraction.iface;
 
-import static io.github.f2bb.util.AbstracterUtil.map;
+import static io.github.f2bb.old.util.AbstracterUtil.map;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -9,8 +9,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import com.google.common.reflect.TypeToken;
-import io.github.f2bb.loader.AbstracterLoader;
-import io.github.f2bb.util.AsmUtil;
+import io.github.f2bb.old.loader.AbstracterLoader;
+import io.github.f2bb.old.util.AsmUtil;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -29,6 +29,7 @@ public class AsmInterfaceAbstracter extends AbstractInterfaceAbstracter {
 	public void write(ZipOutputStream out) throws IOException {
 		ClassNode node = new ClassNode();
 		this.node = node;
+
 		// todo interface
 		super.write(out);
 		out.putNextEntry(new ZipEntry(node.name + ".class"));

@@ -1,7 +1,7 @@
-package io.github.f2bb.abstraction;
+package io.github.f2bb.old.abstraction;
 
-import static io.github.f2bb.util.AbstracterUtil.get;
-import static io.github.f2bb.util.AbstracterUtil.map;
+import static io.github.f2bb.old.util.AbstracterUtil.get;
+import static io.github.f2bb.old.util.AbstracterUtil.map;
 
 import java.io.IOException;
 import java.lang.reflect.GenericArrayType;
@@ -20,19 +20,19 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
-import io.github.f2bb.loader.AbstracterLoader;
+import io.github.f2bb.abstracter.Abstracter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 @SuppressWarnings ("UnstableApiUsage")
 public abstract class AbstractAbstracter implements Opcodes {
-	protected static final Logger LOGGER = Logger.getLogger("Abstract");
-	protected final AbstracterLoader loader;
+
+	protected final AbstractionType abstractionType;
 	protected final Class<?> cls;
 	protected final TypeToken<?> token;
 
-	protected AbstractAbstracter(AbstracterLoader loader, Class<?> cls) {
-		this.loader = loader;
+	protected AbstractAbstracter(AbstractionType loader, Class<?> cls) {
+		this.abstractionType = loader;
 		this.cls = cls;
 		this.token = TypeToken.of(cls);
 	}
@@ -57,8 +57,8 @@ public abstract class AbstractAbstracter implements Opcodes {
 	public TypeName toTypeName(Type type) {
 		if (type instanceof Class<?>) {
 			Class<?> cls = (Class<?>) type;
-			if (this.loader.isMinecraft(cls)) {
-				String name = this.loader.getAbstractedName(cls);
+			if (Abstracter.isMinecraft(cls)) {
+				String name = Abstracter.getInterfaceName(cls);
 				int pkgIndex = Math.max(name.lastIndexOf('/'), 0);
 				String pkg = name.substring(0, pkgIndex);
 				int innerIndex = name.indexOf('$', pkgIndex);
@@ -98,7 +98,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 	public String toSignature(Type type, boolean interfaceDesc) {
 		if (type instanceof Class<?>) {
 			Class<?> c = (Class<?>) type;
-			return interfaceDesc ? this.loader.getAbstractedDescriptor(c) : org.objectweb.asm.Type.getDescriptor(c);
+			return interfaceDesc ? Abstracter.getInterfaceDesc(c) : org.objectweb.asm.Type.getDescriptor(c);
 		} else if (type instanceof GenericArrayType) {
 			return '[' + this.toSignature(((GenericArrayType) type).getGenericComponentType(), interfaceDesc);
 		} else if (type instanceof ParameterizedType) {

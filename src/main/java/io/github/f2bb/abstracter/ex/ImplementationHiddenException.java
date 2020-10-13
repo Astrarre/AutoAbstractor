@@ -1,4 +1,4 @@
-package io.github.f2bb.ex;
+package io.github.f2bb.abstracter.ex;
 
 import org.objectweb.asm.Type;
 
