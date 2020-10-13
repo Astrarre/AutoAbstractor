@@ -11,6 +11,7 @@ import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
+import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
 
 @SuppressWarnings ("unchecked")
@@ -25,6 +26,7 @@ public interface MemberFilter<T extends Member> {
 		              "thing");
 		return false;
 	}));
+	MemberFilter<Field> MINECRAFT_TYPE = (c, f) -> Abstracter.isMinecraft(TypeMappingFunction.raw(c, f.getGenericType()));
 
 	static <T extends Member> MemberFilter<T> userDeclared() {
 		return (MemberFilter<T>) USER_DECLARED;

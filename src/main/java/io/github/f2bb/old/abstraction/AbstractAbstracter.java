@@ -11,7 +11,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.util.logging.Logger;
 import java.util.zip.ZipOutputStream;
 
 import com.google.common.reflect.TypeToken;
@@ -178,15 +177,6 @@ public abstract class AbstractAbstracter implements Opcodes {
 		}
 		builder.append(')');
 		builder.append(this.toSignature(returnType.getRawType()));
-		return builder.toString();
-	}
-
-	public String classSignature(TypeVariable<?>[] variables, Type superClass, Type[] interfaces) {
-		StringBuilder builder = this.typeVarsAsString(variables);
-		builder.append(this.toSignature(superClass));
-		for (Type anInterface : interfaces) {
-			builder.append(this.toSignature(anInterface));
-		}
 		return builder.toString();
 	}
 

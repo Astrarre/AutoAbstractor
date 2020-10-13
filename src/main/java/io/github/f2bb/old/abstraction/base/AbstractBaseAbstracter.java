@@ -56,13 +56,13 @@ public abstract class AbstractBaseAbstracter extends AbstractAbstracter {
 
 	public void visitField(Field field, TypeToken<?> resolved) {
 		int access = field.getModifiers();
-		if (!Abstracter.isMinecraft(resolved.getRawType()) && !isStatic(access)) {
-			this.visitEmptyField(resolved, field);
-		} else {
+		if (Abstracter.isMinecraft(resolved.getRawType()) || isStatic(access)) {
 			if (!isFinal(access)) {
 				this.visitFieldSetter(resolved, field);
 			}
 			this.visitFieldGetter(resolved, field);
+		} else {
+			this.visitEmptyField(resolved, field);
 		}
 	}
 

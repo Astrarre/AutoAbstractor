@@ -42,11 +42,15 @@ public class Abstracter implements Opcodes {
 	}
 
 	public static String getInterfaceName(Class<?> cls) {
-		return getInterfaceName(cls, Type.getInternalName(cls));
+		return getName(cls, "I", Type.getInternalName(cls));
+	}
+
+	public static String getBaseName(Class<?> cls) {
+		return getName(cls, "Base", Type.getInternalName(cls));
 	}
 
 	public static String getInterfaceDesc(Class<?> cls) {
-		return getInterfaceName(cls, Type.getDescriptor(cls));
+		return getName(cls, "I", Type.getDescriptor(cls));
 	}
 
 	public static boolean isMinecraft(Class<?> cls) {
@@ -79,10 +83,10 @@ public class Abstracter implements Opcodes {
 		}
 	}
 
-	private static String getInterfaceName(Class<?> cls, String str) {
+	private static String getName(Class<?> cls, String prefix, String str) {
 		if (isAbstracted(cls)) {
 			int last = str.lastIndexOf('/') + 1;
-			return str.substring(0, last) + "I" + str.substring(last);
+			return str.substring(0, last) + prefix + str.substring(last);
 		} else if (isMinecraft(cls)) {
 			throw new InvalidClassException(cls);
 		}
