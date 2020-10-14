@@ -19,12 +19,14 @@ public interface SerializingFunction<T> {
 	};
 
 	SerializingFunction<TypeSpec.Builder> JAVA = (s, o, t) -> {
-		TypeSpec built = t.build();
-		s.putNextEntry(new ZipEntry(built.name + ".java"));
-		OutputStreamWriter writer = new OutputStreamWriter(s);
-		writer.write(built.toString());
-		writer.flush();
-		s.closeEntry();
+		if(o.getEnclosingClass() != null) {
+			TypeSpec built = t.build();
+			s.putNextEntry(new ZipEntry(built.name + ".java"));
+			OutputStreamWriter writer = new OutputStreamWriter(s);
+			writer.write(built.toString());
+			writer.flush();
+			s.closeEntry();
+		}
 	};
 
 	void serialize(ZipOutputStream stream, Class<?> original, T object) throws IOException;

@@ -10,8 +10,8 @@ public interface MethodAbstracter<T> {
 	// asm
 	MethodAbstracter<ClassNode> BASE_IMPL_ASM = (h, a, m) -> MethodAbstraction.visitBridged(h, a, m, true, true);
 	MethodAbstracter<ClassNode> BASE_API_ASM = (h, a, m) -> MethodAbstraction.visitBridged(h, a, m, false, true);
-	MethodAbstracter<ClassNode> INTER_IMPL_ASM = (h, a, m) -> MethodAbstraction.visitBridged(h, a, m, true, false);
-	MethodAbstracter<ClassNode> INTER_API_ASM = (h, a, m) -> MethodAbstraction.visitBridged(h, a, m, false, false);
+	MethodAbstracter<ClassNode> INTERFACE_IMPL_ASM = (h, a, m) -> MethodAbstraction.visitBridged(h, a, m, true, false);
+	MethodAbstracter<ClassNode> INTERFACE_API_ASM = (h, a, m) -> MethodAbstraction.visitBridged(h, a, m, false, false);
 	// java
 	MethodAbstracter<TypeSpec.Builder> API_JAVA = MethodAbstraction::visitJava;
 

@@ -14,6 +14,7 @@ import java.util.function.IntFunction;
 import java.util.function.IntUnaryOperator;
 import java.util.zip.ZipOutputStream;
 
+import com.squareup.javapoet.TypeSpec;
 import io.github.f2bb.abstracter.ex.InvalidClassException;
 import io.github.f2bb.abstracter.func.abstracting.ConstructorAbstracter;
 import io.github.f2bb.abstracter.func.abstracting.FieldAbstracter;
@@ -33,6 +34,7 @@ import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.SignatureRemapper;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
+import org.objectweb.asm.tree.ClassNode;
 
 public class Abstracter<T> implements Opcodes {
 	public static final SignatureVisitor EMPTY_VISITOR = new SignatureVisitor(ASM9) {};
@@ -143,6 +145,102 @@ public class Abstracter<T> implements Opcodes {
 		return cls.getSimpleName().contains("Block"); // todo
 	}
 
+	private static final int INTERFACE_ADD = ACC_INTERFACE | ACC_ABSTRACT;
+	public static final Abstracter<ClassNode> INTERFACE_IMPL_ASM = new Abstracter<>(HeaderFunction.ASM,
+			ConstructorSupplier.INTERFACE_DEFAULT,
+			FieldSupplier.INTERFACE_DEFAULT,
+			MethodSupplier.INTERFACE_DEFAULT,
+			InterfaceFunction.INTERFACE_DEFAULT,
+			SuperFunction.INTERFACE_DEFAULT,
+			ToStringFunction.INTERFACE_DEFAULT,
+			i -> (i & (~ACC_ENUM)) | INTERFACE_ADD,
+			FieldAbstracter.INTERFACE_IMPL_ASM,
+			MethodAbstracter.INTERFACE_IMPL_ASM,
+			ConstructorAbstracter.INTERFACE_IMPL_ASM,
+			InnerClassVisit.ASM,
+			SerializingFunction.ASM);
+	public static final Abstracter<ClassNode> INTERFACE_API_ASM = new Abstracter<>(
+			HeaderFunction.ASM,
+			ConstructorSupplier.INTERFACE_DEFAULT,
+			FieldSupplier.INTERFACE_DEFAULT,
+			MethodSupplier.INTERFACE_DEFAULT,
+			InterfaceFunction.INTERFACE_DEFAULT,
+			SuperFunction.INTERFACE_DEFAULT,
+			ToStringFunction.INTERFACE_DEFAULT,
+			i -> (i & (~ACC_ENUM)) | INTERFACE_ADD,
+			FieldAbstracter.INTERFACE_API_ASM,
+			MethodAbstracter.INTERFACE_API_ASM,
+			ConstructorAbstracter.INTERFACE_API_ASM,
+			InnerClassVisit.ASM,
+			SerializingFunction.ASM
+	);
+	
+	public static final Abstracter<ClassNode> BASE_IMPL_ASM = new Abstracter<>(
+			HeaderFunction.ASM,
+			ConstructorSupplier.BASE_DEFAULT,
+			FieldSupplier.BASE_DEFAULT,
+			MethodSupplier.BASE_DEFAULT,
+			InterfaceFunction.BASE_DEFAULT,
+			SuperFunction.BASE_IMPL_DEFAULT,
+			ToStringFunction.BASE_DEFAULT,
+			IntUnaryOperator.identity(),
+			FieldAbstracter.BASE_IMPL_ASM,
+			MethodAbstracter.BASE_IMPL_ASM,
+			ConstructorAbstracter.BASE_IMPL_ASM,
+			InnerClassVisit.ASM,
+			SerializingFunction.ASM
+	);
+	public static final Abstracter<ClassNode> BASE_API_ASM = new Abstracter<>(
+			HeaderFunction.ASM,
+			ConstructorSupplier.BASE_DEFAULT,
+			FieldSupplier.BASE_DEFAULT,
+			MethodSupplier.BASE_DEFAULT,
+			InterfaceFunction.BASE_DEFAULT,
+			SuperFunction.BASE_API_DEFAULT,
+			ToStringFunction.BASE_DEFAULT,
+			IntUnaryOperator.identity(),
+			FieldAbstracter.BASE_API_ASM,
+			MethodAbstracter.BASE_API_ASM,
+			ConstructorAbstracter.BASE_API_ASM,
+			InnerClassVisit.ASM,
+			SerializingFunction.ASM
+	);
+
+	public static final Abstracter<TypeSpec.Builder> INTERFACE_API_JAVA = new Abstracter<>(
+			HeaderFunction.JAVA,
+			ConstructorSupplier.INTERFACE_DEFAULT,
+			FieldSupplier.INTERFACE_DEFAULT,
+			MethodSupplier.INTERFACE_DEFAULT,
+			InterfaceFunction.INTERFACE_DEFAULT,
+			SuperFunction.INTERFACE_DEFAULT,
+			ToStringFunction.INTERFACE_DEFAULT,
+			IntUnaryOperator.identity(),
+			FieldAbstracter.INTERFACE_API_JAVA,
+			MethodAbstracter.API_JAVA,
+			ConstructorAbstracter.INTERFACE_API_JAVA,
+			InnerClassVisit.JAVA,
+			SerializingFunction.JAVA
+	);
+	
+	public static final Abstracter<TypeSpec.Builder> BASE_API_JAVA = new Abstracter<>(
+			HeaderFunction.JAVA,
+			ConstructorSupplier.BASE_DEFAULT,
+			FieldSupplier.BASE_DEFAULT,
+			MethodSupplier.BASE_DEFAULT,
+			InterfaceFunction.BASE_DEFAULT,
+			SuperFunction.BASE_API_DEFAULT,
+			ToStringFunction.BASE_DEFAULT,
+			IntUnaryOperator.identity(),
+			FieldAbstracter.BASE_API_JAVA,
+			MethodAbstracter.API_JAVA,
+			ConstructorAbstracter.BASE_API_JAVA,
+			InnerClassVisit.JAVA,
+			SerializingFunction.JAVA
+	);
+
+	
+	
+	
 	protected final HeaderFunction<T> headerFunction;
 	protected final ConstructorSupplier constructorSupplier;
 	protected final FieldSupplier fieldSupplier;

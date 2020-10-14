@@ -60,7 +60,7 @@ public interface FieldAbstracter<T> {
 	FieldAbstracter<ClassNode> INTERFACE_API_ASM = defaultInterface(ASM_GETTER_API_INTER, ASM_SETTER_API_INTER);
 	// java
 	FieldAbstracter<TypeSpec.Builder> BASE_API_JAVA = defaultBase(JAVA_EMPTY_API, JAVA_GETTER_API_BASE, JAVA_SETTER_API_BASE);
-	FieldAbstracter<TypeSpec.Builder> INTER_API_JAVA = defaultInterface(JAVA_GETTER_API_INTER, JAVA_SETTER_API_INTER);
+	FieldAbstracter<TypeSpec.Builder> INTERFACE_API_JAVA = defaultInterface(JAVA_GETTER_API_INTER, JAVA_SETTER_API_INTER);
 
 
 	static <T> FieldAbstracter<T> defaultBase(FieldAbstracter<T> empty,

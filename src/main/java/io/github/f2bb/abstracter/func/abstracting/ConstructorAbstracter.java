@@ -8,13 +8,13 @@ import org.objectweb.asm.tree.ClassNode;
 
 public interface ConstructorAbstracter<T> {
 	// asm
-	ConstructorAbstracter<ClassNode> IMPL_INTERFACE_ASM = (h, a, c) -> ConstructorAbstraction.abstractInterfaceCtorAsm(h, a, c, true);
-	ConstructorAbstracter<ClassNode> API_INTERFACE_ASM = (h, a, c) -> ConstructorAbstraction.abstractInterfaceCtorAsm(h, a, c, false);
-	ConstructorAbstracter<ClassNode> IMPL_BASE_ASM = (h, a, c) -> ConstructorAbstraction.abstractBaseCtorAsm(h, a, c, true);
-	ConstructorAbstracter<ClassNode> API_BASE_ASM = (h, a, c) -> ConstructorAbstraction.abstractBaseCtorAsm(h, a, c, false);
+	ConstructorAbstracter<ClassNode> INTERFACE_IMPL_ASM = (h, a, c) -> ConstructorAbstraction.abstractInterfaceCtorAsm(h, a, c, true);
+	ConstructorAbstracter<ClassNode> INTERFACE_API_ASM = (h, a, c) -> ConstructorAbstraction.abstractInterfaceCtorAsm(h, a, c, false);
+	ConstructorAbstracter<ClassNode> BASE_IMPL_ASM = (h, a, c) -> ConstructorAbstraction.abstractBaseCtorAsm(h, a, c, true);
+	ConstructorAbstracter<ClassNode> BASE_API_ASM = (h, a, c) -> ConstructorAbstraction.abstractBaseCtorAsm(h, a, c, false);
 	// java
-	ConstructorAbstracter<TypeSpec.Builder> API_INTERFACE_JAVA = ConstructorAbstraction::abstractInterfaceCtorJava;
-	ConstructorAbstracter<TypeSpec.Builder> IMPL_INTERFACE_JAVA = ConstructorAbstraction::abstractInterfaceCtorJava;
+	ConstructorAbstracter<TypeSpec.Builder> INTERFACE_API_JAVA = ConstructorAbstraction::abstractInterfaceCtorJava;
+	ConstructorAbstracter<TypeSpec.Builder> BASE_API_JAVA = ConstructorAbstraction::abstractBaseCtorJava;
 
 	void abstractConstructor(T header, Class<?> abstracting, Constructor<?> constructor);
 
