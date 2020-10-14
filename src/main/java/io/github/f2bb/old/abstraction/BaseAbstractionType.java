@@ -20,6 +20,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.reflect.TypeToken;
 import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.util.RawClassType;
+import org.objectweb.asm.Type;
 
 @SuppressWarnings ("UnstableApiUsage")
 public class BaseAbstractionType implements AbstractionType {
@@ -34,7 +35,7 @@ public class BaseAbstractionType implements AbstractionType {
 		this.cls = cls;
 		this.token = TypeToken.of(cls);
 		List<TypeToken<?>> interfaces = new ArrayList<>();
-		interfaces.add(TypeToken.of(new RawClassType(Abstracter.getInterfaceName(this.cls))));
+		interfaces.add(TypeToken.of(new RawClassType(Type.getObjectType(Abstracter.getInterfaceName(this.cls)))));
 		this.visitInterfaces(this.cls, interfaces);
 		this.interfaces = Collections.unmodifiableList(interfaces);
 		Map<String, Method> map = new HashMap<>();

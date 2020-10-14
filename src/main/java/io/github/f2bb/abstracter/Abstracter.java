@@ -1,9 +1,23 @@
 package io.github.f2bb.abstracter;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.function.IntUnaryOperator;
 
 import io.github.f2bb.abstracter.ex.InvalidClassException;
+import io.github.f2bb.abstracter.func.abstracting.ConstructorAbstracter;
+import io.github.f2bb.abstracter.func.abstracting.FieldAbstracter;
+import io.github.f2bb.abstracter.func.abstracting.MethodAbstracter;
+import io.github.f2bb.abstracter.func.elements.ConstructorSupplier;
+import io.github.f2bb.abstracter.func.elements.FieldSupplier;
+import io.github.f2bb.abstracter.func.elements.MethodSupplier;
+import io.github.f2bb.abstracter.func.header.HeaderFunction;
+import io.github.f2bb.abstracter.func.inheritance.InterfaceFunction;
+import io.github.f2bb.abstracter.func.inheritance.SuperFunction;
+import io.github.f2bb.abstracter.func.string.ToStringFunction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
@@ -11,7 +25,7 @@ import org.objectweb.asm.commons.SignatureRemapper;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 
-public class Abstracter implements Opcodes {
+public class Abstracter<T> implements Opcodes {
 	public static final SignatureVisitor EMPTY_VISITOR = new SignatureVisitor(ASM9) {};
 	private static final ClsLdr INSTANCE = new ClsLdr();
 	public static final Remapper REMAPPER = new Remapper() {
@@ -96,5 +110,63 @@ public class Abstracter implements Opcodes {
 
 	private static boolean isAbstractedInternal(Class<?> cls) {
 		return cls.getSimpleName().contains("Block"); // todo
+	}
+
+	protected final HeaderFunction<T> headerFunction;
+	protected final ConstructorSupplier constructorSupplier;
+	protected final FieldSupplier fieldSupplier;
+	protected final MethodSupplier methodSupplier;
+	protected final InterfaceFunction interfaceFunction;
+	protected final SuperFunction superFunction;
+	protected final ToStringFunction<Class<?>> nameFunction;
+	protected final IntUnaryOperator accessOperator;
+	protected final FieldAbstracter<T> fieldAbstracter;
+	protected final MethodAbstracter<T> methodAbstracter;
+	protected final ConstructorAbstracter<T> constructorAbstracter;
+
+	protected Abstracter(HeaderFunction<T> headerFunction,
+			ConstructorSupplier supplier,
+			FieldSupplier fieldSupplier,
+			MethodSupplier methodSupplier,
+			InterfaceFunction function,
+			SuperFunction superFunction,
+			ToStringFunction<Class<?>> nameFunction,
+			IntUnaryOperator operator,
+			FieldAbstracter<T> abstracter,
+			MethodAbstracter<T> methodAbstracter,
+			ConstructorAbstracter<T> constructorAbstracter) {
+		this.headerFunction = headerFunction;
+		this.constructorSupplier = supplier;
+		this.fieldSupplier = fieldSupplier;
+		this.methodSupplier = methodSupplier;
+		this.interfaceFunction = function;
+		this.superFunction = superFunction;
+		this.nameFunction = nameFunction;
+		this.accessOperator = operator;
+		this.fieldAbstracter = abstracter;
+		this.methodAbstracter = methodAbstracter;
+		this.constructorAbstracter = constructorAbstracter;
+	}
+
+	public T apply(Class<?> cls) {
+		T header = this.headerFunction.createHeader(this.accessOperator.applyAsInt(cls.getModifiers()),
+				this.nameFunction.toString(cls),
+				cls.getTypeParameters(),
+				this.superFunction.findValidSuper(cls),
+				this.interfaceFunction.getInterfaces(cls));
+
+		for (Field field : this.fieldSupplier.getFields(cls)) {
+			this.fieldAbstracter.abstractField(header, cls, field);
+		}
+
+		for (Constructor<?> constructor : this.constructorSupplier.getConstructors(cls)) {
+			this.constructorAbstracter.abstractConstructor(header, cls, constructor);
+		}
+
+		for (Method method : this.methodSupplier.getMethods(cls)) {
+			this.methodAbstracter.abstractMethod(header, cls, method);
+		}
+
+		return header;
 	}
 }

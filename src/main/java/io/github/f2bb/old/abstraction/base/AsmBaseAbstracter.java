@@ -56,43 +56,8 @@ public class AsmBaseAbstracter extends AbstractBaseAbstracter {
 		out.closeEntry();
 	}
 
-	@Override
-	public void visitBridge(Method method, String target) {
-		if (this.impl) {
-			int access = method.getModifiers();
-			MethodNode node = new MethodNode(access | ACC_FINAL,
-					method.getName(),
-					Type.getMethodDescriptor(method),
-					null /*sign*/,
-					null);
-			if (!Modifier.isAbstract(access)) {
-				// triangular method
-				this.invoke(node, method, false);
-			}
-			this.node.methods.add(node);
-		}
-	}
 
-	@Override
-	public String visitBridged(Method method) {
-		TypeToken<?>[] params = map(method.getGenericParameterTypes(), this::resolved, TypeToken[]::new);
-		TypeToken<?> returnType = this.resolved(method.getGenericReturnType());
-		String desc = this.methodDescriptor(params, returnType);
-		String sign = this.impl ? null : this.methodSignature(method.getTypeParameters(), params, returnType, true);
-		int access = method.getModifiers();
-		MethodNode node = new MethodNode(access, method.getName(), desc, sign, null);
-		if (!Modifier.isAbstract(access)) {
-			if(this.impl) {
-				// triangular method
-				this.invoke(node, method, true);
-			} else {
-				AsmUtil.visitStub(node);
-			}
-		}
 
-		this.node.methods.add(node);
-		return desc;
-	}
 
 	@Override
 	public void visitFieldGetter(TypeToken<?> token, Field field) {

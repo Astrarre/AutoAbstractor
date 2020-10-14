@@ -8,22 +8,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.lang.model.element.Modifier;
 
 import com.google.common.reflect.TypeToken;
-import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import io.github.f2bb.abstracter.ex.DoNotOverride;
 import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
+import io.github.f2bb.abstracter.impl.JavaAbstracter;
 import io.github.f2bb.old.loader.AbstracterLoader;
-import io.github.f2bb.old.util.AbstracterUtil;
-import io.github.f2bb.old.util.AsmUtil;
 
 public class JavaBaseAbstracter extends AbstractBaseAbstracter {
 	public JavaBaseAbstracter(AbstracterLoader loader, Class<?> toAbstract) {
@@ -34,7 +30,7 @@ public class JavaBaseAbstracter extends AbstractBaseAbstracter {
 	@Override
 	public void write(ZipOutputStream out) throws IOException {
 		this.builder = TypeSpec.classBuilder("Base" + this.cls.getSimpleName());
-		this.builder.addModifiers(AbstracterUtil.getModifiers(this.cls.getModifiers()).toArray(new Modifier[0]));
+		this.builder.addModifiers(JavaAbstracter.getModifiers(this.cls.getModifiers()).toArray(new Modifier[0]));
 		Class<?> sup = this.findSuper();
 		Class<?>[] interfaces = this.getInterfaces();
 		this.builder.superclass(sup);
@@ -72,30 +68,16 @@ public class JavaBaseAbstracter extends AbstractBaseAbstracter {
 
 	@Override
 	public void visitFieldGetter(TypeToken<?> token, Field field) {
-		MethodSpec.Builder builder = MethodSpec.methodBuilder(AsmUtil.getEtterName("get", field.getType(), field.getName()));
-		builder.returns(this.toTypeName(token.getType()));
-		builder.addStatement("throw $T.create()", ImplementationHiddenException.class);
-		builder.addAnnotation(AnnotationSpec.builder(DoNotOverride.class).build());
-		this.builder.addMethod(builder.build());
+
 	}
 
 	@Override
 	public void visitFieldSetter(TypeToken<?> token, Field field) {
-		MethodSpec.Builder builder = MethodSpec.methodBuilder(AsmUtil.getEtterName("set", field.getType(), field.getName()));
-		builder.addParameter(this.toTypeName(field.getGenericType()), field.getName());
-		builder.addStatement("throw $T.create()", ImplementationHiddenException.class);
-		builder.addAnnotation(AnnotationSpec.builder(DoNotOverride.class).build());
-		this.builder.addMethod(builder.build());
+
 	}
 
 	@Override
 	public void visitEmptyField(TypeToken<?> token, Field field) {
-		List<Modifier> modifiers = AbstracterUtil.getModifiers(field.getModifiers());
-		modifiers.add(Modifier.FINAL);
-		FieldSpec.Builder builder = FieldSpec.builder(this.toTypeName(field.getGenericType()), field.getName(),
-				modifiers.toArray(new Modifier[0]));
-		builder.initializer("$T.instance()", ImplementationHiddenException.class);
-		// todo initializer or something
-		this.builder.addField(builder.build());
+
 	}
 }

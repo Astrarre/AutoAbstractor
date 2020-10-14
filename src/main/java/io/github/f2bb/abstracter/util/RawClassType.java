@@ -4,12 +4,15 @@ import java.lang.reflect.Type;
 
 // todo add sign?
 public class RawClassType implements Type {
-	private final String desc;
+	private final org.objectweb.asm.Type type;
 
-	public RawClassType(String desc) {this.desc = desc;}
+	public RawClassType(org.objectweb.asm.Type type) {this.type = type;}
 
+	public String getInternalName() {
+		return this.type.getInternalName();
+	}
 	@Override
 	public String toString() {
-		return this.desc;
+		return this.type.getDescriptor();
 	}
 }
