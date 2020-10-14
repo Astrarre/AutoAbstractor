@@ -28,4 +28,13 @@ public interface TypeMappingFunction {
 		TypeToken<?> token = TypeToken.of(view);
 		return token.resolveType(type).getRawType();
 	}
+
+	static Function<Type, TypeToken<?>> resolve(Class<?> view) {
+		TypeToken<?> token = TypeToken.of(view);
+		return token::resolveType;
+	}
+
+	static TypeToken<?> resolve(Class<?> view, Type type) {
+		return resolve(view).apply(type);
+	}
 }
