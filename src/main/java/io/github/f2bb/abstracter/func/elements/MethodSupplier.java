@@ -26,18 +26,17 @@ public interface MethodSupplier {
 					                                        // and must be protected
 					                                        .and(MemberFilter.<Method>withAccess(PROTECTED)
 							                                             // or public but not static
-							                                             .or(MemberFilter.<Method>withAccess(PUBLIC).and(
-									                                             MemberFilter.<Method>withAccess(STATIC)
-											                                             .negate())))
+							                                             .or(MemberFilter.<Method>withAccess(PUBLIC)
+									                                                 .and(MemberFilter.<Method>withAccess(
+											                                                 STATIC).negate())))
 					                                        .and(MemberFilter.VALID_PARAMS_AND_RETURN));
 
 	/**
 	 * all public methods are exposed from classes inside the 'umbrella'
 	 */
-	MethodSupplier INTERFACE_DEFAULT =
-			create(AbstracterUtil::isUnabstractedClass).filtered(MemberFilter.<Method>userDeclared()
-			                                                                                    .and(withAccess(PUBLIC))
-			                                                                                    .and(MemberFilter.VALID_PARAMS_AND_RETURN));
+	MethodSupplier INTERFACE_DEFAULT = create(AbstracterUtil::isUnabstractedClass)
+			                                   .filtered(MemberFilter.<Method>userDeclared().and(withAccess(PUBLIC))
+			                                                                                .and(MemberFilter.VALID_PARAMS_AND_RETURN));
 
 
 	Collection<Method> getMethods(Class<?> cls);
@@ -59,17 +58,21 @@ public interface MethodSupplier {
 	 */
 	@Deprecated
 	static void walk(Predicate<Class<?>> filter, Class<?> cls, Map<String, Method> map) {
-		if (filter.test(cls)) {
-			// inverse virtual order, interface -> super -> this
-			for (Class<?> iface : cls.getInterfaces()) {
+
+		// inverse virtual order, interface -> super -> this
+		for (Class<?> iface : cls.getInterfaces()) {
+			if (filter.test(iface)) {
 				walk(filter, iface, map);
 			}
+		}
 
-			walk(filter, cls.getSuperclass(), map);
-			for (Method method : cls.getDeclaredMethods()) {
-				String desc = org.objectweb.asm.Type.getMethodDescriptor(method);
-				map.put(desc, method);
-			}
+		Class<?> sup = cls.getSuperclass();
+		if (filter.test(sup)) {
+			walk(filter, sup, map);
+		}
+		for (Method method : cls.getDeclaredMethods()) {
+			String desc = org.objectweb.asm.Type.getMethodDescriptor(method);
+			map.put(desc, method);
 		}
 	}
 }

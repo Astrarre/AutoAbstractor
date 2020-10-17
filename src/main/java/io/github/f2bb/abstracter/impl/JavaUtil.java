@@ -22,6 +22,7 @@ import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
 import io.github.f2bb.abstracter.Abstracter;
@@ -31,6 +32,7 @@ import io.github.f2bb.abstracter.util.AbstracterUtil;
 
 public class JavaUtil {
 	public static final Constructor<WildcardTypeName> WILDCARD_TYPE_NAME_CONSTRUCTOR;
+	public static final Field KIND;
 	public static final Method METHOD_GENERIC;
 	public static final Method FIELD_GENERIC;
 	public static final Field CONSTRUCTOR_GENERIC;
@@ -46,6 +48,8 @@ public class JavaUtil {
 			FIELD_GENERIC.setAccessible(true);
 			CONSTRUCTOR_GENERIC = Constructor.class.getDeclaredField("signature");
 			CONSTRUCTOR_GENERIC.setAccessible(true);
+			KIND = TypeSpec.Builder.class.getDeclaredField("kind");
+			KIND.setAccessible(true);
 		} catch (NoSuchMethodException | NoSuchFieldException e) {
 			throw new RuntimeException(e);
 		}
@@ -138,9 +142,18 @@ public class JavaUtil {
 
 	public static WildcardTypeName get(List<TypeName> upper, List<TypeName> lower) {
 		try {
+			if(upper.isEmpty()) upper.add(TypeName.OBJECT);
 			return WILDCARD_TYPE_NAME_CONSTRUCTOR.newInstance(upper, lower, Collections.emptyList());
 		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			throw new IllegalStateException(e);
+		}
+	}
+
+	public static TypeSpec.Kind getKind(TypeSpec.Builder builder) {
+		try {
+			return (TypeSpec.Kind) KIND.get(builder);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
 		}
 	}
 }

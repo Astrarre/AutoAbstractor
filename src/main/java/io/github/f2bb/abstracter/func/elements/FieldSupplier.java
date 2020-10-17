@@ -21,21 +21,21 @@ import io.github.f2bb.abstracter.util.AbstracterUtil;
 public interface FieldSupplier {
 	FieldSupplier EMPTY = c -> Collections.emptySet();
 
-	FieldSupplier INTERFACE_DEFAULT =
-			create(AbstracterUtil::isUnabstractedClass).filtered(MemberFilter.withType(Filters.IS_ABSTRACTED)
-			                                                                 .and(MemberFilter.withAccess(
-					                                                                                   Filters.PUBLIC)));
+	FieldSupplier INTERFACE_DEFAULT = create(AbstracterUtil::isUnabstractedClass)
+			                                  .filtered(MemberFilter.withType(Filters.IS_ABSTRACTED)
+			                                                        .and(MemberFilter.withAccess(Filters.PUBLIC)));
 	FieldSupplier BASE_DEFAULT = create(Abstracter::isMinecraft).filtered(MemberFilter.withType(Filters.IS_ABSTRACTED)
 	                                                                                  .and(// and must be protected
-					                                                                      MemberFilter.<Field>withAccess(
-							                                                                      PROTECTED)
-							                                                                      // or public but not
-							                                                                      // static
-							                                                                      .or(MemberFilter.<Field>withAccess(
-									                                                                      PUBLIC).and(
-									                                                                      MemberFilter.<Field>withAccess(
-											                                                                      STATIC)
-											                                                                      .negate()))));
+			                                                                                  MemberFilter.<Field>withAccess(
+					                                                                                  PROTECTED)
+					                                                                                  // or public but
+					                                                                                  // not
+					                                                                                  // static
+					                                                                                  .or(MemberFilter.<Field>withAccess(
+							                                                                                  PUBLIC)
+							                                                                                      .and(MemberFilter.<Field>withAccess(
+									                                                                                      STATIC)
+									                                                                                           .negate()))));
 
 	Collection<Field> getFields(Class<?> cls);
 
@@ -47,10 +47,10 @@ public interface FieldSupplier {
 		return c -> {
 			List<Field> fields = new ArrayList<>();
 			Class<?> cls = c;
-			while (filter.test(cls)) {
+			do {
 				fields.addAll(Arrays.asList(cls.getDeclaredFields()));
 				cls = cls.getSuperclass();
-			}
+			} while (filter.test(cls));
 			return fields;
 		};
 	}

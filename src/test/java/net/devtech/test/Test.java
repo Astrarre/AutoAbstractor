@@ -22,12 +22,25 @@ public class Test {
 				Abstracter.INTERFACE_IMPL_ASM.asBuilder().nameFunction(abstractSettings).build(),
 				Abstracter.INTERFACE_API_JAVA.asBuilder().nameFunction(abstractSettings).build());
 		AbstracterConfig.overrideInnerClass("net.minecraft.block.Block", "net.minecraft.block.AbstractBlock$Settings");
+
 		registerDefaultInterface("net.minecraft.block.Block");
 		registerDefaultInterface("net.minecraft.item.Item");
 		registerDefaultInterface("net.minecraft.item.Item$Settings");
+		registerDefaultInterface("net.minecraft.block.Blocks");
+		registerDefaultInterface("net.minecraft.block.BlockState");
+		registerDefaultInterface("net.minecraft.block.Material");
+		registerDefaultInterface("net.minecraft.util.math.BlockPos");
+		registerDefaultInterface("net.minecraft.world.World");
+		registerDefaultInterface("net.minecraft.world.WorldAccess");
+		registerDefaultInterface("net.minecraft.entity.Entity");
+		registerDefaultInterface("net.minecraft.enchantment.Enchantment");
+		registerDefaultInterface("net.minecraft.Bootstrap");
 
 		registerDefaultBase("net.minecraft.block.Block");
+		registerDefaultBase("net.minecraft.entity.Entity");
+		registerDefaultBase("net.minecraft.enchantment.Enchantment");
 		registerDefaultBase("net.minecraft.item.Item");
+
 		ZipOutputStream api = new ZipOutputStream(new FileOutputStream("api.jar"));
 		AbstracterConfig.writeApiJar(api);
 		api.close();

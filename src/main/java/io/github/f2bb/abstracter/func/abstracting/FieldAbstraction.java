@@ -15,6 +15,7 @@ import io.github.f2bb.abstracter.impl.AsmUtil;
 import io.github.f2bb.abstracter.impl.JavaUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 @SuppressWarnings ("UnstableApiUsage")
@@ -27,17 +28,19 @@ public class FieldAbstraction implements Opcodes {
 					f.getType(),
 					f.getName()));
 			Set<javax.lang.model.element.Modifier> modifiers = JavaUtil.getModifiers(f.getModifiers());
-			builder.addModifiers();
 			if (iface) {
 				modifiers.remove(javax.lang.model.element.Modifier.FINAL);
-				modifiers.add(javax.lang.model.element.Modifier.DEFAULT);
+				if (!modifiers.contains(javax.lang.model.element.Modifier.STATIC)) {
+					modifiers.add(javax.lang.model.element.Modifier.DEFAULT);
+					builder.addAnnotation(AnnotationSpec.builder(DoNotOverride.class).build());
+				}
 			} else {
 				modifiers.add(javax.lang.model.element.Modifier.FINAL);
 			}
+			builder.addModifiers(modifiers);
 
 			builder.returns(JavaUtil.toTypeName(TypeMappingFunction.reify(c, f.getGenericType())));
 			builder.addStatement("throw $T.create()", ImplementationHiddenException.class);
-			builder.addAnnotation(AnnotationSpec.builder(DoNotOverride.class).build());
 			h.addMethod(builder.build());
 		};
 	}
@@ -55,8 +58,8 @@ public class FieldAbstraction implements Opcodes {
 				modifiers.add(javax.lang.model.element.Modifier.FINAL);
 			}
 			builder.addModifiers(modifiers);
-			builder.addParameter(JavaUtil.toTypeName(TypeMappingFunction.reify(c, f.getGenericType())),
-					f.getName());
+
+			builder.addParameter(JavaUtil.toTypeName(TypeMappingFunction.reify(c, f.getGenericType())), f.getName());
 			builder.addStatement("throw $T.create()", ImplementationHiddenException.class);
 			builder.addAnnotation(AnnotationSpec.builder(DoNotOverride.class).build());
 			h.addMethod(builder.build());

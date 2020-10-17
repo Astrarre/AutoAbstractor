@@ -38,12 +38,10 @@ public interface HeaderFunction<T> {
 
 	HeaderFunction<ClassNode> ASM = (a, n, v, s, i) -> {
 		ClassNode node = new ClassNode();
-
 		String sign = AsmUtil.classSignature(v, s, i);
 		if(sign.isEmpty()) {
 			sign = null;
 		}
-		System.out.println(sign);
 		node.visit(V1_8,
 				a,
 				n,

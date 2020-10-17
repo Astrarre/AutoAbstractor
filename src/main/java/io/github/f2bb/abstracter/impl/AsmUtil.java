@@ -19,6 +19,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 
 @SuppressWarnings ("UnstableApiUsage")
 public class AsmUtil implements Opcodes {
@@ -26,6 +28,17 @@ public class AsmUtil implements Opcodes {
 		SignatureWriter writer = new SignatureWriter();
 		visit(writer, reified);
 		return writer.toString();
+	}
+
+	public static MethodNode findOrCreateMethod(int access, ClassNode node, String name, String desc) {
+		for (MethodNode method : node.methods) {
+			if(name.equals(method.name) && desc.equals(method.desc)) {
+				return method;
+			}
+		}
+		MethodNode method = new MethodNode(access, name, desc, null, null);
+		node.methods.add(method);
+		return method;
 	}
 
 	public static void visitStub(MethodVisitor visitor) {

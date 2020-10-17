@@ -38,8 +38,4 @@ dependencies {
     // https://mvnrepository.com/artifact/org.ow2.asm/asm
     implementation 'org.ow2.asm:asm:9.0'
     compile group: 'org.ow2.asm', name: 'asm-commons', version: '9.0'
-
-    testCompileOnly files('run/api.jar')
-    testCompileOnly files('run/sources.jar')
-    testCompileOnly files('run/fodder.jar')
 }
