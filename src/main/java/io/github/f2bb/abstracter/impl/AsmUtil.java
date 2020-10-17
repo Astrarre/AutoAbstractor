@@ -10,7 +10,9 @@ import java.lang.reflect.WildcardType;
 import java.util.Collection;
 
 import com.google.common.reflect.TypeToken;
+import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
+import io.github.f2bb.abstracter.util.AbstracterUtil;
 import io.github.f2bb.abstracter.util.RawClassType;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -19,7 +21,7 @@ import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
 @SuppressWarnings ("UnstableApiUsage")
-public class AsmAbstracter implements Opcodes {
+public class AsmUtil implements Opcodes {
 	public static String toSignature(Type reified) {
 		SignatureWriter writer = new SignatureWriter();
 		visit(writer, reified);
@@ -66,19 +68,22 @@ public class AsmAbstracter implements Opcodes {
 		}
 	}
 
-	public static void visit(SignatureVisitor visitor, Type type) {
+	public static void visit(SignatureVisitor visitor, Type type, boolean remap) {
 		if (type instanceof Class<?>) {
 			Class<?> c = (Class<?>) type;
 			if (c.isPrimitive()) {
 				visitor.visitBaseType(org.objectweb.asm.Type.getDescriptor(c).charAt(0));
 			} else {
-				// todo remap? no cus one method relies on the visitor crashing only if the class is right
-				visitor.visitClassType(org.objectweb.asm.Type.getInternalName(c));
+				if (remap) {
+					visitor.visitClassType(AbstracterConfig.getInterfaceName(c));
+				} else {
+					visitor.visitClassType(org.objectweb.asm.Type.getInternalName(c));
+				}
 				visitor.visitEnd();
 			}
 			return;
 		} else if (type instanceof GenericArrayType) {
-			visit(visitor.visitArrayType(), ((GenericArrayType) type).getGenericComponentType());
+			visit(visitor.visitArrayType(), ((GenericArrayType) type).getGenericComponentType(), remap);
 			return;
 		} else if (type instanceof ParameterizedType) {
 			ParameterizedType pt = (ParameterizedType) type;
@@ -95,7 +100,7 @@ public class AsmAbstracter implements Opcodes {
 				if (arg instanceof Class<?>) {
 					visitor.visitTypeArgument('=');
 				}
-				visit(visitor, arg);
+				visit(visitor, arg, remap);
 			}
 			visitor.visitEnd();
 			return;
@@ -117,15 +122,21 @@ public class AsmAbstracter implements Opcodes {
 			}
 
 			for (Type l : array) {
-				visit(visitor, l);
+				visit(visitor, l, remap);
 			}
 			return;
 		} else if (type instanceof RawClassType) {
 			SignatureReader reader = new SignatureReader(type.getTypeName());
 			reader.accept(visitor);
 			return;
+		} else if (type == null) {
+			return;
 		}
 		throw new IllegalArgumentException("Unrecognized type " + type + " " + type.getClass());
+	}
+
+	public static void visit(SignatureVisitor visitor, Type type) {
+		visit(visitor, type, true);
 	}
 
 	public static StringBuilder typeVarsAsString(TypeVariable<?>[] variables) {
@@ -207,4 +218,6 @@ public class AsmAbstracter implements Opcodes {
 		visitor.visitMethodInsn(opcode, owner, name, desc, isInterface);
 		visitor.visitInsn(methodDesc.getReturnType().getOpcode(IRETURN));
 	}
+
+
 }

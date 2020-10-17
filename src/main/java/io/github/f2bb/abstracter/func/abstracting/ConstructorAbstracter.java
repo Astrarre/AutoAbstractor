@@ -16,6 +16,7 @@ public interface ConstructorAbstracter<T> {
 	ConstructorAbstracter<TypeSpec.Builder> INTERFACE_API_JAVA = ConstructorAbstraction::abstractInterfaceCtorJava;
 	ConstructorAbstracter<TypeSpec.Builder> BASE_API_JAVA = ConstructorAbstraction::abstractBaseCtorJava;
 
+	// manual
 	void abstractConstructor(T header, Class<?> abstracting, Constructor<?> constructor);
 
 	default ConstructorAbstracter<T> filtered(MemberFilter<Constructor<?>> ctor) {
@@ -24,5 +25,9 @@ public interface ConstructorAbstracter<T> {
 				this.abstractConstructor(h, a, c);
 			}
 		};
+	}
+
+	static <T> ConstructorAbstracter<T> nothing() {
+		return (h, a, c) -> {};
 	}
 }

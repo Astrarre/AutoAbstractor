@@ -1,6 +1,6 @@
 package io.github.f2bb.abstracter.impl;
 
-import static io.github.f2bb.abstracter.Abstracter.map;
+import static io.github.f2bb.abstracter.util.AbstracterUtil.map;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -25,8 +25,11 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
 import io.github.f2bb.abstracter.Abstracter;
+import io.github.f2bb.abstracter.AbstracterConfig;
+import io.github.f2bb.abstracter.ex.InvalidClassException;
+import io.github.f2bb.abstracter.util.AbstracterUtil;
 
-public class JavaAbstracter {
+public class JavaUtil {
 	public static final Constructor<WildcardTypeName> WILDCARD_TYPE_NAME_CONSTRUCTOR;
 	public static final Method METHOD_GENERIC;
 	public static final Method FIELD_GENERIC;
@@ -48,23 +51,29 @@ public class JavaAbstracter {
 		}
 	}
 
+	public static ClassName getName(String internalName) {
+		int pkgIndex = Math.max(internalName.lastIndexOf('/'), 0);
+		String pkg = internalName.substring(0, pkgIndex);
+		int innerIndex = internalName.indexOf('$', pkgIndex);
+		if (innerIndex > 0) {
+			return ClassName.get(pkg.replace('/', '.'),
+					internalName.substring(pkgIndex + 1, innerIndex),
+					internalName.substring(innerIndex + 1).split("\\$"));
+		} else {
+			return ClassName.get(pkg.replace('/', '.'), internalName.substring(pkgIndex + 1));
+		}
+	}
+
 	// automatically remapped
 	public static TypeName toTypeName(Type type) {
 		if (type instanceof Class<?>) {
 			Class<?> cls = (Class<?>) type;
-			if (Abstracter.isMinecraft(cls)) {
-				String name = Abstracter.getInterfaceName(cls);
-				int pkgIndex = Math.max(name.lastIndexOf('/'), 0);
-				String pkg = name.substring(0, pkgIndex);
-				int innerIndex = name.indexOf('$', pkgIndex);
-				if (innerIndex > 0) {
-					return ClassName.get(pkg.replace('/', '.'),
-							name.substring(pkgIndex + 1, innerIndex),
-							name.substring(innerIndex + 1).split("\\$"));
-				} else {
-					return ClassName.get(pkg.replace('/', '.'), name.substring(pkgIndex + 1));
-				}
+			if (AbstracterConfig.isInterfaceAbstracted(cls)) {
+				return getName(AbstracterConfig.getInterfaceName(cls));
+			} else if(Abstracter.isMinecraft(cls)) {
+				throw new InvalidClassException(cls);
 			}
+
 			if (!cls.isPrimitive()) {
 				return ClassName.get(cls);
 			} else {
@@ -75,13 +84,13 @@ public class JavaAbstracter {
 		} else if (type instanceof ParameterizedType) {
 			ParameterizedType ptn = (ParameterizedType) type;
 			return ParameterizedTypeName.get((ClassName) toTypeName(ptn.getRawType()),
-					map(ptn.getActualTypeArguments(), JavaAbstracter::toTypeName, TypeName[]::new));
+					map(ptn.getActualTypeArguments(), JavaUtil::toTypeName, TypeName[]::new));
 		} else if (type instanceof TypeVariable<?>) {
 			TypeVariable<?> tvn = (TypeVariable<?>) type;
-			return TypeVariableName.get(tvn.getName(), map(tvn.getBounds(), JavaAbstracter::toTypeName, TypeName[]::new));
+			return TypeVariableName.get(tvn.getName(), map(tvn.getBounds(), JavaUtil::toTypeName, TypeName[]::new));
 		} else if (type instanceof WildcardType) {
 			WildcardType wtn = (WildcardType) type;
-			return get(map(wtn.getLowerBounds(), JavaAbstracter::toTypeName), map(wtn.getUpperBounds(), JavaAbstracter::toTypeName));
+			return get(map(wtn.getLowerBounds(), JavaUtil::toTypeName), map(wtn.getUpperBounds(), JavaUtil::toTypeName));
 		}
 		throw new IllegalArgumentException("What " + type);
 	}

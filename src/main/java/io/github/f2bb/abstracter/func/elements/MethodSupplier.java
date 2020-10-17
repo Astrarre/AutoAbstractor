@@ -7,6 +7,7 @@ import static io.github.f2bb.abstracter.func.filter.MemberFilter.withAccess;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -14,8 +15,11 @@ import java.util.function.Predicate;
 import com.google.common.collect.Collections2;
 import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.func.filter.MemberFilter;
+import io.github.f2bb.abstracter.util.AbstracterUtil;
 
 public interface MethodSupplier {
+	MethodSupplier EMPTY = c -> Collections.emptySet();
+
 	MethodSupplier BASE_DEFAULT = create(Abstracter::isMinecraft)
 			                              // neither bridge nor synthetic
 			                              .filtered(MemberFilter.<Method>userDeclared()
@@ -31,7 +35,7 @@ public interface MethodSupplier {
 	 * all public methods are exposed from classes inside the 'umbrella'
 	 */
 	MethodSupplier INTERFACE_DEFAULT =
-			create(Abstracter::isUnabstractedClass).filtered(MemberFilter.<Method>userDeclared()
+			create(AbstracterUtil::isUnabstractedClass).filtered(MemberFilter.<Method>userDeclared()
 			                                                                                    .and(withAccess(PUBLIC))
 			                                                                                    .and(MemberFilter.VALID_PARAMS_AND_RETURN));
 

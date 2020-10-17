@@ -41,4 +41,8 @@ public interface MethodAbstracter<T> {
 			}
 		};
 	}
+
+	static <T> MethodAbstracter<T> nothing() {
+		return (h, a, c) -> {};
+	}
 }

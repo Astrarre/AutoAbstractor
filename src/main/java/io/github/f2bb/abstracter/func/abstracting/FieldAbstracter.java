@@ -10,8 +10,8 @@ import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.filter.Filters;
 import io.github.f2bb.abstracter.func.filter.MemberFilter;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
-import io.github.f2bb.abstracter.impl.AsmAbstracter;
-import io.github.f2bb.abstracter.impl.JavaAbstracter;
+import io.github.f2bb.abstracter.impl.AsmUtil;
+import io.github.f2bb.abstracter.impl.JavaUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -23,16 +23,16 @@ public interface FieldAbstracter<T> {
 		FieldNode node = new FieldNode(f.getModifiers(),
 				f.getName(),
 				Type.getDescriptor(f.getType()),
-				AsmAbstracter.toSignature(reified),
+				AsmUtil.toSignature(reified),
 				null);
 		h.fields.add(node);
 	};
 
 	FieldAbstracter<TypeSpec.Builder> JAVA_EMPTY_API = (h, c, f) -> {
-		FieldSpec.Builder builder = FieldSpec.builder(JavaAbstracter.toTypeName(TypeMappingFunction.reify(c,
+		FieldSpec.Builder builder = FieldSpec.builder(JavaUtil.toTypeName(TypeMappingFunction.reify(c,
 				f.getGenericType())),
 				f.getName(),
-				JavaAbstracter.getModifiers(f.getModifiers()).toArray(new Modifier[0]));
+				JavaUtil.getModifiers(f.getModifiers()).toArray(new Modifier[0]));
 		builder.initializer("$T.instance()", ImplementationHiddenException.class);
 		h.addField(builder.build());
 	};
@@ -100,5 +100,9 @@ public interface FieldAbstracter<T> {
 				this.abstractField(h, c, f);
 			}
 		};
+	}
+
+	static <T> FieldAbstracter<T> nothing() {
+		return (h, a, c) -> {};
 	}
 }

@@ -1,6 +1,6 @@
 package io.github.f2bb.abstracter.func.abstracting;
 
-import static io.github.f2bb.abstracter.Abstracter.map;
+import static io.github.f2bb.abstracter.util.AbstracterUtil.map;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -14,8 +14,8 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
-import io.github.f2bb.abstracter.impl.AsmAbstracter;
-import io.github.f2bb.abstracter.impl.JavaAbstracter;
+import io.github.f2bb.abstracter.impl.AsmUtil;
+import io.github.f2bb.abstracter.impl.JavaUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -29,11 +29,11 @@ public class MethodAbstraction implements Opcodes {
 
 		MethodSpec.Builder builder = MethodSpec.methodBuilder(method.getName());
 		for (Parameter parameter : method.getParameters()) {
-			builder.addParameter(JavaAbstracter.toTypeName(reifier.map(parameter.getParameterizedType())), parameter.getName());
+			builder.addParameter(JavaUtil.toTypeName(reifier.map(parameter.getParameterizedType())), parameter.getName());
 		}
-		builder.returns(JavaAbstracter.toTypeName(returnType));
+		builder.returns(JavaUtil.toTypeName(returnType));
 		for (TypeVariable<Method> parameter : method.getTypeParameters()) {
-			builder.addTypeVariable((TypeVariableName) JavaAbstracter.toTypeName(reifier.map(parameter)));
+			builder.addTypeVariable((TypeVariableName) JavaUtil.toTypeName(reifier.map(parameter)));
 		}
 		builder.addStatement("throw $T.create()", ImplementationHiddenException.class);
 		header.addMethod(builder.build());
@@ -44,18 +44,18 @@ public class MethodAbstraction implements Opcodes {
 		Function<java.lang.reflect.Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(declaring);
 		TypeToken<?>[] params = map(method.getGenericParameterTypes(), resolve, TypeToken[]::new);
 		TypeToken<?> returnType = resolve.apply(method.getGenericReturnType());
-		String desc = AsmAbstracter.methodDescriptor(params, returnType);
-		String sign = impl ? null : AsmAbstracter.methodSignature(method.getTypeParameters(), params, returnType);
+		String desc = AsmUtil.methodDescriptor(params, returnType);
+		String sign = impl ? null : AsmUtil.methodSignature(method.getTypeParameters(), params, returnType);
 		int access = method.getModifiers();
 		MethodNode node = new MethodNode(access, method.getName(), desc, sign, null);
 		boolean identical = desc.equals(Type.getMethodDescriptor(method));
 		if (!Modifier.isAbstract(access)) {
 			if (!impl) {
-				AsmAbstracter.visitStub(node);
+				AsmUtil.visitStub(node);
 				header.methods.add(node);
 			} else if (!identical) {
 				// triangular method
-				AsmAbstracter.invoke(node, method, base);
+				AsmUtil.invoke(node, method, base);
 				if (base) {
 					visitBridge(header, method, desc);
 				}
@@ -73,7 +73,7 @@ public class MethodAbstraction implements Opcodes {
 				null);
 		if (!Modifier.isAbstract(access)) {
 			// triangular method
-			AsmAbstracter.invoke(node,
+			AsmUtil.invoke(node,
 					method.getModifiers(),
 					header.name,
 					method.getName(),

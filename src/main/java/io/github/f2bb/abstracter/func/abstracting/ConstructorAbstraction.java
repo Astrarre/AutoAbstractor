@@ -1,6 +1,6 @@
 package io.github.f2bb.abstracter.func.abstracting;
 
-import static io.github.f2bb.abstracter.Abstracter.map;
+import static io.github.f2bb.abstracter.util.AbstracterUtil.map;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ARETURN;
@@ -26,8 +26,9 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
-import io.github.f2bb.abstracter.impl.AsmAbstracter;
-import io.github.f2bb.abstracter.impl.JavaAbstracter;
+import io.github.f2bb.abstracter.impl.AsmUtil;
+import io.github.f2bb.abstracter.impl.JavaUtil;
+import io.github.f2bb.abstracter.util.AbstracterUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -37,15 +38,20 @@ public class ConstructorAbstraction {
 		MethodSpec.Builder method = MethodSpec.methodBuilder("newInstance");
 		method.addModifiers(Modifier.STATIC);
 		method.addModifiers(Modifier.PUBLIC);
-		ParameterizedTypeName name = ParameterizedTypeName.get((ClassName) JavaAbstracter.toTypeName(cls),
-				map(cls.getTypeParameters(), JavaAbstracter::toTypeName, TypeName[]::new));
-		method.returns(name);
+		TypeVariable<? extends Class<?>>[] vars = cls.getTypeParameters();
+		if (vars.length != 0) {
+			ParameterizedTypeName name = ParameterizedTypeName.get((ClassName) JavaUtil.toTypeName(cls),
+					map(cls.getTypeParameters(), JavaUtil::toTypeName, TypeName[]::new));
+			method.returns(name);
+		} else {
+			method.returns(JavaUtil.toTypeName(cls));
+		}
 		for (TypeVariable<? extends Class<?>> parameter : cls.getTypeParameters()) {
-			method.addTypeVariable((TypeVariableName) JavaAbstracter.toTypeName(parameter));
+			method.addTypeVariable((TypeVariableName) JavaUtil.toTypeName(parameter));
 		}
 
 		for (Parameter parameter : ctor.getParameters()) {
-			method.addParameter(JavaAbstracter.toTypeName(parameter.getType()), parameter.getName());
+			method.addParameter(JavaUtil.toTypeName(parameter.getType()), parameter.getName());
 		}
 
 		method.addStatement("throw $T.create()", ImplementationHiddenException.class);
@@ -58,11 +64,11 @@ public class ConstructorAbstraction {
 		for (Parameter parameter : ctor.getParameters()) {
 			String name = parameter.getName();
 			params.add(name);
-			method.addParameter(JavaAbstracter.toTypeName(parameter.getType()), name);
+			method.addParameter(JavaUtil.toTypeName(parameter.getType()), name);
 		}
 
 		for (TypeVariable<? extends Class<?>> parameter : cls.getTypeParameters()) {
-			method.addTypeVariable((TypeVariableName) JavaAbstracter.toTypeName(parameter));
+			method.addTypeVariable((TypeVariableName) JavaUtil.toTypeName(parameter));
 		}
 
 		method.addStatement("super($L)", String.join(",", params));
@@ -70,9 +76,11 @@ public class ConstructorAbstraction {
 	}
 
 	public static void abstractInterfaceCtorAsm(ClassNode node, Class<?> cls, Constructor<?> ctor, boolean impl) {
+		String desc = Abstracter.REMAPPER.mapSignature(Type.getConstructorDescriptor(ctor), false);
+		desc = desc.substring(0, desc.length() - 1);
 		MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC,
 				"newInstance",
-				"()" + Type.getDescriptor(cls),
+				desc + AbstracterUtil.getInterfaceDesc(cls),
 				null,
 				null);
 		if (impl) {
@@ -91,15 +99,19 @@ public class ConstructorAbstraction {
 					false);
 			method.visitInsn(ARETURN);
 		} else {
-			AsmAbstracter.visitStub(method);
+			AsmUtil.visitStub(method);
 		}
 		node.methods.add(method);
 	}
 
 	public static void abstractBaseCtorAsm(ClassNode node, Class<?> cls, Constructor<?> ctor, boolean impl) {
 		String desc = Type.getConstructorDescriptor(ctor);
-		MethodNode method = new MethodNode(ctor.getModifiers(), "<init>", Abstracter.REMAPPER.mapSignature(desc, false), null, null);
-		if(impl) {
+		MethodNode method = new MethodNode(ctor.getModifiers(),
+				"<init>",
+				Abstracter.REMAPPER.mapSignature(desc, false),
+				null,
+				null);
+		if (impl) {
 			Type[] types = Type.getType(ctor).getArgumentTypes();
 			for (int i = 0; i < types.length; i++) {
 				method.visitVarInsn(types[i].getOpcode(ILOAD), i);
@@ -107,7 +119,7 @@ public class ConstructorAbstraction {
 			method.visitMethodInsn(INVOKESPECIAL, node.superName, "<init>", desc, false);
 			method.visitInsn(RETURN);
 		} else {
-			AsmAbstracter.visitStub(method);
+			AsmUtil.visitStub(method);
 		}
 		node.methods.add(method);
 	}

@@ -11,8 +11,8 @@ import com.squareup.javapoet.TypeSpec;
 import io.github.f2bb.abstracter.annotation.DoNotOverride;
 import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
-import io.github.f2bb.abstracter.impl.AsmAbstracter;
-import io.github.f2bb.abstracter.impl.JavaAbstracter;
+import io.github.f2bb.abstracter.impl.AsmUtil;
+import io.github.f2bb.abstracter.impl.JavaUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
@@ -26,7 +26,7 @@ public class FieldAbstraction implements Opcodes {
 			MethodSpec.Builder builder = MethodSpec.methodBuilder(FieldAbstraction.getEtterName("get",
 					f.getType(),
 					f.getName()));
-			Set<javax.lang.model.element.Modifier> modifiers = JavaAbstracter.getModifiers(f.getModifiers());
+			Set<javax.lang.model.element.Modifier> modifiers = JavaUtil.getModifiers(f.getModifiers());
 			builder.addModifiers();
 			if (iface) {
 				modifiers.remove(javax.lang.model.element.Modifier.FINAL);
@@ -35,7 +35,7 @@ public class FieldAbstraction implements Opcodes {
 				modifiers.add(javax.lang.model.element.Modifier.FINAL);
 			}
 
-			builder.returns(JavaAbstracter.toTypeName(TypeMappingFunction.reify(c, f.getGenericType())));
+			builder.returns(JavaUtil.toTypeName(TypeMappingFunction.reify(c, f.getGenericType())));
 			builder.addStatement("throw $T.create()", ImplementationHiddenException.class);
 			builder.addAnnotation(AnnotationSpec.builder(DoNotOverride.class).build());
 			h.addMethod(builder.build());
@@ -47,7 +47,7 @@ public class FieldAbstraction implements Opcodes {
 			MethodSpec.Builder builder = MethodSpec.methodBuilder(FieldAbstraction.getEtterName("set",
 					f.getType(),
 					f.getName()));
-			Set<javax.lang.model.element.Modifier> modifiers = JavaAbstracter.getModifiers(f.getModifiers());
+			Set<javax.lang.model.element.Modifier> modifiers = JavaUtil.getModifiers(f.getModifiers());
 			if (iface) {
 				modifiers.remove(javax.lang.model.element.Modifier.FINAL);
 				modifiers.add(javax.lang.model.element.Modifier.DEFAULT);
@@ -55,7 +55,7 @@ public class FieldAbstraction implements Opcodes {
 				modifiers.add(javax.lang.model.element.Modifier.FINAL);
 			}
 			builder.addModifiers(modifiers);
-			builder.addParameter(JavaAbstracter.toTypeName(TypeMappingFunction.reify(c, f.getGenericType())),
+			builder.addParameter(JavaUtil.toTypeName(TypeMappingFunction.reify(c, f.getGenericType())),
 					f.getName());
 			builder.addStatement("throw $T.create()", ImplementationHiddenException.class);
 			builder.addAnnotation(AnnotationSpec.builder(DoNotOverride.class).build());
@@ -69,7 +69,7 @@ public class FieldAbstraction implements Opcodes {
 		TypeToken<?> token = TypeToken.of(cls);
 		String descriptor = Type.getDescriptor(token.getRawType());
 		String name = field.getName();
-		String signature = AsmAbstracter.toSignature(token.getType());
+		String signature = AsmUtil.toSignature(token.getType());
 		MethodNode node = new MethodNode(access | (iface ? 0 : ACC_FINAL),
 				getEtterName("get", descriptor, name),
 				"()" + descriptor,
@@ -84,7 +84,7 @@ public class FieldAbstraction implements Opcodes {
 			}
 			node.visitInsn(Type.getType(descriptor).getOpcode(IRETURN));
 		} else {
-			AsmAbstracter.visitStub(node);
+			AsmUtil.visitStub(node);
 		}
 		node.visitAnnotation(DO_NOT_OVERRIDE, true);
 		return node;
@@ -104,7 +104,7 @@ public class FieldAbstraction implements Opcodes {
 		TypeToken<?> token = TypeToken.of(cls);
 		String descriptor = Type.getDescriptor(token.getRawType());
 		String name = field.getName();
-		String signature = AsmAbstracter.toSignature(token.getType());
+		String signature = AsmUtil.toSignature(token.getType());
 		MethodNode node = new MethodNode(access | (iface ? 0 : ACC_FINAL),
 				getEtterName("set", descriptor, name),
 				"(" + descriptor + ")V",
@@ -121,7 +121,7 @@ public class FieldAbstraction implements Opcodes {
 				node.visitFieldInsn(PUTFIELD, owner, name, descriptor);
 			}
 		} else {
-			AsmAbstracter.visitStub(node);
+			AsmUtil.visitStub(node);
 		}
 		node.visitInsn(RETURN);
 		node.visitParameter(name, ACC_FINAL);

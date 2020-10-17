@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -11,16 +12,29 @@ import java.util.function.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.reflect.TypeToken;
 import io.github.f2bb.abstracter.Abstracter;
+import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.func.filter.Filters;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
+import io.github.f2bb.abstracter.util.AbstracterUtil;
 
 // automatically reified
 public interface InterfaceFunction {
+	InterfaceFunction EMPTY = c -> Collections.emptySet();
+
 	InterfaceFunction SIMPLE = c -> Arrays.asList(c.getGenericInterfaces());
 	// todo add `this` class
 	InterfaceFunction BASE_DEFAULT = branching(Abstracter::isMinecraft).filtered(Filters.IS_ABSTRACTED);
-	InterfaceFunction INTERFACE_DEFAULT = branching(Abstracter::isUnabstractedClass).filtered(Filters.IS_ABSTRACTED)
-			                                      .add(Class::getGenericSuperclass);
+	InterfaceFunction INTERFACE_DEFAULT =
+			branching(AbstracterUtil::isUnabstractedClass).filtered(Filters.IS_ABSTRACTED)
+	                                                                                    .add(c -> {
+		                                                                                    if (AbstracterConfig
+				                                                                                        .isInterfaceAbstracted(
+						                                                                                        c.getSuperclass())) {
+			                                                                                    return c.getGenericSuperclass();
+		                                                                                    } else {
+			                                                                                    return null;
+		                                                                                    }
+	                                                                                    });
 
 	Collection<Type> getInterfaces(Class<?> cls);
 
@@ -39,7 +53,10 @@ public interface InterfaceFunction {
 	default InterfaceFunction add(Function<Class<?>, Type> type) {
 		return c -> {
 			List<Type> types = new ArrayList<>();
-			types.add(type.apply(c));
+			Type t = type.apply(c);
+			if (t != null) {
+				types.add(t);
+			}
 			return types;
 		};
 	}
@@ -53,8 +70,12 @@ public interface InterfaceFunction {
 		}
 
 		default void visitInterfaces(TypeToken<?> original, Class<?> cls, List<Type> classes) {
+			if (cls == null) {
+				return;
+			}
+
 			for (Class<?> iface : cls.getInterfaces()) {
-				if (Abstracter.isAbstracted(iface)) {
+				if (AbstracterConfig.isInterfaceAbstracted(iface)) {
 					classes.add(original.resolveType(iface).getType());
 				} else if (Abstracter.isMinecraft(iface)) {
 					// if the minecraft class just wasn't abstracted

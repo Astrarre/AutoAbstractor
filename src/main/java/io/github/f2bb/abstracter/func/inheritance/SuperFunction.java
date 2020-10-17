@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings ("UnstableApiUsage")
 public interface SuperFunction {
+	SuperFunction EMPTY = c -> null;
+
 	SuperFunction BASE_API_DEFAULT = c -> {
 		Class<?> current = c;
 		while (Abstracter.isMinecraft(current)) {
@@ -22,4 +24,5 @@ public interface SuperFunction {
 
 	@Nullable
 	Type findValidSuper(Class<?> cls);
+
 }
