@@ -1,10 +1,5 @@
 package io.github.f2bb.abstracter.func.elements;
 
-import static io.github.f2bb.abstracter.func.filter.Filters.PROTECTED;
-import static io.github.f2bb.abstracter.func.filter.Filters.PUBLIC;
-import static io.github.f2bb.abstracter.func.filter.Filters.STATIC;
-import static io.github.f2bb.abstracter.func.filter.MemberFilter.withAccess;
-
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,6 +11,7 @@ import com.google.common.collect.Collections2;
 import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.func.filter.MemberFilter;
 import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.func.filter.Filters;
 
 public interface MethodSupplier {
 	MethodSupplier EMPTY = c -> Collections.emptySet();
@@ -24,18 +20,19 @@ public interface MethodSupplier {
 			                              // neither bridge nor synthetic
 			                              .filtered(MemberFilter.<Method>userDeclared()
 					                                        // and must be protected
-					                                        .and(MemberFilter.<Method>withAccess(PROTECTED)
+					                                        .and(MemberFilter.<Method>withAccess(Filters.PROTECTED)
 							                                             // or public but not static
-							                                             .or(MemberFilter.<Method>withAccess(PUBLIC)
+							                                             .or(MemberFilter.<Method>withAccess(Filters.PUBLIC)
 									                                                 .and(MemberFilter.<Method>withAccess(
-											                                                 STATIC).negate())))
+											                                                 Filters.STATIC).negate())))
 					                                        .and(MemberFilter.VALID_PARAMS_AND_RETURN));
 
 	/**
 	 * all public methods are exposed from classes inside the 'umbrella'
 	 */
 	MethodSupplier INTERFACE_DEFAULT = create(AbstracterUtil::isUnabstractedClass)
-			                                   .filtered(MemberFilter.<Method>userDeclared().and(withAccess(PUBLIC))
+			                                   .filtered(MemberFilter.<Method>userDeclared().and(MemberFilter.withAccess(
+					                                   Filters.PUBLIC))
 			                                                                                .and(MemberFilter.VALID_PARAMS_AND_RETURN));
 
 

@@ -1,5 +1,3 @@
-package net.devtech.test;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,7 +7,7 @@ import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.func.string.ToStringFunction;
 
-public class Test {
+public class AbstractTest {
 	public static void main(String[] args) throws IOException {
 		for (File file : new File("classpath").listFiles()) {
 			Abstracter.CLASSPATH.addURL(file.toURI().toURL());

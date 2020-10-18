@@ -1,7 +1,5 @@
 package io.github.f2bb.abstracter.util;
 
-import static io.github.f2bb.abstracter.Abstracter.isMinecraft;
-
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
@@ -15,9 +13,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
-import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.AbstracterConfig;
-import io.github.f2bb.abstracter.ex.InvalidClassException;
+import io.github.f2bb.abstracter.Abstracter;
 import org.objectweb.asm.commons.SignatureRemapper;
 import org.objectweb.asm.signature.SignatureReader;
 
@@ -88,6 +85,6 @@ public class AbstracterUtil {
 	 * @return true if the class is a minecraft class, but isn't supposed to be abstracted
 	 */
 	public static boolean isUnabstractedClass(Class<?> cls) {
-		return isMinecraft(cls) && !AbstracterConfig.isInterfaceAbstracted(cls);
+		return Abstracter.isMinecraft(cls) && !AbstracterConfig.isInterfaceAbstracted(cls);
 	}
 }

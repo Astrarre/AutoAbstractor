@@ -1,9 +1,5 @@
 package io.github.f2bb.abstracter.func.elements;
 
-import static io.github.f2bb.abstracter.func.filter.Filters.PROTECTED;
-import static io.github.f2bb.abstracter.func.filter.Filters.PUBLIC;
-import static io.github.f2bb.abstracter.func.filter.Filters.STATIC;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,14 +23,14 @@ public interface FieldSupplier {
 	FieldSupplier BASE_DEFAULT = create(Abstracter::isMinecraft).filtered(MemberFilter.withType(Filters.IS_ABSTRACTED)
 	                                                                                  .and(// and must be protected
 			                                                                                  MemberFilter.<Field>withAccess(
-					                                                                                  PROTECTED)
+					                                                                                  Filters.PROTECTED)
 					                                                                                  // or public but
 					                                                                                  // not
 					                                                                                  // static
 					                                                                                  .or(MemberFilter.<Field>withAccess(
-							                                                                                  PUBLIC)
+							                                                                                  Filters.PUBLIC)
 							                                                                                      .and(MemberFilter.<Field>withAccess(
-									                                                                                      STATIC)
+									                                                                                      Filters.STATIC)
 									                                                                                           .negate()))));
 
 	Collection<Field> getFields(Class<?> cls);

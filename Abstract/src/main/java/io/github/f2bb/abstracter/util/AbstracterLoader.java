@@ -1,7 +1,5 @@
 package io.github.f2bb.abstracter.util;
 
-import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 

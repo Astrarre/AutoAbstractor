@@ -8,7 +8,7 @@ import com.google.common.reflect.TypeToken;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
-import io.github.f2bb.abstracter.annotation.DoNotOverride;
+import io.github.f2bb.DoNotOverride;
 import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
 import io.github.f2bb.abstracter.impl.AsmUtil;

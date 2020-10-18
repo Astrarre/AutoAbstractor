@@ -1,7 +1,5 @@
 package io.github.f2bb.abstracter.func.filter;
 
-import static io.github.f2bb.abstracter.func.filter.Filters.IS_ABSTRACTED;
-
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -18,9 +16,9 @@ import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
 public interface MemberFilter<T extends Member> {
 	Logger LOGGER = Logger.getLogger("Abstract");
 	MemberFilter<?> USER_DECLARED = withAccess(Filters.SYNTHETIC).or(withAccess(Filters.BRIDGE)).negate();
-	MemberFilter<Executable> VALID_PARAMETERS = withParameters(IS_ABSTRACTED);
-	MemberFilter<Method> VALID_PARAMS_AND_RETURN = (MemberFilter.<Method>withParameters(IS_ABSTRACTED).and(withReturn(
-			IS_ABSTRACTED))).or(MemberFilter.<Method>withAccess(Filters.ABSTRACT).and((c, m) -> {
+	MemberFilter<Executable> VALID_PARAMETERS = withParameters(Filters.IS_ABSTRACTED);
+	MemberFilter<Method> VALID_PARAMS_AND_RETURN = (MemberFilter.<Method>withParameters(Filters.IS_ABSTRACTED).and(withReturn(
+			Filters.IS_ABSTRACTED))).or(MemberFilter.<Method>withAccess(Filters.ABSTRACT).and((c, m) -> {
 		LOGGER.severe("Method " + m + " could not be abstracted because it contained a non" + "-abstracted class, but " +
 		              "it is `abstract`, if the method is not exposed, it will" + " cause an abstract exception " +
 		              "thing");

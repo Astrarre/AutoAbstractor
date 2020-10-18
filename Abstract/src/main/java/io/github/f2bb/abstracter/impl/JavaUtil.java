@@ -88,13 +88,14 @@ public class JavaUtil {
 		} else if (type instanceof ParameterizedType) {
 			ParameterizedType ptn = (ParameterizedType) type;
 			return ParameterizedTypeName.get((ClassName) toTypeName(ptn.getRawType()),
-					map(ptn.getActualTypeArguments(), JavaUtil::toTypeName, TypeName[]::new));
+					AbstracterUtil.map(ptn.getActualTypeArguments(), JavaUtil::toTypeName, TypeName[]::new));
 		} else if (type instanceof TypeVariable<?>) {
 			TypeVariable<?> tvn = (TypeVariable<?>) type;
-			return TypeVariableName.get(tvn.getName(), map(tvn.getBounds(), JavaUtil::toTypeName, TypeName[]::new));
+			return TypeVariableName.get(tvn.getName(), AbstracterUtil
+					                                           .map(tvn.getBounds(), JavaUtil::toTypeName, TypeName[]::new));
 		} else if (type instanceof WildcardType) {
 			WildcardType wtn = (WildcardType) type;
-			return get(map(wtn.getLowerBounds(), JavaUtil::toTypeName), map(wtn.getUpperBounds(), JavaUtil::toTypeName));
+			return get(AbstracterUtil.map(wtn.getLowerBounds(), JavaUtil::toTypeName), AbstracterUtil.map(wtn.getUpperBounds(), JavaUtil::toTypeName));
 		}
 		throw new IllegalArgumentException("What " + type);
 	}

@@ -41,7 +41,7 @@ public class ConstructorAbstraction {
 		TypeVariable<? extends Class<?>>[] vars = cls.getTypeParameters();
 		if (vars.length != 0) {
 			ParameterizedTypeName name = ParameterizedTypeName.get((ClassName) JavaUtil.toTypeName(cls),
-					map(cls.getTypeParameters(), JavaUtil::toTypeName, TypeName[]::new));
+					AbstracterUtil.map(cls.getTypeParameters(), JavaUtil::toTypeName, TypeName[]::new));
 			method.returns(name);
 		} else {
 			method.returns(JavaUtil.toTypeName(cls));

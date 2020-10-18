@@ -9,7 +9,6 @@ import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.ex.InvalidClassException;
 import io.github.f2bb.abstracter.impl.AsmUtil;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.SignatureRemapper;
 

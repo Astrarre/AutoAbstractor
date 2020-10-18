@@ -8,7 +8,6 @@ import java.util.zip.ZipOutputStream;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import io.github.f2bb.abstracter.AbstracterConfig;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 

@@ -2,7 +2,6 @@ package io.github.f2bb.abstracter;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.zip.ZipOutputStream;
 
 import com.squareup.javapoet.TypeSpec;
