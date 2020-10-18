@@ -13,7 +13,8 @@ public interface MethodAbstracter<T> {
 	MethodAbstracter<ClassNode> INTERFACE_IMPL_ASM = (h, a, m) -> MethodAbstraction.visitBridged(h, a, m, true, false);
 	MethodAbstracter<ClassNode> INTERFACE_API_ASM = (h, a, m) -> MethodAbstraction.visitBridged(h, a, m, false, false);
 	// java
-	MethodAbstracter<TypeSpec.Builder> API_JAVA = MethodAbstraction::visitJava;
+	MethodAbstracter<TypeSpec.Builder> API_JAVA_BASE = (h, a, m) -> MethodAbstraction.visitJava(h, a, m, true);
+	MethodAbstracter<TypeSpec.Builder> API_JAVA_INTERFACE = (h, a, m) -> MethodAbstraction.visitJava(h, a, m, false);
 
 	void abstractMethod(T header, Class<?> abstracting, Method method);
 

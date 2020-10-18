@@ -13,7 +13,7 @@ import com.google.common.reflect.TypeToken;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
-import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
+import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
 import io.github.f2bb.abstracter.impl.AsmUtil;
 import io.github.f2bb.abstracter.impl.JavaUtil;
@@ -24,7 +24,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 @SuppressWarnings ("UnstableApiUsage")
 public class MethodAbstraction implements Opcodes {
-	public static void visitJava(TypeSpec.Builder header, Class<?> declaring, Method method) {
+	public static void visitJava(TypeSpec.Builder header, Class<?> declaring, Method method, boolean base) {
 		TypeMappingFunction reifier = TypeMappingFunction.reify(declaring);
 		java.lang.reflect.Type returnType = reifier.map(method.getGenericReturnType());
 
@@ -37,17 +37,20 @@ public class MethodAbstraction implements Opcodes {
 		for (TypeVariable<Method> parameter : method.getTypeParameters()) {
 			builder.addTypeVariable((TypeVariableName) JavaUtil.toTypeName(reifier.map(parameter)));
 		}
-		builder.addStatement("throw $T.create()", ImplementationHiddenException.class);
-
 		Set<javax.lang.model.element.Modifier> mods = JavaUtil.getModifiers(method.getModifiers());
-		if(JavaUtil.getKind(header) == TypeSpec.Kind.INTERFACE) {
+		if(!base) {
 			mods.remove(javax.lang.model.element.Modifier.FINAL);
+			// if instance method
 			if (!mods.contains(javax.lang.model.element.Modifier.STATIC)) {
 				mods.add(javax.lang.model.element.Modifier.DEFAULT);
 				mods.remove(javax.lang.model.element.Modifier.ABSTRACT);
 			}
 		}
 		builder.addModifiers(mods);
+		if(!mods.contains(javax.lang.model.element.Modifier.ABSTRACT)) {
+			builder.addStatement("throw $T.create()", ImplementationHiddenException.class);
+		}
+
 		header.addMethod(builder.build());
 	}
 

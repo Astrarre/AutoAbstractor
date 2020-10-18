@@ -9,13 +9,12 @@ import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import io.github.f2bb.abstracter.annotation.DoNotOverride;
-import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
+import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
 import io.github.f2bb.abstracter.impl.AsmUtil;
 import io.github.f2bb.abstracter.impl.JavaUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 @SuppressWarnings ("UnstableApiUsage")

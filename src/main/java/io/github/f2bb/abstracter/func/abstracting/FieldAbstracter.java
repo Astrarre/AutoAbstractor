@@ -6,7 +6,7 @@ import javax.lang.model.element.Modifier;
 
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeSpec;
-import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
+import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.filter.Filters;
 import io.github.f2bb.abstracter.func.filter.MemberFilter;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;

@@ -119,7 +119,7 @@ public class Abstracter<T> implements Opcodes {
 			                                                                      .nameFunction(ToStringFunction.INTERFACE_DEFAULT)
 			                                                                      .accessOperator(INTERFACE_OPERATOR)
 			                                                                      .fieldAbstracter(FieldAbstracter.INTERFACE_API_JAVA)
-			                                                                      .methodAbstracter(MethodAbstracter.API_JAVA)
+			                                                                      .methodAbstracter(MethodAbstracter.API_JAVA_INTERFACE)
 			                                                                      .constructorAbstracter(
 					                                                                      ConstructorAbstracter.INTERFACE_API_JAVA)
 			                                                                      .serializer(SerializingFunction
@@ -136,7 +136,7 @@ public class Abstracter<T> implements Opcodes {
 			                                                                 .accessOperator(IntUnaryOperator
 					                                                                                 .identity())
 			                                                                 .fieldAbstracter(FieldAbstracter.BASE_API_JAVA)
-			                                                                 .methodAbstracter(MethodAbstracter.API_JAVA)
+			                                                                 .methodAbstracter(MethodAbstracter.API_JAVA_BASE)
 			                                                                 .constructorAbstracter(
 					                                                                 ConstructorAbstracter.BASE_API_JAVA)
 			                                                                 .serializer(SerializingFunction

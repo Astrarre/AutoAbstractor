@@ -35,7 +35,6 @@ public class Test {
 		registerDefaultInterface("net.minecraft.entity.Entity");
 		registerDefaultInterface("net.minecraft.enchantment.Enchantment");
 		registerDefaultInterface("net.minecraft.Bootstrap");
-
 		registerDefaultBase("net.minecraft.block.Block");
 		registerDefaultBase("net.minecraft.entity.Entity");
 		registerDefaultBase("net.minecraft.enchantment.Enchantment");

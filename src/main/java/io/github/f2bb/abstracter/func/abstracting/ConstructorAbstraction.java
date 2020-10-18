@@ -25,7 +25,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import io.github.f2bb.abstracter.Abstracter;
-import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
+import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.impl.AsmUtil;
 import io.github.f2bb.abstracter.impl.JavaUtil;
 import io.github.f2bb.abstracter.util.AbstracterUtil;

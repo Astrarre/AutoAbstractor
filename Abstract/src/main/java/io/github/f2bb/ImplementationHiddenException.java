@@ -1,9 +1,6 @@
-package io.github.f2bb.abstracter.ex;
-
-import org.objectweb.asm.Type;
+package io.github.f2bb;
 
 public class ImplementationHiddenException extends IllegalStateException {
-	public static final String INTERNAL = Type.getInternalName(ImplementationHiddenException.class);
 
 	public ImplementationHiddenException(String s) {
 		super(s);

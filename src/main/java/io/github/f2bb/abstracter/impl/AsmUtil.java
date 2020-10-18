@@ -11,8 +11,7 @@ import java.util.Collection;
 
 import com.google.common.reflect.TypeToken;
 import io.github.f2bb.abstracter.AbstracterConfig;
-import io.github.f2bb.abstracter.ex.ImplementationHiddenException;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.util.RawClassType;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -24,6 +23,7 @@ import org.objectweb.asm.tree.MethodNode;
 
 @SuppressWarnings ("UnstableApiUsage")
 public class AsmUtil implements Opcodes {
+	public static final String INTERNAL = org.objectweb.asm.Type.getInternalName(ImplementationHiddenException.class);
 	public static String toSignature(Type reified) {
 		SignatureWriter writer = new SignatureWriter();
 		visit(writer, reified);
@@ -43,9 +43,9 @@ public class AsmUtil implements Opcodes {
 
 	public static void visitStub(MethodVisitor visitor) {
 		visitor.visitMethodInsn(INVOKESTATIC,
-				ImplementationHiddenException.INTERNAL,
+				INTERNAL,
 				"create",
-				"()L" + ImplementationHiddenException.INTERNAL + ';',
+				"()L" + INTERNAL + ';',
 				false);
 		visitor.visitInsn(ATHROW);
 	}
