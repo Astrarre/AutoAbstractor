@@ -11,8 +11,9 @@ import com.squareup.javapoet.TypeSpec;
 import io.github.f2bb.DoNotOverride;
 import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
-import io.github.f2bb.abstracter.impl.AsmUtil;
 import io.github.f2bb.abstracter.impl.JavaUtil;
+import io.github.f2bb.abstracter.util.asm.InvokeUtil;
+import io.github.f2bb.abstracter.util.asm.SignatureUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
@@ -71,8 +72,13 @@ public class FieldAbstraction implements Opcodes {
 		TypeToken<?> token = TypeToken.of(cls);
 		String descriptor = Type.getDescriptor(token.getRawType());
 		String name = field.getName();
-		String signature = AsmUtil.toSignature(token.getType());
-		MethodNode node = new MethodNode(access | (iface ? 0 : ACC_FINAL),
+		String signature = SignatureUtil.toSignature(token.getType());
+		if(iface) {
+			access &= ~ACC_FINAL;
+		} else {
+			access |= ACC_FINAL;
+		}
+		MethodNode node = new MethodNode(access,
 				getEtterName("get", descriptor, name),
 				"()" + descriptor,
 				signature.equals(descriptor) ? null : "()" + signature,
@@ -86,7 +92,7 @@ public class FieldAbstraction implements Opcodes {
 			}
 			node.visitInsn(Type.getType(descriptor).getOpcode(IRETURN));
 		} else {
-			AsmUtil.visitStub(node);
+			InvokeUtil.visitStub(node);
 		}
 		node.visitAnnotation(DO_NOT_OVERRIDE, true);
 		return node;
@@ -106,8 +112,13 @@ public class FieldAbstraction implements Opcodes {
 		TypeToken<?> token = TypeToken.of(cls);
 		String descriptor = Type.getDescriptor(token.getRawType());
 		String name = field.getName();
-		String signature = AsmUtil.toSignature(token.getType());
-		MethodNode node = new MethodNode(access | (iface ? 0 : ACC_FINAL),
+		String signature = SignatureUtil.toSignature(token.getType());
+		if(iface) {
+			access &= ~ACC_FINAL;
+		} else {
+			access |= ACC_FINAL;
+		}
+		MethodNode node = new MethodNode(access,
 				getEtterName("set", descriptor, name),
 				"(" + descriptor + ")V",
 				signature.equals(descriptor) ? null : "(" + signature + ")V",
@@ -123,7 +134,7 @@ public class FieldAbstraction implements Opcodes {
 				node.visitFieldInsn(PUTFIELD, owner, name, descriptor);
 			}
 		} else {
-			AsmUtil.visitStub(node);
+			InvokeUtil.visitStub(node);
 		}
 		node.visitInsn(RETURN);
 		node.visitParameter(name, ACC_FINAL);

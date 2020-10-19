@@ -51,12 +51,6 @@ public class AbstracterUtil {
 		return org.objectweb.asm.Type.getInternalName(raw(type));
 	}
 
-	public static <A> A[] add(A[] as, A a) {
-		A[] copy = Arrays.copyOf(as, as.length + 1);
-		copy[as.length] = a;
-		return copy;
-	}
-
 	public static <A, B> B[] map(A[] arr, Function<A, B> func, IntFunction<B[]> array) {
 		B[] bs = array.apply(arr.length);
 		for (int i = 0; i < arr.length; i++) {

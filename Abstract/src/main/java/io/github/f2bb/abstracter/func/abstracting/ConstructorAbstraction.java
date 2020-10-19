@@ -1,9 +1,10 @@
 package io.github.f2bb.abstracter.func.abstracting;
 
-import static io.github.f2bb.abstracter.util.AbstracterUtil.map;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.CHECKCAST;
 import static org.objectweb.asm.Opcodes.DUP;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
@@ -24,11 +25,11 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
-import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.ImplementationHiddenException;
-import io.github.f2bb.abstracter.impl.AsmUtil;
+import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.impl.JavaUtil;
 import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.util.asm.InvokeUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -46,6 +47,7 @@ public class ConstructorAbstraction {
 		} else {
 			method.returns(JavaUtil.toTypeName(cls));
 		}
+
 		for (TypeVariable<? extends Class<?>> parameter : cls.getTypeParameters()) {
 			method.addTypeVariable((TypeVariableName) JavaUtil.toTypeName(parameter));
 		}
@@ -84,22 +86,9 @@ public class ConstructorAbstraction {
 				null,
 				null);
 		if (impl) {
-			String internal = Type.getInternalName(cls);
-			method.visitTypeInsn(NEW, internal);
-			method.visitInsn(DUP);
-			Type[] types = Type.getType(ctor).getArgumentTypes();
-			for (int i = 0; i < types.length; i++) {
-				Type type = types[i];
-				method.visitVarInsn(type.getOpcode(ILOAD), i);
-			}
-			method.visitMethodInsn(INVOKESPECIAL,
-					internal,
-					"<init>",
-					Abstracter.REMAPPER.mapSignature(Type.getConstructorDescriptor(ctor), false),
-					false);
-			method.visitInsn(ARETURN);
+			InvokeUtil.invokeConstructor(method, ctor, true);
 		} else {
-			AsmUtil.visitStub(method);
+			InvokeUtil.visitStub(method);
 		}
 		node.methods.add(method);
 	}
@@ -112,14 +101,9 @@ public class ConstructorAbstraction {
 				null,
 				null);
 		if (impl) {
-			Type[] types = Type.getType(ctor).getArgumentTypes();
-			for (int i = 0; i < types.length; i++) {
-				method.visitVarInsn(types[i].getOpcode(ILOAD), i);
-			}
-			method.visitMethodInsn(INVOKESPECIAL, node.superName, "<init>", desc, false);
-			method.visitInsn(RETURN);
+			InvokeUtil.invokeConstructor(method, ctor, false);
 		} else {
-			AsmUtil.visitStub(method);
+			InvokeUtil.visitStub(method);
 		}
 		node.methods.add(method);
 	}

@@ -10,9 +10,9 @@ import java.util.Collection;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
-import io.github.f2bb.abstracter.impl.AsmUtil;
 import io.github.f2bb.abstracter.impl.JavaUtil;
 import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.util.asm.SignatureUtil;
 import org.objectweb.asm.tree.ClassNode;
 
 public interface HeaderFunction<T> {
@@ -38,14 +38,10 @@ public interface HeaderFunction<T> {
 
 	HeaderFunction<ClassNode> ASM = (a, n, v, s, i) -> {
 		ClassNode node = new ClassNode();
-		String sign = AsmUtil.classSignature(v, s, i);
-		if(sign.isEmpty()) {
-			sign = null;
-		}
 		node.visit(V1_8,
 				a,
 				n,
-				sign,
+				null,
 				AbstracterUtil.getRawName(s),
 				i.stream().map(AbstracterUtil::getRawName).toArray(String[]::new));
 		return node;

@@ -179,7 +179,6 @@ public class AbstracterConfig {
 				node.visitInnerClass(node.name + '$' + simple, node.name, simple, cls.getModifiers());
 			}
 		}
-		System.out.println(c);
 		a.serialize(zos, c, node);
 	}
 

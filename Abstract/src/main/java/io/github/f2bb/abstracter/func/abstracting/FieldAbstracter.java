@@ -10,9 +10,10 @@ import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.filter.Filters;
 import io.github.f2bb.abstracter.func.filter.MemberFilter;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
-import io.github.f2bb.abstracter.impl.AsmUtil;
 import io.github.f2bb.abstracter.impl.JavaUtil;
 import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.util.asm.MethodUtil;
+import io.github.f2bb.abstracter.util.asm.SignatureUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -29,22 +30,22 @@ public interface FieldAbstracter<T> extends Opcodes {
 		FieldNode node = new FieldNode(f.getModifiers(),
 				f.getName(),
 				Type.getDescriptor(f.getType()),
-				AsmUtil.toSignature(reified),
+				SignatureUtil.toSignature(reified),
 				null);
 		h.fields.add(node);
 	};
 
-	public static FieldAbstracter<ClassNode> constant(boolean impl) {
+	static FieldAbstracter<ClassNode> constant(boolean impl) {
 		return (h, c, f) -> {
 			java.lang.reflect.Type reified = TypeMappingFunction.reify(c, f.getGenericType());
 			FieldNode node = new FieldNode(f.getModifiers(),
 					f.getName(),
 					AbstracterUtil.getInterfaceDesc(TypeMappingFunction.raw(c, f.getGenericType())),
-					AsmUtil.toSignature(reified),
+					SignatureUtil.toSignature(reified),
 					null);
 			h.fields.add(node);
 			if (impl) {
-				MethodNode init = AsmUtil.findOrCreateMethod(ACC_STATIC | ACC_PUBLIC, h, "<clinit>", "()V");
+				MethodNode init = MethodUtil.findOrCreateMethod(ACC_STATIC | ACC_PUBLIC, h, "<clinit>", "()V");
 				InsnList list = init.instructions;
 				if(list.getLast() == null) {
 					list.insert(new InsnNode(RETURN));

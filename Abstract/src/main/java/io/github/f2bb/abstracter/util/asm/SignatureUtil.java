@@ -1,8 +1,6 @@
-package io.github.f2bb.abstracter.impl;
+package io.github.f2bb.abstracter.util.asm;
 
 import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -11,43 +9,16 @@ import java.util.Collection;
 
 import com.google.common.reflect.TypeToken;
 import io.github.f2bb.abstracter.AbstracterConfig;
-import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.util.RawClassType;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
 
-@SuppressWarnings ("UnstableApiUsage")
-public class AsmUtil implements Opcodes {
-	public static final String INTERNAL = org.objectweb.asm.Type.getInternalName(ImplementationHiddenException.class);
+public class SignatureUtil {
 	public static String toSignature(Type reified) {
 		SignatureWriter writer = new SignatureWriter();
 		visit(writer, reified);
 		return writer.toString();
-	}
-
-	public static MethodNode findOrCreateMethod(int access, ClassNode node, String name, String desc) {
-		for (MethodNode method : node.methods) {
-			if(name.equals(method.name) && desc.equals(method.desc)) {
-				return method;
-			}
-		}
-		MethodNode method = new MethodNode(access, name, desc, null, null);
-		node.methods.add(method);
-		return method;
-	}
-
-	public static void visitStub(MethodVisitor visitor) {
-		visitor.visitMethodInsn(INVOKESTATIC,
-				INTERNAL,
-				"create",
-				"()L" + INTERNAL + ';',
-				false);
-		visitor.visitInsn(ATHROW);
 	}
 
 	public static String classSignature(TypeVariable<?>[] variables, Type superClass, Collection<Type> interfaces) {
@@ -59,7 +30,6 @@ public class AsmUtil implements Opcodes {
 		}
 		return writer.toString();
 	}
-
 
 	public static void visit(SignatureVisitor visitor, TypeVariable<?>[] variables) {
 		for (TypeVariable<?> variable : variables) {
@@ -191,46 +161,4 @@ public class AsmUtil implements Opcodes {
 		builder.append(toSignature(returnType.getRawType()));
 		return builder.toString();
 	}
-
-	public static void invoke(MethodVisitor visitor, Method method, boolean special) {
-		Class<?> dec = method.getDeclaringClass();
-		invoke(visitor,
-				method.getModifiers(),
-				org.objectweb.asm.Type.getInternalName(dec),
-				method.getName(),
-				org.objectweb.asm.Type.getMethodDescriptor(method),
-				special ? INVOKESPECIAL : INVOKEVIRTUAL,
-				dec.isInterface());
-	}
-
-	public static void invoke(MethodVisitor visitor,
-			int access,
-			String owner,
-			String name,
-			String desc,
-			int instanceOpcode,
-			boolean isInterface) {
-		if (isInterface && instanceOpcode == INVOKEVIRTUAL) {
-			instanceOpcode = INVOKEINTERFACE;
-		}
-
-		org.objectweb.asm.Type methodDesc = org.objectweb.asm.Type.getMethodType(desc);
-		int index = 0;
-		int opcode;
-		// todo casts
-		if (!Modifier.isStatic(access)) {
-			visitor.visitVarInsn(ALOAD, index++);
-			opcode = instanceOpcode;
-		} else {
-			opcode = INVOKESTATIC;
-		}
-
-		for (org.objectweb.asm.Type type : methodDesc.getArgumentTypes()) {
-			visitor.visitVarInsn(type.getOpcode(ILOAD), index++);
-		}
-		visitor.visitMethodInsn(opcode, owner, name, desc, isInterface);
-		visitor.visitInsn(methodDesc.getReturnType().getOpcode(IRETURN));
-	}
-
-
 }

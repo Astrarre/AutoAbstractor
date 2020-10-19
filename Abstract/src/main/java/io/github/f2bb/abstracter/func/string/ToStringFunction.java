@@ -14,6 +14,7 @@ public interface ToStringFunction<T> {
 
 	static String getName(Class<?> cls, String prefix) {
 		String str = Type.getInternalName(cls);
+		str = str.replace("net/minecraft/", "io/github/f2bb/");
 		int last = str.lastIndexOf('/') + 1;
 		return str.substring(0, last) + prefix + str.substring(last);
 	}

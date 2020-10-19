@@ -9,12 +9,13 @@ import io.github.f2bb.abstracter.func.string.ToStringFunction;
 
 public class AbstractTest {
 	public static void main(String[] args) throws IOException {
+		Abstracter.testing = true;
 		for (File file : new File("classpath").listFiles()) {
 			Abstracter.CLASSPATH.addURL(file.toURI().toURL());
 		}
 		Abstracter.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
-		ToStringFunction<Class<?>> abstractSettings = ToStringFunction.constant("net/minecraft/block/IBlock$Settings");
+		ToStringFunction<Class<?>> abstractSettings = ToStringFunction.constant("io/github/f2bb/block/IBlock$Settings");
 		AbstracterConfig.registerInterface("net.minecraft.block.AbstractBlock$Settings",
 				Abstracter.INTERFACE_API_ASM.asBuilder().nameFunction(abstractSettings).build(),
 				Abstracter.INTERFACE_IMPL_ASM.asBuilder().nameFunction(abstractSettings).build(),
