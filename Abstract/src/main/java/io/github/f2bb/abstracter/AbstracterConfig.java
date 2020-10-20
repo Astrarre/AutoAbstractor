@@ -15,7 +15,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
 public class AbstracterConfig {
-	private static final Map<Class<?>, Abstracter<ClassNode>> INTERFACE_API_ASM = new HashMap<>(), INTERFACE_IMPL_ASM 
+	private static final Map<Class<?>, Abstracter<ClassNode>> INTERFACE_API_ASM = new HashMap<>(), INTERFACE_IMPL_ASM
 			                                                                                               =
 			                                                                                               new HashMap<>(), BASE_API_ASM = new HashMap<>(), BASE_IMPL_ASM = new HashMap<>();
 	private static final Map<Class<?>, Abstracter<TypeSpec.Builder>> INTERFACE_API_JAVA = new HashMap<>(),
@@ -26,7 +26,7 @@ public class AbstracterConfig {
 	/**
 	 * 'adds' an inner class to the other class
 	 */
-	public static void overrideInnerClass(Class<?> cls, Class<?> ...inners) {
+	public static void overrideInnerClass(Class<?> cls, Class<?>... inners) {
 		INNER_CLASS_OVERRIDES.put(cls, inners);
 		for (Class<?> inner : inners) {
 			OUTER_CLASS_OVERRIDES.put(inner, false);
@@ -36,8 +36,9 @@ public class AbstracterConfig {
 	/**
 	 * 'adds' an inner class to the other class
 	 */
-	public static void overrideInnerClass(String cls, String ...inners) {
-		overrideInnerClass(AbstracterLoader.getClass(cls), ArrayUtil.map(inners, AbstracterLoader::getClass, Class[]::new));
+	public static void overrideInnerClass(String cls, String... inners) {
+		overrideInnerClass(AbstracterLoader.getClass(cls),
+				ArrayUtil.map(inners, AbstracterLoader::getClass, Class[]::new));
 	}
 
 	/**
@@ -69,20 +70,14 @@ public class AbstracterConfig {
 			Abstracter.Builder<ClassNode> interfaceApiAsm,
 			Abstracter.Builder<ClassNode> interfaceImplAsm,
 			Abstracter.Builder<TypeSpec.Builder> interfaceApiJava) {
-		registerInterface(cls,
-				interfaceApiAsm.build(),
-				interfaceImplAsm.build(),
-				interfaceApiJava.build());
+		registerInterface(cls, interfaceApiAsm.build(), interfaceImplAsm.build(), interfaceApiJava.build());
 	}
 
 	public static void registerBase(String cls,
 			Abstracter.Builder<ClassNode> baseApiAsm,
 			Abstracter.Builder<ClassNode> baseImplAsm,
 			Abstracter.Builder<TypeSpec.Builder> baseApiJava) {
-		registerBase(cls,
-				baseApiAsm.build(),
-				baseImplAsm.build(),
-				baseApiJava.build());
+		registerBase(cls, baseApiAsm.build(), baseImplAsm.build(), baseApiJava.build());
 	}
 
 	public static void registerInterface(Class<?> cls,
@@ -107,20 +102,14 @@ public class AbstracterConfig {
 			Abstracter.Builder<ClassNode> interfaceApiAsm,
 			Abstracter.Builder<ClassNode> interfaceImplAsm,
 			Abstracter.Builder<TypeSpec.Builder> interfaceApiJava) {
-		registerInterface(cls,
-				interfaceApiAsm.build(),
-				interfaceImplAsm.build(),
-				interfaceApiJava.build());
+		registerInterface(cls, interfaceApiAsm.build(), interfaceImplAsm.build(), interfaceApiJava.build());
 	}
 
 	public static void registerBase(Class<?> cls,
 			Abstracter.Builder<ClassNode> baseApiAsm,
 			Abstracter.Builder<ClassNode> baseImplAsm,
 			Abstracter.Builder<TypeSpec.Builder> baseApiJava) {
-		registerBase(cls,
-				baseApiAsm.build(),
-				baseImplAsm.build(),
-				baseApiJava.build());
+		registerBase(cls, baseApiAsm.build(), baseImplAsm.build(), baseApiJava.build());
 	}
 
 	public static void writeManifest(OutputStream stream) throws IOException {

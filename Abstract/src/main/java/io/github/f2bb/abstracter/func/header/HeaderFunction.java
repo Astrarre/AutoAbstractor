@@ -11,7 +11,7 @@ import java.util.Collection;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 import io.github.f2bb.abstracter.impl.JavaUtil;
-import io.github.f2bb.abstracter.util.asm.SignUtil;
+import io.github.f2bb.abstracter.util.asm.TypeUtil;
 import org.objectweb.asm.tree.ClassNode;
 
 public interface HeaderFunction<T> {
@@ -41,8 +41,8 @@ public interface HeaderFunction<T> {
 				a,
 				n,
 				null,
-				SignUtil.getRawName(s),
-				i.stream().map(SignUtil::getRawName).toArray(String[]::new));
+				TypeUtil.getRawName(s),
+				i.stream().map(TypeUtil::getRawName).toArray(String[]::new));
 		return node;
 	};
 

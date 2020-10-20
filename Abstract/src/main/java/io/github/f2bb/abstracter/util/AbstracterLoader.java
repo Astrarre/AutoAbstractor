@@ -10,13 +10,6 @@ import org.objectweb.asm.commons.Remapper;
 public class AbstracterLoader extends URLClassLoader {
 	public static final AbstracterLoader CLASSPATH = new AbstracterLoader();
 	public static final AbstracterLoader INSTANCE = new AbstracterLoader(CLASSPATH);
-	public static final Remapper REMAPPER = new Remapper() {
-		@Override
-		public String map(String internalName) {
-			Class<?> cls = AbstracterLoader.getClass(Type.getObjectType(internalName).getClassName());
-			return AbstracterConfig.getInterfaceName(cls);
-		}
-	};
 
 	public AbstracterLoader() {
 		super(new URL[] {});

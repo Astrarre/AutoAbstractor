@@ -5,11 +5,9 @@ import java.lang.reflect.Type;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
-import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.ex.InvalidClassException;
-import io.github.f2bb.abstracter.util.AbstracterLoader;
-import io.github.f2bb.abstracter.util.asm.SignUtil;
+import io.github.f2bb.abstracter.util.asm.TypeUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.SignatureRemapper;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -17,9 +15,9 @@ import org.objectweb.asm.signature.SignatureVisitor;
 public interface Filters extends Opcodes {
 	SignatureVisitor EMPTY_VISITOR = new SignatureVisitor(ASM9) {};
 	Predicate<Type> IS_ABSTRACTED = t -> {
-		SignatureRemapper remapper = new SignatureRemapper(EMPTY_VISITOR, AbstracterLoader.REMAPPER);
+		SignatureRemapper remapper = new SignatureRemapper(EMPTY_VISITOR, TypeUtil.REMAPPER);
 		try {
-			SignUtil.visit(remapper, t, false);
+			TypeUtil.visit(remapper, t, false);
 			return true;
 		} catch (InvalidClassException e) {
 			return false;

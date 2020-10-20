@@ -1,21 +1,33 @@
 package io.github.f2bb.abstracter.util.asm;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 
 import com.google.common.reflect.TypeToken;
 import io.github.f2bb.abstracter.AbstracterConfig;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.util.AbstracterLoader;
 import io.github.f2bb.abstracter.util.RawClassType;
+import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
-public class SignUtil {
+public class TypeUtil {
+	public static final Remapper REMAPPER = new Remapper() {
+		@Override
+		public String map(String internalName) {
+			Class<?> cls = AbstracterLoader.getClass(org.objectweb.asm.Type.getObjectType(internalName).getClassName());
+			return AbstracterConfig.getInterfaceName(cls);
+		}
+	};
+
 	public static String toSignature(Type reified) {
 		SignatureWriter writer = new SignatureWriter();
 		visit(writer, reified);
@@ -167,7 +179,7 @@ public class SignUtil {
 		if (type instanceof RawClassType) {
 			return ((RawClassType) type).getInternalName();
 		}
-		return org.objectweb.asm.Type.getInternalName(AbstracterUtil.raw(type));
+		return org.objectweb.asm.Type.getInternalName(raw(type));
 	}
 
 	public static String getInterfaceDesc(Class<?> cls) {
@@ -176,5 +188,30 @@ public class SignUtil {
 		} else {
 			return "L" + AbstracterConfig.getInterfaceName(cls) + ";";
 		}
+	}
+
+	public static Class<?> raw(Type type) {
+		if (type instanceof Class<?>) {
+			return (Class<?>) type;
+		} else if (type instanceof GenericArrayType) {
+			return Array.newInstance(raw(((GenericArrayType) type).getGenericComponentType()), 0).getClass();
+		} else if (type instanceof ParameterizedType) {
+			return (Class<?>) ((ParameterizedType) type).getRawType();
+		} else if (type instanceof TypeVariable<?>) {
+			Iterator<Type> iterator = Arrays.asList(((TypeVariable<?>) type).getBounds()).iterator();
+			while (iterator.hasNext()) {
+				Type bound = iterator.next();
+				if (bound != Object.class) {
+					return raw(bound);
+				} else if (!iterator.hasNext()) {
+					return Object.class;
+				}
+			}
+		} else if (type instanceof WildcardType) {
+			// todo
+		} else if (type == null) {
+			return Object.class;
+		}
+		throw new UnsupportedOperationException("Raw type " + type + " not found!");
 	}
 }

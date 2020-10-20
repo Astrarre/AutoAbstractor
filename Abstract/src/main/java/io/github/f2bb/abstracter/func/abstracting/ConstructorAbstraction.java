@@ -19,10 +19,9 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.impl.JavaUtil;
-import io.github.f2bb.abstracter.util.AbstracterLoader;
 import io.github.f2bb.abstracter.util.ArrayUtil;
 import io.github.f2bb.abstracter.util.asm.InvokeUtil;
-import io.github.f2bb.abstracter.util.asm.SignUtil;
+import io.github.f2bb.abstracter.util.asm.TypeUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -55,6 +54,7 @@ public class ConstructorAbstraction {
 
 	public static void abstractBaseCtorJava(TypeSpec.Builder builder, Class<?> cls, Constructor<?> ctor) {
 		MethodSpec.Builder method = MethodSpec.constructorBuilder();
+		method.addModifiers(JavaUtil.getModifiers(ctor.getModifiers()));
 		List<String> params = new ArrayList<>();
 		for (Parameter parameter : ctor.getParameters()) {
 			String name = parameter.getName();
@@ -71,11 +71,11 @@ public class ConstructorAbstraction {
 	}
 
 	public static void abstractInterfaceCtorAsm(ClassNode node, Class<?> cls, Constructor<?> ctor, boolean impl) {
-		String desc = AbstracterLoader.REMAPPER.mapSignature(Type.getConstructorDescriptor(ctor), false);
+		String desc = TypeUtil.REMAPPER.mapSignature(Type.getConstructorDescriptor(ctor), false);
 		desc = desc.substring(0, desc.length() - 1);
 		MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC,
 				"newInstance",
-				desc + SignUtil.getInterfaceDesc(cls),
+				desc + TypeUtil.getInterfaceDesc(cls),
 				null,
 				null);
 		if (impl) {
@@ -90,7 +90,7 @@ public class ConstructorAbstraction {
 		String desc = Type.getConstructorDescriptor(ctor);
 		MethodNode method = new MethodNode(ctor.getModifiers(),
 				"<init>",
-				AbstracterLoader.REMAPPER.mapSignature(desc, false),
+				TypeUtil.REMAPPER.mapSignature(desc, false),
 				null,
 				null);
 		if (impl) {
