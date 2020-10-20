@@ -6,22 +6,22 @@ import java.util.zip.ZipOutputStream;
 import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.func.string.ToStringFunction;
+import io.github.f2bb.abstracter.util.AbstracterLoader;
 
 public class AbstractTest {
 	public static void main(String[] args) throws IOException {
-		Abstracter.testing = true;
 		for (File file : new File("classpath").listFiles()) {
-			Abstracter.CLASSPATH.addURL(file.toURI().toURL());
+			AbstracterLoader.CLASSPATH.addURL(file.toURI().toURL());
 		}
-		Abstracter.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
+		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
 		ToStringFunction<Class<?>> abstractSettings = ToStringFunction.constant("io/github/f2bb/block/IBlock$Settings");
 		AbstracterConfig.registerInterface("net.minecraft.block.AbstractBlock$Settings",
 				Abstracter.INTERFACE_API_ASM.asBuilder().nameFunction(abstractSettings).build(),
 				Abstracter.INTERFACE_IMPL_ASM.asBuilder().nameFunction(abstractSettings).build(),
 				Abstracter.INTERFACE_API_JAVA.asBuilder().nameFunction(abstractSettings).build());
-		AbstracterConfig.overrideInnerClass("net.minecraft.block.Block", "net.minecraft.block.AbstractBlock$Settings");
 
+		AbstracterConfig.overrideInnerClass("net.minecraft.block.Block", "net.minecraft.block.AbstractBlock$Settings");
 		registerDefaultInterface("net.minecraft.block.Block");
 		registerDefaultInterface("net.minecraft.item.Item");
 		registerDefaultInterface("net.minecraft.item.Item$Settings");
@@ -50,6 +50,10 @@ public class AbstractTest {
 		ZipOutputStream sources = new ZipOutputStream(new FileOutputStream("sources.jar"));
 		AbstracterConfig.writeSources(sources);
 		sources.close();
+
+		FileOutputStream manifest = new FileOutputStream("manifest.properties");
+		AbstracterConfig.writeManifest(manifest);
+		manifest.close();
 	}
 
 	private static void registerDefaultInterface(String cls) {

@@ -11,9 +11,8 @@ import io.github.f2bb.abstracter.func.filter.Filters;
 import io.github.f2bb.abstracter.func.filter.MemberFilter;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
 import io.github.f2bb.abstracter.impl.JavaUtil;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
 import io.github.f2bb.abstracter.util.asm.MethodUtil;
-import io.github.f2bb.abstracter.util.asm.SignatureUtil;
+import io.github.f2bb.abstracter.util.asm.SignUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -30,7 +29,7 @@ public interface FieldAbstracter<T> extends Opcodes {
 		FieldNode node = new FieldNode(f.getModifiers(),
 				f.getName(),
 				Type.getDescriptor(f.getType()),
-				SignatureUtil.toSignature(reified),
+				SignUtil.toSignature(reified),
 				null);
 		h.fields.add(node);
 	};
@@ -40,8 +39,8 @@ public interface FieldAbstracter<T> extends Opcodes {
 			java.lang.reflect.Type reified = TypeMappingFunction.reify(c, f.getGenericType());
 			FieldNode node = new FieldNode(f.getModifiers(),
 					f.getName(),
-					AbstracterUtil.getInterfaceDesc(TypeMappingFunction.raw(c, f.getGenericType())),
-					SignatureUtil.toSignature(reified),
+					SignUtil.getInterfaceDesc(TypeMappingFunction.raw(c, f.getGenericType())),
+					SignUtil.toSignature(reified),
 					null);
 			h.fields.add(node);
 			if (impl) {

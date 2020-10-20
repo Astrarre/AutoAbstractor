@@ -8,15 +8,14 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Collections2;
-import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.func.filter.MemberFilter;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.util.AbstracterLoader;
 import io.github.f2bb.abstracter.func.filter.Filters;
 
 public interface MethodSupplier {
 	MethodSupplier EMPTY = c -> Collections.emptySet();
 
-	MethodSupplier BASE_DEFAULT = create(Abstracter::isMinecraft)
+	MethodSupplier BASE_DEFAULT = create(AbstracterLoader::isMinecraft)
 			                              // neither bridge nor synthetic
 			                              .filtered(MemberFilter.<Method>userDeclared()
 					                                        // and must be protected
@@ -30,7 +29,7 @@ public interface MethodSupplier {
 	/**
 	 * all public methods are exposed from classes inside the 'umbrella'
 	 */
-	MethodSupplier INTERFACE_DEFAULT = create(AbstracterUtil::isUnabstractedClass)
+	MethodSupplier INTERFACE_DEFAULT = create(AbstracterLoader::isUnabstractedClass)
 			                                   .filtered(MemberFilter.<Method>userDeclared().and(MemberFilter.withAccess(
 					                                   Filters.PUBLIC))
 			                                                                                .and(MemberFilter.VALID_PARAMS_AND_RETURN));

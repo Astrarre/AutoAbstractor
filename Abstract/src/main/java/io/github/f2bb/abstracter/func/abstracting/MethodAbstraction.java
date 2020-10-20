@@ -1,6 +1,6 @@
 package io.github.f2bb.abstracter.func.abstracting;
 
-import static io.github.f2bb.abstracter.util.AbstracterUtil.map;
+import static io.github.f2bb.abstracter.util.ArrayUtil.map;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -17,7 +17,7 @@ import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
 import io.github.f2bb.abstracter.impl.JavaUtil;
 import io.github.f2bb.abstracter.util.asm.InvokeUtil;
-import io.github.f2bb.abstracter.util.asm.SignatureUtil;
+import io.github.f2bb.abstracter.util.asm.SignUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -60,8 +60,8 @@ public class MethodAbstraction implements Opcodes {
 		Function<java.lang.reflect.Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(declaring);
 		TypeToken<?>[] params = map(method.getGenericParameterTypes(), resolve, TypeToken[]::new);
 		TypeToken<?> returnType = resolve.apply(method.getGenericReturnType());
-		String desc = SignatureUtil.methodDescriptor(params, returnType);
-		String sign = impl ? null : SignatureUtil.methodSignature(method.getTypeParameters(), params, returnType);
+		String desc = SignUtil.methodDescriptor(params, returnType);
+		String sign = impl ? null : SignUtil.methodSignature(method.getTypeParameters(), params, returnType);
 		int access = method.getModifiers();
 		if (Modifier.isInterface(header.access)) {
 			access &= ~ACC_FINAL;

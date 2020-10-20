@@ -2,14 +2,6 @@ package io.github.f2bb.abstracter.func.abstracting;
 
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
-import static org.objectweb.asm.Opcodes.ALOAD;
-import static org.objectweb.asm.Opcodes.ARETURN;
-import static org.objectweb.asm.Opcodes.CHECKCAST;
-import static org.objectweb.asm.Opcodes.DUP;
-import static org.objectweb.asm.Opcodes.ILOAD;
-import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
-import static org.objectweb.asm.Opcodes.NEW;
-import static org.objectweb.asm.Opcodes.RETURN;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Parameter;
@@ -26,10 +18,11 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import io.github.f2bb.ImplementationHiddenException;
-import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.impl.JavaUtil;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.util.AbstracterLoader;
+import io.github.f2bb.abstracter.util.ArrayUtil;
 import io.github.f2bb.abstracter.util.asm.InvokeUtil;
+import io.github.f2bb.abstracter.util.asm.SignUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -42,7 +35,7 @@ public class ConstructorAbstraction {
 		TypeVariable<? extends Class<?>>[] vars = cls.getTypeParameters();
 		if (vars.length != 0) {
 			ParameterizedTypeName name = ParameterizedTypeName.get((ClassName) JavaUtil.toTypeName(cls),
-					AbstracterUtil.map(cls.getTypeParameters(), JavaUtil::toTypeName, TypeName[]::new));
+					ArrayUtil.map(cls.getTypeParameters(), JavaUtil::toTypeName, TypeName[]::new));
 			method.returns(name);
 		} else {
 			method.returns(JavaUtil.toTypeName(cls));
@@ -78,11 +71,11 @@ public class ConstructorAbstraction {
 	}
 
 	public static void abstractInterfaceCtorAsm(ClassNode node, Class<?> cls, Constructor<?> ctor, boolean impl) {
-		String desc = Abstracter.REMAPPER.mapSignature(Type.getConstructorDescriptor(ctor), false);
+		String desc = AbstracterLoader.REMAPPER.mapSignature(Type.getConstructorDescriptor(ctor), false);
 		desc = desc.substring(0, desc.length() - 1);
 		MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC,
 				"newInstance",
-				desc + AbstracterUtil.getInterfaceDesc(cls),
+				desc + SignUtil.getInterfaceDesc(cls),
 				null,
 				null);
 		if (impl) {
@@ -97,7 +90,7 @@ public class ConstructorAbstraction {
 		String desc = Type.getConstructorDescriptor(ctor);
 		MethodNode method = new MethodNode(ctor.getModifiers(),
 				"<init>",
-				Abstracter.REMAPPER.mapSignature(desc, false),
+				AbstracterLoader.REMAPPER.mapSignature(desc, false),
 				null,
 				null);
 		if (impl) {

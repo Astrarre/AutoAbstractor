@@ -11,11 +11,10 @@ import java.util.function.Predicate;
 
 import com.google.common.collect.Collections2;
 import com.google.common.reflect.TypeToken;
-import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.func.filter.Filters;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.util.AbstracterLoader;
 
 // automatically reified
 public interface InterfaceFunction {
@@ -23,10 +22,10 @@ public interface InterfaceFunction {
 
 	InterfaceFunction SIMPLE = c -> Arrays.asList(c.getGenericInterfaces());
 	// todo add `this` class
-	InterfaceFunction BASE_DEFAULT = branching(Abstracter::isMinecraft).filtered(Filters.IS_ABSTRACTED);
+	InterfaceFunction BASE_DEFAULT = branching(AbstracterLoader::isMinecraft).filtered(Filters.IS_ABSTRACTED);
 	InterfaceFunction INTERFACE_DEFAULT =
-			branching(AbstracterUtil::isUnabstractedClass).filtered(Filters.IS_ABSTRACTED)
-	                                                                                    .add(c -> {
+			branching(AbstracterLoader::isUnabstractedClass).filtered(Filters.IS_ABSTRACTED)
+			                                                .add(c -> {
 		                                                                                    if (AbstracterConfig
 				                                                                                        .isInterfaceAbstracted(
 						                                                                                        c.getSuperclass())) {
@@ -77,7 +76,7 @@ public interface InterfaceFunction {
 			for (Class<?> iface : cls.getInterfaces()) {
 				if (AbstracterConfig.isInterfaceAbstracted(iface)) {
 					classes.add(original.resolveType(iface).getType());
-				} else if (Abstracter.isMinecraft(iface)) {
+				} else if (AbstracterLoader.isMinecraft(iface)) {
 					// if the minecraft class just wasn't abstracted
 					// then we need to find all it's interfaces and add them
 					this.visitInterfaces(original, iface, classes);

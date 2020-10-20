@@ -9,12 +9,13 @@ import java.util.Collection;
 
 import com.google.common.reflect.TypeToken;
 import io.github.f2bb.abstracter.AbstracterConfig;
+import io.github.f2bb.abstracter.util.AbstracterUtil;
 import io.github.f2bb.abstracter.util.RawClassType;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
-public class SignatureUtil {
+public class SignUtil {
 	public static String toSignature(Type reified) {
 		SignatureWriter writer = new SignatureWriter();
 		visit(writer, reified);
@@ -160,5 +161,20 @@ public class SignatureUtil {
 		builder.append(')');
 		builder.append(toSignature(returnType.getRawType()));
 		return builder.toString();
+	}
+
+	public static String getRawName(Type type) {
+		if (type instanceof RawClassType) {
+			return ((RawClassType) type).getInternalName();
+		}
+		return org.objectweb.asm.Type.getInternalName(AbstracterUtil.raw(type));
+	}
+
+	public static String getInterfaceDesc(Class<?> cls) {
+		if(cls.isPrimitive()) {
+			return org.objectweb.asm.Type.getDescriptor(cls);
+		} else {
+			return "L" + AbstracterConfig.getInterfaceName(cls) + ";";
+		}
 	}
 }

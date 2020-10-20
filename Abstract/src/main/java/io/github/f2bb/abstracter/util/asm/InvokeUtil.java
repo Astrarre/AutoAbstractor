@@ -41,7 +41,7 @@ public class InvokeUtil implements Opcodes {
 	public static void invokeConstructor(MethodNode from, Constructor<?> constructor, boolean interfaceCtor) {
 		invoke(from,
 				0,
-				from.access,
+				0,
 				Type.getInternalName(constructor.getDeclaringClass()),
 				"<init>",
 				Type.getConstructorDescriptor(constructor),
@@ -79,8 +79,9 @@ public class InvokeUtil implements Opcodes {
 				if (iface) {
 					from.visitTypeInsn(CHECKCAST, owner);
 				}
+				index++;
 			}
-			index++;
+
 			// auto adjust for interface
 			if (opcode == INVOKEVIRTUAL && Modifier.isInterface(classAccess)) {
 				opcode = INVOKEINTERFACE;
@@ -96,7 +97,8 @@ public class InvokeUtil implements Opcodes {
 		for (int i = 0; i < targetArgs.length; i++) {
 			Type targetArg = targetArgs[i];
 			Type originArg = originArgs[i];
-			from.visitVarInsn(originArg.getOpcode(ILOAD), index++);
+			from.visitVarInsn(originArg.getOpcode(ILOAD), index);
+			index+=originArg.getSize();
 			// if type changed, generics or abstraction
 			if (!targetArg.equals(originArg)) {
 				from.visitTypeInsn(CHECKCAST, targetArg.getInternalName());

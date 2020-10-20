@@ -1,12 +1,16 @@
 package io.github.f2bb.abstracter;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.zip.ZipOutputStream;
 
 import com.squareup.javapoet.TypeSpec;
 import io.github.f2bb.abstracter.ex.InvalidClassException;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.util.AbstracterLoader;
+import io.github.f2bb.abstracter.util.ArrayUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -33,7 +37,7 @@ public class AbstracterConfig {
 	 * 'adds' an inner class to the other class
 	 */
 	public static void overrideInnerClass(String cls, String ...inners) {
-		overrideInnerClass(Abstracter.getClass(cls), AbstracterUtil.map(inners, Abstracter::getClass, Class[]::new));
+		overrideInnerClass(AbstracterLoader.getClass(cls), ArrayUtil.map(inners, AbstracterLoader::getClass, Class[]::new));
 	}
 
 	/**
@@ -44,21 +48,21 @@ public class AbstracterConfig {
 	}
 
 	public static void overrideOuterClass(String inner) {
-		overrideOuterClass(Abstracter.getClass(inner));
+		overrideOuterClass(AbstracterLoader.getClass(inner));
 	}
 
 	public static void registerInterface(String cls,
 			Abstracter<ClassNode> interfaceApiAsm,
 			Abstracter<ClassNode> interfaceImplAsm,
 			Abstracter<TypeSpec.Builder> interfaceApiJava) {
-		registerInterface(Abstracter.getClass(cls), interfaceApiAsm, interfaceImplAsm, interfaceApiJava);
+		registerInterface(AbstracterLoader.getClass(cls), interfaceApiAsm, interfaceImplAsm, interfaceApiJava);
 	}
 
 	public static void registerBase(String cls,
 			Abstracter<ClassNode> baseApiAsm,
 			Abstracter<ClassNode> baseImplAsm,
 			Abstracter<TypeSpec.Builder> baseApiJava) {
-		registerBase(Abstracter.getClass(cls), baseApiAsm, baseImplAsm, baseApiJava);
+		registerBase(AbstracterLoader.getClass(cls), baseApiAsm, baseImplAsm, baseApiJava);
 	}
 
 	public static void registerInterface(String cls,
@@ -119,6 +123,13 @@ public class AbstracterConfig {
 				baseApiJava.build());
 	}
 
+	public static void writeManifest(OutputStream stream) throws IOException {
+		Properties properties = new Properties();
+		for (Class<?> cls : INTERFACE_IMPL_ASM.keySet()) {
+			properties.put(Type.getInternalName(cls), getInterfaceName(cls));
+		}
+		properties.store(stream, "F2bb Interface Manifest");
+	}
 
 	public static void writeApiJar(ZipOutputStream zos) {
 		for (Class<?> cls : INTERFACE_API_ASM.keySet()) {
@@ -195,7 +206,7 @@ public class AbstracterConfig {
 		Abstracter<ClassNode> abstracter = INTERFACE_IMPL_ASM.get(cls);
 		if (abstracter != null) {
 			return abstracter.nameFunction.toString(cls);
-		} else if (Abstracter.isMinecraft(cls)) {
+		} else if (AbstracterLoader.isMinecraft(cls)) {
 			throw new InvalidClassException(cls);
 		} else {
 			return Type.getInternalName(cls);
@@ -206,7 +217,7 @@ public class AbstracterConfig {
 		Abstracter<ClassNode> abstracter = BASE_IMPL_ASM.get(cls);
 		if (abstracter != null) {
 			return abstracter.nameFunction.toString(cls);
-		} else if (Abstracter.isMinecraft(cls)) {
+		} else if (AbstracterLoader.isMinecraft(cls)) {
 			throw new InvalidClassException(cls);
 		} else {
 			return Type.getInternalName(cls);

@@ -19,38 +19,11 @@ import io.github.f2bb.abstracter.func.inheritance.InterfaceFunction;
 import io.github.f2bb.abstracter.func.inheritance.SuperFunction;
 import io.github.f2bb.abstracter.func.serialization.SerializingFunction;
 import io.github.f2bb.abstracter.func.string.ToStringFunction;
-import io.github.f2bb.abstracter.util.AbstracterLoader;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.tree.ClassNode;
 
 public class Abstracter<T> implements Opcodes {
-	public static boolean testing = false;
-	public static final SignatureVisitor EMPTY_VISITOR = new SignatureVisitor(ASM9) {};
-	public static final AbstracterLoader CLASSPATH = new AbstracterLoader(), INSTANCE =
-			                                                                         new AbstracterLoader(CLASSPATH);
-	public static final Remapper REMAPPER = new Remapper() {
-		@Override
-		public String map(String internalName) {
-			Class<?> cls = Abstracter.getClass(Type.getObjectType(internalName).getClassName());
-			return AbstracterConfig.getInterfaceName(cls);
-		}
-	};
-
-	public static boolean isMinecraft(Class<?> cls) {
-		return cls != null && cls.getClassLoader() == Abstracter.INSTANCE;
-	}
-
-	public static Class<?> getClass(String reflectionName) {
-		try {
-			return INSTANCE.loadClass(reflectionName);
-		} catch (ClassNotFoundException e) {
-			throw new IllegalArgumentException(e);
-		}
-	}
-
 	private static final int INTERFACE_ADD = ACC_INTERFACE | ACC_ABSTRACT;
 	private static final IntUnaryOperator INTERFACE_OPERATOR = i -> (i & (~(ACC_ENUM | ACC_FINAL))) | INTERFACE_ADD;
 	public static final Abstracter<ClassNode> INTERFACE_IMPL_ASM = new Builder<ClassNode>()

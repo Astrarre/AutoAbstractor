@@ -6,17 +6,10 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.IntFunction;
 
 import io.github.f2bb.abstracter.AbstracterConfig;
-import io.github.f2bb.abstracter.Abstracter;
-import org.objectweb.asm.commons.SignatureRemapper;
-import org.objectweb.asm.signature.SignatureReader;
 
 public class AbstracterUtil {
 	public static Class<?> raw(Type type) {
@@ -44,41 +37,4 @@ public class AbstracterUtil {
 		throw new UnsupportedOperationException("Raw type " + type + " not found!");
 	}
 
-	public static String getRawName(Type type) {
-		if (type instanceof RawClassType) {
-			return ((RawClassType) type).getInternalName();
-		}
-		return org.objectweb.asm.Type.getInternalName(raw(type));
-	}
-
-	public static <A, B> B[] map(A[] arr, Function<A, B> func, IntFunction<B[]> array) {
-		B[] bs = array.apply(arr.length);
-		for (int i = 0; i < arr.length; i++) {
-			bs[i] = func.apply(arr[i]);
-		}
-		return bs;
-	}
-
-	public static <A, B> List<B> map(A[] arr, Function<A, B> func) {
-		ArrayList<B> array = new ArrayList<>(arr.length);
-		for (A a : arr) {
-			array.add(func.apply(a));
-		}
-		return array;
-	}
-
-	public static String getInterfaceDesc(Class<?> cls) {
-		if(cls.isPrimitive()) {
-			return org.objectweb.asm.Type.getDescriptor(cls);
-		} else {
-			return "L" + AbstracterConfig.getInterfaceName(cls) + ";";
-		}
-	}
-
-	/**
-	 * @return true if the class is a minecraft class, but isn't supposed to be abstracted
-	 */
-	public static boolean isUnabstractedClass(Class<?> cls) {
-		return Abstracter.isMinecraft(cls) && !AbstracterConfig.isInterfaceAbstracted(cls);
-	}
 }

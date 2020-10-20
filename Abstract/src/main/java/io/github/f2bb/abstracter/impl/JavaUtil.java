@@ -1,6 +1,6 @@
 package io.github.f2bb.abstracter.impl;
 
-import static io.github.f2bb.abstracter.util.AbstracterUtil.map;
+import static io.github.f2bb.abstracter.util.ArrayUtil.map;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -25,10 +25,10 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
-import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.ex.InvalidClassException;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.util.AbstracterLoader;
+import io.github.f2bb.abstracter.util.ArrayUtil;
 
 public class JavaUtil {
 	public static final Constructor<WildcardTypeName> WILDCARD_TYPE_NAME_CONSTRUCTOR;
@@ -74,7 +74,7 @@ public class JavaUtil {
 			Class<?> cls = (Class<?>) type;
 			if (AbstracterConfig.isInterfaceAbstracted(cls)) {
 				return getName(AbstracterConfig.getInterfaceName(cls));
-			} else if(Abstracter.isMinecraft(cls)) {
+			} else if(AbstracterLoader.isMinecraft(cls)) {
 				throw new InvalidClassException(cls);
 			}
 
@@ -88,14 +88,14 @@ public class JavaUtil {
 		} else if (type instanceof ParameterizedType) {
 			ParameterizedType ptn = (ParameterizedType) type;
 			return ParameterizedTypeName.get((ClassName) toTypeName(ptn.getRawType()),
-					AbstracterUtil.map(ptn.getActualTypeArguments(), JavaUtil::toTypeName, TypeName[]::new));
+					ArrayUtil.map(ptn.getActualTypeArguments(), JavaUtil::toTypeName, TypeName[]::new));
 		} else if (type instanceof TypeVariable<?>) {
 			TypeVariable<?> tvn = (TypeVariable<?>) type;
-			return TypeVariableName.get(tvn.getName(), AbstracterUtil
+			return TypeVariableName.get(tvn.getName(), ArrayUtil
 					                                           .map(tvn.getBounds(), JavaUtil::toTypeName, TypeName[]::new));
 		} else if (type instanceof WildcardType) {
 			WildcardType wtn = (WildcardType) type;
-			return get(AbstracterUtil.map(wtn.getLowerBounds(), JavaUtil::toTypeName), AbstracterUtil.map(wtn.getUpperBounds(), JavaUtil::toTypeName));
+			return get(ArrayUtil.map(wtn.getLowerBounds(), JavaUtil::toTypeName), ArrayUtil.map(wtn.getUpperBounds(), JavaUtil::toTypeName));
 		}
 		throw new IllegalArgumentException("What " + type);
 	}

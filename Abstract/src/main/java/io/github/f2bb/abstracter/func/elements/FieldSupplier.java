@@ -9,19 +9,18 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Collections2;
-import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.func.filter.Filters;
 import io.github.f2bb.abstracter.func.filter.MemberFilter;
-import io.github.f2bb.abstracter.util.AbstracterUtil;
+import io.github.f2bb.abstracter.util.AbstracterLoader;
 
 public interface FieldSupplier {
 	FieldSupplier EMPTY = c -> Collections.emptySet();
 
-	FieldSupplier INTERFACE_DEFAULT = create(AbstracterUtil::isUnabstractedClass)
+	FieldSupplier INTERFACE_DEFAULT = create(AbstracterLoader::isUnabstractedClass)
 			                                  .filtered(MemberFilter.withType(Filters.IS_ABSTRACTED)
 			                                                        .and(MemberFilter.withAccess(Filters.PUBLIC)));
-	FieldSupplier BASE_DEFAULT = create(Abstracter::isMinecraft).filtered(MemberFilter.withType(Filters.IS_ABSTRACTED)
-	                                                                                  .and(// and must be protected
+	FieldSupplier BASE_DEFAULT = create(AbstracterLoader::isMinecraft).filtered(MemberFilter.withType(Filters.IS_ABSTRACTED)
+	                                                                                        .and(// and must be protected
 			                                                                                  MemberFilter.<Field>withAccess(
 					                                                                                  Filters.PROTECTED)
 					                                                                                  // or public but

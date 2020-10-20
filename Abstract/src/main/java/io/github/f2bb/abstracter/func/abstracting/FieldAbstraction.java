@@ -13,7 +13,7 @@ import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
 import io.github.f2bb.abstracter.impl.JavaUtil;
 import io.github.f2bb.abstracter.util.asm.InvokeUtil;
-import io.github.f2bb.abstracter.util.asm.SignatureUtil;
+import io.github.f2bb.abstracter.util.asm.SignUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
@@ -72,7 +72,7 @@ public class FieldAbstraction implements Opcodes {
 		TypeToken<?> token = TypeToken.of(cls);
 		String descriptor = Type.getDescriptor(token.getRawType());
 		String name = field.getName();
-		String signature = SignatureUtil.toSignature(token.getType());
+		String signature = SignUtil.toSignature(token.getType());
 		if(iface) {
 			access &= ~ACC_FINAL;
 		} else {
@@ -112,7 +112,7 @@ public class FieldAbstraction implements Opcodes {
 		TypeToken<?> token = TypeToken.of(cls);
 		String descriptor = Type.getDescriptor(token.getRawType());
 		String name = field.getName();
-		String signature = SignatureUtil.toSignature(token.getType());
+		String signature = SignUtil.toSignature(token.getType());
 		if(iface) {
 			access &= ~ACC_FINAL;
 		} else {
@@ -131,6 +131,9 @@ public class FieldAbstraction implements Opcodes {
 			} else {
 				node.visitVarInsn(ALOAD, 0);
 				node.visitVarInsn(type.getOpcode(ILOAD), 1);
+				if(!Type.getDescriptor(field.getType()).equals(descriptor)) {
+					node.visitTypeInsn(CHECKCAST, Type.getInternalName(field.getType()));
+				}
 				node.visitFieldInsn(PUTFIELD, owner, name, descriptor);
 			}
 		} else {
