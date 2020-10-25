@@ -21,67 +21,39 @@ import io.github.f2bb.abstracter.func.string.ToStringFunction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
-public class Abstracter<T> implements Opcodes {
+public class Abstracter implements Opcodes {
 	private static final int INTERFACE_ADD = ACC_INTERFACE | ACC_ABSTRACT;
 	private static final IntUnaryOperator INTERFACE_OPERATOR = i -> (i & (~(ACC_ENUM | ACC_FINAL))) | INTERFACE_ADD;
-	public static final Abstracter<ClassNode> INTERFACE_IMPL_ASM = new Builder<ClassNode>()
+	public static final Abstracter<ClassNode> INTERFACE_ASM = new Builder<ClassNode>()
 			                                                               .headerFunction(HeaderFunction.ASM)
 			                                                               .ctorSupplier(ConstructorSupplier.INTERFACE_DEFAULT)
 			                                                               .fieldSupplier(FieldSupplier.INTERFACE_DEFAULT)
 			                                                               .methodSupplier(MethodSupplier.INTERFACE_DEFAULT)
 			                                                               .interfaceFunction(InterfaceFunction.INTERFACE_DEFAULT)
-			                                                               .superFunction(SuperFunction.INTERFACE_DEFAULT)
+			                                                               .superFunction(SuperFunction.EMPTY)
 			                                                               .nameFunction(ToStringFunction.INTERFACE_DEFAULT)
 			                                                               .accessOperator(INTERFACE_OPERATOR)
-			                                                               .fieldAbstracter(FieldAbstracter.INTERFACE_IMPL_ASM)
-			                                                               .methodAbstracter(MethodAbstracter.INTERFACE_IMPL_ASM)
+			                                                               .fieldAbstracter(FieldAbstracter.INTERFACE_ASM)
+			                                                               .methodAbstracter(MethodAbstracter.INTERFACE_ASM)
 			                                                               .constructorAbstracter(ConstructorAbstracter.INTERFACE_ASM)
 			                                                               .serializer(SerializingFunction.ASM).build();
-	public static final Abstracter<ClassNode> INTERFACE_API_ASM = new Builder<ClassNode>()
-			                                                              .headerFunction(HeaderFunction.ASM)
-			                                                              .ctorSupplier(ConstructorSupplier.INTERFACE_DEFAULT)
-			                                                              .fieldSupplier(FieldSupplier.INTERFACE_DEFAULT)
-			                                                              .methodSupplier(MethodSupplier.INTERFACE_DEFAULT)
-			                                                              .interfaceFunction(InterfaceFunction.INTERFACE_DEFAULT)
-			                                                              .superFunction(SuperFunction.INTERFACE_DEFAULT)
-			                                                              .nameFunction(ToStringFunction.INTERFACE_DEFAULT)
-			                                                              .accessOperator(INTERFACE_OPERATOR)
-			                                                              .fieldAbstracter(FieldAbstracter.INTERFACE_API_ASM)
-			                                                              .methodAbstracter(MethodAbstracter.INTERFACE_API_ASM)
-			                                                              .constructorAbstracter(ConstructorAbstracter.INTERFACE_API_ASM)
-			                                                              .serializer(SerializingFunction.ASM).build();
 
-	public static final Abstracter<ClassNode> BASE_IMPL_ASM = new Builder<ClassNode>()
+	public static final Abstracter<ClassNode> BASE_ASM = new Builder<ClassNode>()
 			                                                          .headerFunction(HeaderFunction.ASM)
 			                                                          .ctorSupplier(ConstructorSupplier.BASE_DEFAULT)
 			                                                          .fieldSupplier(FieldSupplier.BASE_DEFAULT)
 			                                                          .methodSupplier(MethodSupplier.BASE_DEFAULT)
 			                                                          .interfaceFunction(InterfaceFunction.BASE_DEFAULT)
-			                                                          .superFunction(SuperFunction.BASE_IMPL_DEFAULT)
+			                                                          .superFunction(SuperFunction.BASE_DEFAULT)
 			                                                          .nameFunction(ToStringFunction.BASE_DEFAULT)
 			                                                          .accessOperator(IntUnaryOperator.identity())
-			                                                          .fieldAbstracter(FieldAbstracter.BASE_IMPL_ASM)
-			                                                          .methodAbstracter(MethodAbstracter.BASE_IMPL_ASM)
-			                                                          .constructorAbstracter(ConstructorAbstracter.BASE_IMPL_ASM)
+			                                                          .fieldAbstracter(FieldAbstracter.BASE_ASM)
+			                                                          .methodAbstracter(MethodAbstracter.BASE_ASM)
+			                                                          .constructorAbstracter(ConstructorAbstracter.BASE_ASM)
 			                                                          .serializer(SerializingFunction.ASM).build();
-	public static final Abstracter<ClassNode> BASE_API_ASM =
-			new Builder<ClassNode>().headerFunction(HeaderFunction.ASM)
-	                                                                                 .ctorSupplier(ConstructorSupplier.BASE_DEFAULT)
-	                                                                                 .fieldSupplier(FieldSupplier.BASE_DEFAULT)
-	                                                                                 .methodSupplier(MethodSupplier.BASE_DEFAULT)
-	                                                                                 .interfaceFunction(
-			                                                                                 InterfaceFunction.BASE_DEFAULT)
-	                                                                                 .superFunction(SuperFunction.BASE_API_DEFAULT)
-	                                                                                 .nameFunction(ToStringFunction.BASE_DEFAULT)
-	                                                                                 .accessOperator(IntUnaryOperator
-			                                                                                                 .identity())
-	                                                                                 .fieldAbstracter(FieldAbstracter.BASE_API_ASM)
-	                                                                                 .methodAbstracter(MethodAbstracter.BASE_API_ASM)
-	                                                                                 .constructorAbstracter(
-			                                                                                 ConstructorAbstracter.BASE_API_ASM)
-	                                                                                 .serializer(SerializingFunction.ASM).build();
 
-	protected final HeaderFunction<T> headerFunction;
+	protected final HeaderFunction<ClassNode> headerFunctionAsm;
+	protected final HeaderFunction<TypeSpec.Builder>
 	protected final ConstructorSupplier constructorSupplier;
 	protected final FieldSupplier fieldSupplier;
 	protected final MethodSupplier methodSupplier;
@@ -180,6 +152,7 @@ public class Abstracter<T> implements Opcodes {
 		private SerializingFunction<T> serializer;
 
 		public Builder() {}
+
 		private Builder(HeaderFunction<T> headerFunction,
 				ConstructorSupplier ctorSupplier,
 				FieldSupplier fieldSupplier,
