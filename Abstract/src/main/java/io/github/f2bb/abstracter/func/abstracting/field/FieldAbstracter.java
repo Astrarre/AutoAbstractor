@@ -60,10 +60,10 @@ public interface FieldAbstracter<T> extends Opcodes {
 			ASM_SETTER_INTER);
 
 	// java
-	FieldAbstracter<TypeSpec.Builder> BASE_API_JAVA = new BaseFieldAbstracter<>(JAVA_VIRTUAL_FIELD,
+	FieldAbstracter<TypeSpec.Builder> BASE_JAVA = new BaseFieldAbstracter<>(JAVA_VIRTUAL_FIELD,
 			JAVA_GETTER_API_BASE,
 			JAVA_SETTER_API_BASE);
-	FieldAbstracter<TypeSpec.Builder> INTERFACE_API_JAVA = new InterfaceFieldAbstracter<>(JAVA_VIRTUAL_FIELD,
+	FieldAbstracter<TypeSpec.Builder> INTERFACE_JAVA = new InterfaceFieldAbstracter<>(JAVA_VIRTUAL_FIELD,
 			JAVA_GETTER_API_INTER,
 			JAVA_SETTER_API_INTER);
 

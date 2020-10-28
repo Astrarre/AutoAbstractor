@@ -9,207 +9,142 @@ import java.util.zip.ZipOutputStream;
 
 import com.squareup.javapoet.TypeSpec;
 import io.github.f2bb.abstracter.ex.InvalidClassException;
+import io.github.f2bb.abstracter.func.abstracting.constructor.ConstructorAbstracter;
+import io.github.f2bb.abstracter.func.abstracting.field.FieldAbstracter;
+import io.github.f2bb.abstracter.func.abstracting.method.MethodAbstracter;
+import io.github.f2bb.abstracter.func.elements.ConstructorSupplier;
+import io.github.f2bb.abstracter.func.elements.FieldSupplier;
+import io.github.f2bb.abstracter.func.elements.MethodSupplier;
+import io.github.f2bb.abstracter.func.inheritance.InterfaceFunction;
+import io.github.f2bb.abstracter.func.inheritance.SuperFunction;
+import io.github.f2bb.abstracter.func.serialization.SerializingFunction;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
 import io.github.f2bb.abstracter.util.ArrayUtil;
+import io.github.f2bb.abstracter.util.asm.TypeUtil;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
-public class AbstracterConfig {
-	private static final Map<Class<?>, Abstracter<ClassNode>> INTERFACE_API_ASM = new HashMap<>(), INTERFACE_IMPL_ASM
-			                                                                                               =
-			                                                                                               new HashMap<>(), BASE_API_ASM = new HashMap<>(), BASE_IMPL_ASM = new HashMap<>();
-	private static final Map<Class<?>, Abstracter<TypeSpec.Builder>> INTERFACE_API_JAVA = new HashMap<>(),
-			BASE_API_JAVA = new HashMap<>();
+public class AbstracterConfig implements Opcodes {
+	private static final Map<Class<?>, Abstracter> INTERFACE_ABSTRACTION = new HashMap<>(), BASE_ABSTRACTION =
+			                                                                                        new HashMap<>();
 	private static final Map<Class<?>, Class<?>[]> INNER_CLASS_OVERRIDES = new HashMap<>();
-	private static final Map<Class<?>, Boolean> OUTER_CLASS_OVERRIDES = new HashMap<>();
-
-	/**
-	 * 'adds' an inner class to the other class
-	 */
-	public static void overrideInnerClass(Class<?> cls, Class<?>... inners) {
-		INNER_CLASS_OVERRIDES.put(cls, inners);
-		for (Class<?> inner : inners) {
-			OUTER_CLASS_OVERRIDES.put(inner, false);
-		}
-	}
-
-	/**
-	 * 'adds' an inner class to the other class
-	 */
-	public static void overrideInnerClass(String cls, String... inners) {
-		overrideInnerClass(AbstracterLoader.getClass(cls),
-				ArrayUtil.map(inners, AbstracterLoader::getClass, Class[]::new));
-	}
-
-	/**
-	 * makes an inner class an outer class
-	 */
-	public static void overrideOuterClass(Class<?> inner) {
-		OUTER_CLASS_OVERRIDES.put(inner, true);
-	}
-
-	public static void overrideOuterClass(String inner) {
-		overrideOuterClass(AbstracterLoader.getClass(inner));
-	}
-
-	public static void registerInterface(String cls,
-			Abstracter<ClassNode> interfaceApiAsm,
-			Abstracter<ClassNode> interfaceImplAsm,
-			Abstracter<TypeSpec.Builder> interfaceApiJava) {
-		registerInterface(AbstracterLoader.getClass(cls), interfaceApiAsm, interfaceImplAsm, interfaceApiJava);
-	}
-
-	public static void registerBase(String cls,
-			Abstracter<ClassNode> baseApiAsm,
-			Abstracter<ClassNode> baseImplAsm,
-			Abstracter<TypeSpec.Builder> baseApiJava) {
-		registerBase(AbstracterLoader.getClass(cls), baseApiAsm, baseImplAsm, baseApiJava);
-	}
-
-	public static void registerInterface(String cls,
-			Abstracter.Builder<ClassNode> interfaceApiAsm,
-			Abstracter.Builder<ClassNode> interfaceImplAsm,
-			Abstracter.Builder<TypeSpec.Builder> interfaceApiJava) {
-		registerInterface(cls, interfaceApiAsm.build(), interfaceImplAsm.build(), interfaceApiJava.build());
-	}
-
-	public static void registerBase(String cls,
-			Abstracter.Builder<ClassNode> baseApiAsm,
-			Abstracter.Builder<ClassNode> baseImplAsm,
-			Abstracter.Builder<TypeSpec.Builder> baseApiJava) {
-		registerBase(cls, baseApiAsm.build(), baseImplAsm.build(), baseApiJava.build());
-	}
-
-	public static void registerInterface(Class<?> cls,
-			Abstracter<ClassNode> interfaceApiAsm,
-			Abstracter<ClassNode> interfaceImplAsm,
-			Abstracter<TypeSpec.Builder> interfaceApiJava) {
-		INTERFACE_API_ASM.put(cls, interfaceApiAsm);
-		INTERFACE_IMPL_ASM.put(cls, interfaceImplAsm);
-		INTERFACE_API_JAVA.put(cls, interfaceApiJava);
-	}
-
-	public static void registerBase(Class<?> cls,
-			Abstracter<ClassNode> baseApiAsm,
-			Abstracter<ClassNode> baseImplAsm,
-			Abstracter<TypeSpec.Builder> baseApiJava) {
-		BASE_API_ASM.put(cls, baseApiAsm);
-		BASE_IMPL_ASM.put(cls, baseImplAsm);
-		BASE_API_JAVA.put(cls, baseApiJava);
-	}
-
-	public static void registerInterface(Class<?> cls,
-			Abstracter.Builder<ClassNode> interfaceApiAsm,
-			Abstracter.Builder<ClassNode> interfaceImplAsm,
-			Abstracter.Builder<TypeSpec.Builder> interfaceApiJava) {
-		registerInterface(cls, interfaceApiAsm.build(), interfaceImplAsm.build(), interfaceApiJava.build());
-	}
-
-	public static void registerBase(Class<?> cls,
-			Abstracter.Builder<ClassNode> baseApiAsm,
-			Abstracter.Builder<ClassNode> baseImplAsm,
-			Abstracter.Builder<TypeSpec.Builder> baseApiJava) {
-		registerBase(cls, baseApiAsm.build(), baseImplAsm.build(), baseApiJava.build());
-	}
+	private static final Map<Class<?>, Boolean> IS_INNER = new HashMap<>();
 
 	public static void writeManifest(OutputStream stream) throws IOException {
 		Properties properties = new Properties();
-		for (Class<?> cls : INTERFACE_IMPL_ASM.keySet()) {
-			properties.put(Type.getInternalName(cls), getInterfaceName(cls));
-		}
+		INTERFACE_ABSTRACTION
+				.forEach((c, a) -> properties.setProperty(Type.getInternalName(c), a.nameFunction.toString(c)));
 		properties.store(stream, "F2bb Interface Manifest");
+		// todo store licence or something
 	}
 
-	public static void writeApiJar(ZipOutputStream zos) {
-		for (Class<?> cls : INTERFACE_API_ASM.keySet()) {
-			writeClass(INTERFACE_API_ASM, zos, cls);
-		}
-
-		for (Class<?> cls : BASE_API_ASM.keySet()) {
-			writeClass(BASE_API_ASM, zos, cls);
-		}
+	public static void writeJar(ZipOutputStream out, boolean impl) {
+		write(out, INTERFACE_ABSTRACTION, impl);
+		write(out, BASE_ABSTRACTION, impl);
 	}
 
-	public static void writeSources(ZipOutputStream zos) {
-		writeJava(INTERFACE_API_JAVA, zos);
-		writeJava(BASE_API_JAVA, zos);
+	public static void write(ZipOutputStream out, Map<Class<?>, Abstracter> abstraction, boolean impl) {
+		Map<Class<?>, ClassNode> cache = new HashMap<>();
+		abstraction.forEach((cls, abs) -> {
+			abs.serialize(out, cls, cache.computeIfAbsent(cls, c -> asm(abstraction, cache, c, impl)));
+			if (!IS_INNER.getOrDefault(cls, cls.getEnclosingClass() != null) && !impl) {
+				abs.serialize(out, cls, java(abstraction, cls, false));
+			}
+		});
 	}
 
-	public static void writeImplJar(ZipOutputStream zos) {
-		for (Class<?> cls : INTERFACE_IMPL_ASM.keySet()) {
-			writeClass(INTERFACE_IMPL_ASM, zos, cls);
-		}
-
-		for (Class<?> cls : BASE_IMPL_ASM.keySet()) {
-			writeClass(BASE_IMPL_ASM, zos, cls);
-		}
-	}
-
-	private static void writeJava(Map<Class<?>, Abstracter<TypeSpec.Builder>> map, ZipOutputStream out) {
-		for (Class<?> cls : map.keySet()) {
-			if (OUTER_CLASS_OVERRIDES.computeIfAbsent(cls, c -> {
-				Class<?> enclosing = cls.getEnclosingClass();
-				return enclosing == null || !map.containsKey(enclosing);
-			})) {
-				writeJava(map, out, cls);
+	public static ClassNode asm(Map<Class<?>, Abstracter> map,
+			Map<Class<?>, ClassNode> cache,
+			Class<?> cls,
+			boolean impl) {
+		ClassNode node = map.get(cls).applyAsm(cls, impl);
+		if (node != null) {
+			for (Class<?> inner : INNER_CLASS_OVERRIDES.getOrDefault(cls, cls.getClasses())) {
+				if (map.containsKey(inner)) {
+					ClassNode innerNode = cache.computeIfAbsent(inner, c -> asm(map, cache, c, impl));
+					node.visitInnerClass(innerNode.name,
+							node.name,
+							TypeUtil.getInnerName(innerNode.name),
+							innerNode.access);
+				}
 			}
 		}
+		return node;
 	}
 
-	private static void writeJava(Map<Class<?>, Abstracter<TypeSpec.Builder>> map, ZipOutputStream zos, Class<?> cls) {
-		Abstracter<TypeSpec.Builder> a = map.get(cls);
-		TypeSpec.Builder builder = a.apply(cls);
-		for (Class<?> c : INNER_CLASS_OVERRIDES.computeIfAbsent(cls, Class::getDeclaredClasses)) {
-			Abstracter<TypeSpec.Builder> inner = map.get(c);
-			if (inner != null) {
-				builder.addType(inner.apply(c).build());
+	public static TypeSpec.Builder java(Map<Class<?>, Abstracter> map, Class<?> cls, boolean impl) {
+		TypeSpec.Builder node = map.get(cls).applyJava(cls, impl);
+		if (node != null) {
+			for (Class<?> inner : INNER_CLASS_OVERRIDES.getOrDefault(cls, cls.getClasses())) {
+				if (map.containsKey(inner)) {
+					node.addType(java(map, inner, impl).build());
+				}
 			}
 		}
-		a.serialize(zos, cls, builder);
+		return node;
 	}
 
-	private static void writeClass(Map<Class<?>, Abstracter<ClassNode>> map, ZipOutputStream zos, Class<?> c) {
-		Abstracter<ClassNode> a = map.get(c);
-		ClassNode node = a.apply(c);
-		for (Class<?> cls : INNER_CLASS_OVERRIDES.computeIfAbsent(c, Class::getDeclaredClasses)) {
-			if (map.containsKey(cls)) {
-				String name = Type.getInternalName(cls);
-				int last = name.lastIndexOf('$');
-				String simple = name.substring(last + 1);
-				node.visitInnerClass(node.name + '$' + simple, node.name, simple, cls.getModifiers());
-			}
+	public static void manualInterface(String mcClass, String abstraction) {
+		String internal = abstraction.replace('.', '/');
+		registerInterface(mcClass,
+				new Abstracter((access, name, variables, sup, interfaces) -> null,
+						(access, name, variables, sup, interfaces) -> null,
+						ConstructorSupplier.EMPTY,
+						FieldSupplier.EMPTY,
+						MethodSupplier.EMPTY,
+						InterfaceFunction.EMPTY,
+						SuperFunction.EMPTY,
+						instance -> internal,
+						operand -> operand,
+						FieldAbstracter.nothing(),
+						MethodAbstracter.nothing(),
+						ConstructorAbstracter.nothing(),
+						SerializingFunction.nothing(),
+						FieldAbstracter.nothing(),
+						MethodAbstracter.nothing(),
+						ConstructorAbstracter.nothing(),
+						SerializingFunction.nothing()));
+	}
+
+	public static void registerInnerOverride(String cls, String... inners) {
+		Class<?>[] innerClasses = ArrayUtil.map(inners, AbstracterLoader::getClass, Class[]::new);
+		for (Class<?> aClass : innerClasses) {
+			IS_INNER.put(aClass, true);
 		}
-		a.serialize(zos, c, node);
+		INNER_CLASS_OVERRIDES.put(AbstracterLoader.getClass(cls), innerClasses);
 	}
 
+	public static void makeOuter(String cls) {
+		IS_INNER.put(AbstracterLoader.getClass(cls), false);
+	}
 
-	public static boolean isBaseAbstracted(Class<?> cls) {
-		return BASE_IMPL_ASM.containsKey(cls);
+	public static void registerInterface(String cls, Abstracter abstracter) {
+		INTERFACE_ABSTRACTION.put(AbstracterLoader.getClass(cls), abstracter);
+	}
+
+	public static void registerBase(String cls, Abstracter abstracter) {
+		BASE_ABSTRACTION.put(AbstracterLoader.getClass(cls), abstracter);
 	}
 
 	public static boolean isInterfaceAbstracted(Class<?> cls) {
-		return INTERFACE_IMPL_ASM.containsKey(cls);
+		return INTERFACE_ABSTRACTION.containsKey(cls);
 	}
 
 	public static String getInterfaceName(Class<?> cls) {
-		Abstracter<ClassNode> abstracter = INTERFACE_IMPL_ASM.get(cls);
-		if (abstracter != null) {
-			return abstracter.nameFunction.toString(cls);
-		} else if (AbstracterLoader.isMinecraft(cls)) {
-			throw new InvalidClassException(cls);
-		} else {
-			return Type.getInternalName(cls);
+		Abstracter function = INTERFACE_ABSTRACTION.get(cls);
+		if (function == null) {
+			if (AbstracterLoader.isMinecraft(cls)) {
+				throw new InvalidClassException(cls);
+			} else {
+				return Type.getInternalName(cls);
+			}
 		}
+
+		return function.nameFunction.toString(cls);
 	}
 
 	public static String getBaseName(Class<?> cls) {
-		Abstracter<ClassNode> abstracter = BASE_IMPL_ASM.get(cls);
-		if (abstracter != null) {
-			return abstracter.nameFunction.toString(cls);
-		} else if (AbstracterLoader.isMinecraft(cls)) {
-			throw new InvalidClassException(cls);
-		} else {
-			return Type.getInternalName(cls);
-		}
+		return BASE_ABSTRACTION.get(cls).nameFunction.toString(cls);
 	}
 }

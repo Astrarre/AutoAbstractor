@@ -214,4 +214,9 @@ public class TypeUtil {
 		}
 		throw new UnsupportedOperationException("Raw type " + type + " not found!");
 	}
+
+	public static String getInnerName(String str) {
+		int index = str.indexOf('$');
+		return str.substring(index+1);
+	}
 }

@@ -1,0 +1,42 @@
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    implementation parent
+
+    // fast util go brrr
+    implementation 'it.unimi.dsi:fastutil:8.4.1'
+
+    // ini config
+    implementation 'org.ini4j:ini4j:0.5.4'
+    // documentation
+    compileOnly 'org.jetbrains:annotations:19.0.0'
+
+    // gib bimap
+    compile 'com.google.guava:guava:29.0-jre'
+
+    // command line
+    implementation 'commons-cli:commons-cli:1.4'
+
+    implementation 'com.squareup:javapoet:1.13.0'
+
+    // for outputting raw asm later
+    // https://github.com/soabase/asm-mirror-descriptor
+
+
+    // https://mvnrepository.com/artifact/org.ow2.asm/asm
+    implementation 'org.ow2.asm:asm:9.0'
+    implementation 'org.ow2.asm:asm-commons:9.0'
+}

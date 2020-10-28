@@ -5,6 +5,7 @@ import org.objectweb.asm.Type;
 public interface ToStringFunction<T> {
 	ToStringFunction<Class<?>> BASE_DEFAULT = c -> getName(c, "Base");
 	ToStringFunction<Class<?>> INTERFACE_DEFAULT = c -> getName(c, "I");
+	ToStringFunction<Class<?>> INTERNAL_NAME = Type::getInternalName;
 
 	String toString(T instance);
 

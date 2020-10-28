@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    // api for compile
+    compileOnly files("$parent.projectDir/run/api.jar")
+    compileOnly files("$parent.projectDir/run/sources.jar")
+    compileOnly files("$parent.projectDir/run/fodder.jar")
+    compileOnly parent
+    implementation 'org.ow2.asm:asm:9.0'
+
+    // impl for runtime
+    //runtime files("$parent.projectDir/run/impl.jar")
+    //runtime fileTree(dir: "$parent.projectDir/run/classpath/", include: ['*.jar'])
+}

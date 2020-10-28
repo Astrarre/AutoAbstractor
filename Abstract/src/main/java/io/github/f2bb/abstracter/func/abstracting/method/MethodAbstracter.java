@@ -10,8 +10,8 @@ public interface MethodAbstracter<T> {
 	MethodAbstracter<ClassNode> BASE_ASM = new AsmMethodAbstracter(false);
 	MethodAbstracter<ClassNode> INTERFACE_ASM = new AsmMethodAbstracter(true);
 	// java
-	MethodAbstracter<TypeSpec.Builder> API_JAVA_BASE = new JavaMethodAbstracter(false);
-	MethodAbstracter<TypeSpec.Builder> API_JAVA_INTERFACE = new JavaMethodAbstracter(true);
+	MethodAbstracter<TypeSpec.Builder> JAVA_BASE = new JavaMethodAbstracter(false);
+	MethodAbstracter<TypeSpec.Builder> JAVA_INTERFACE = new JavaMethodAbstracter(true);
 
 	void abstractMethod(T header, Class<?> abstracting, Method method, boolean impl);
 

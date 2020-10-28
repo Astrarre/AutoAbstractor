@@ -15,13 +15,14 @@ public class AbstractTest {
 		}
 		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
-		ToStringFunction<Class<?>> abstractSettings = ToStringFunction.constant("io/github/f2bb/block/IBlock$Settings");
+		ToStringFunction<Class<?>> abstractSettings = ToStringFunction
+				                                              .constant("io/github/f2bb/block" + "/IBlock$Settings");
 		AbstracterConfig.registerInterface("net.minecraft.block.AbstractBlock$Settings",
-				Abstracter.INTERFACE_API_ASM.asBuilder().nameFunction(abstractSettings).build(),
-				Abstracter.INTERFACE_IMPL_ASM.asBuilder().nameFunction(abstractSettings).build(),
-				Abstracter.INTERFACE_API_JAVA.asBuilder().nameFunction(abstractSettings).build());
+				Abstracter.INTERFACE.asBuilder().setNameFunction(abstractSettings).build());
+		AbstracterConfig
+				.registerInnerOverride("net.minecraft.block.Block", "net.minecraft.block.AbstractBlock$Settings");
 
-		AbstracterConfig.overrideInnerClass("net.minecraft.block.Block", "net.minecraft.block.AbstractBlock$Settings");
+
 		registerDefaultInterface("net.minecraft.block.Block");
 		registerDefaultInterface("net.minecraft.item.Item");
 		registerDefaultInterface("net.minecraft.item.Item$Settings");
@@ -34,22 +35,19 @@ public class AbstractTest {
 		registerDefaultInterface("net.minecraft.entity.Entity");
 		registerDefaultInterface("net.minecraft.enchantment.Enchantment");
 		registerDefaultInterface("net.minecraft.Bootstrap");
+
 		registerDefaultBase("net.minecraft.block.Block");
 		registerDefaultBase("net.minecraft.entity.Entity");
 		registerDefaultBase("net.minecraft.enchantment.Enchantment");
 		registerDefaultBase("net.minecraft.item.Item");
 
 		ZipOutputStream api = new ZipOutputStream(new FileOutputStream("api.jar"));
-		AbstracterConfig.writeApiJar(api);
+		AbstracterConfig.writeJar(api, false);
 		api.close();
 
 		ZipOutputStream impl = new ZipOutputStream(new FileOutputStream("impl.jar"));
-		AbstracterConfig.writeImplJar(impl);
+		AbstracterConfig.writeJar(impl, true);
 		impl.close();
-
-		ZipOutputStream sources = new ZipOutputStream(new FileOutputStream("sources.jar"));
-		AbstracterConfig.writeSources(sources);
-		sources.close();
 
 		FileOutputStream manifest = new FileOutputStream("manifest.properties");
 		AbstracterConfig.writeManifest(manifest);
@@ -57,14 +55,10 @@ public class AbstractTest {
 	}
 
 	private static void registerDefaultInterface(String cls) {
-		AbstracterConfig.registerInterface(cls,
-				Abstracter.INTERFACE_API_ASM,
-				Abstracter.INTERFACE_IMPL_ASM,
-				Abstracter.INTERFACE_API_JAVA);
+		AbstracterConfig.registerInterface(cls, Abstracter.INTERFACE);
 	}
 
 	private static void registerDefaultBase(String base) {
-		AbstracterConfig
-				.registerBase(base, Abstracter.BASE_API_ASM, Abstracter.BASE_IMPL_ASM, Abstracter.BASE_API_JAVA);
+		AbstracterConfig.registerBase(base, Abstracter.BASE);
 	}
 }
