@@ -8,12 +8,9 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
 public class AbstracterLoader extends URLClassLoader {
-	public static final AbstracterLoader CLASSPATH = new AbstracterLoader();
+	// isolated classloader
+	public static final AbstracterLoader CLASSPATH = new AbstracterLoader(ClassLoader.getSystemClassLoader().getParent());
 	public static final AbstracterLoader INSTANCE = new AbstracterLoader(CLASSPATH);
-
-	public AbstracterLoader() {
-		super(new URL[] {});
-	}
 
 	public AbstracterLoader(ClassLoader parent) {
 		super(new URL[] {}, parent);

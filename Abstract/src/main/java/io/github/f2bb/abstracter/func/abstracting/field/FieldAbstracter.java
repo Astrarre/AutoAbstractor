@@ -7,20 +7,18 @@ import javax.lang.model.element.Modifier;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeSpec;
 import io.github.f2bb.ImplementationHiddenException;
-import io.github.f2bb.abstracter.func.QuadFunction;
 import io.github.f2bb.abstracter.func.abstracting.field.asm.AsmConstantFieldAbstracter;
 import io.github.f2bb.abstracter.func.abstracting.field.asm.AsmGetterAbstracter;
 import io.github.f2bb.abstracter.func.abstracting.field.asm.AsmSetterAbstracter;
 import io.github.f2bb.abstracter.func.abstracting.field.java.JavaGetterFieldAbstracter;
 import io.github.f2bb.abstracter.func.abstracting.field.java.JavaSetterFieldAbstracter;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
-import io.github.f2bb.abstracter.impl.JavaUtil;
+import io.github.f2bb.abstracter.util.java.JavaUtil;
 import io.github.f2bb.abstracter.util.asm.TypeUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
 
 public interface FieldAbstracter<T> extends Opcodes {
 	FieldAbstracter<ClassNode> ASM_VIRTUAL_FIELD = (h, c, f, i) -> {

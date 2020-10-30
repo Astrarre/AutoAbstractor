@@ -15,6 +15,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+@SuppressWarnings ("UnstableApiUsage")
 public class AsmMethodAbstracter implements MethodAbstracter<ClassNode>, Opcodes {
 	private final boolean iface;
 

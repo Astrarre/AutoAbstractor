@@ -3,6 +3,7 @@ package io.github.f2bb.abstracter.func.abstracting.constructor.asm;
 import java.lang.reflect.Constructor;
 
 import io.github.f2bb.abstracter.func.abstracting.constructor.ConstructorAbstracter;
+import io.github.f2bb.abstracter.util.ReflectUtil;
 import io.github.f2bb.abstracter.util.asm.InvokeUtil;
 import io.github.f2bb.abstracter.util.asm.TypeUtil;
 import org.objectweb.asm.Type;
@@ -16,7 +17,7 @@ public class AsmBaseConstructorAbstracter implements ConstructorAbstracter<Class
 		MethodNode method = new MethodNode(constructor.getModifiers(),
 				"<init>",
 				TypeUtil.REMAPPER.mapSignature(desc, false),
-				null,
+				impl ? null : TypeUtil.REMAPPER.mapSignature(ReflectUtil.getSignature(constructor), false),
 				null);
 		if (impl) {
 			InvokeUtil.invokeConstructor(method, constructor, false);

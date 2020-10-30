@@ -29,12 +29,10 @@ dependencies {
 
     // command line
     implementation 'commons-cli:commons-cli:1.4'
-
     implementation 'com.squareup:javapoet:1.13.0'
 
-    // for outputting raw asm later
-    // https://github.com/soabase/asm-mirror-descriptor
-
+    // mappings
+    implementation 'net.fabricmc:tiny-mappings-parser:0.3.0+build.17'
 
     // https://mvnrepository.com/artifact/org.ow2.asm/asm
     implementation 'org.ow2.asm:asm:9.0'

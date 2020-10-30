@@ -1,4 +1,4 @@
-package io.github.f2bb.abstracter.impl;
+package io.github.f2bb.abstracter.util.java;
 
 import static io.github.f2bb.abstracter.util.ArrayUtil.map;
 

@@ -14,7 +14,7 @@ import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.abstracting.field.FieldAbstracter;
 import io.github.f2bb.abstracter.func.abstracting.field.FieldAbstraction;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
-import io.github.f2bb.abstracter.impl.JavaUtil;
+import io.github.f2bb.abstracter.util.java.JavaUtil;
 
 public class JavaSetterFieldAbstracter implements FieldAbstracter<TypeSpec.Builder> {
 	private final boolean iface;

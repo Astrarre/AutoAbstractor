@@ -12,6 +12,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+@SuppressWarnings ("UnstableApiUsage")
 public class AsmGetterAbstracter implements FieldAbstracter<ClassNode> {
 	private final boolean iface;
 

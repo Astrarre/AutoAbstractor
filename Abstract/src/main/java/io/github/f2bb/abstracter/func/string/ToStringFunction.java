@@ -3,8 +3,8 @@ package io.github.f2bb.abstracter.func.string;
 import org.objectweb.asm.Type;
 
 public interface ToStringFunction<T> {
-	ToStringFunction<Class<?>> BASE_DEFAULT = c -> getName(c, "Base");
-	ToStringFunction<Class<?>> INTERFACE_DEFAULT = c -> getName(c, "I");
+	ToStringFunction<Class<?>> BASE_DEFAULT = c -> getName(c, "Base", 0);
+	ToStringFunction<Class<?>> INTERFACE_DEFAULT = c -> getName(c, "I", 0);
 	ToStringFunction<Class<?>> INTERNAL_NAME = Type::getInternalName;
 
 	String toString(T instance);
@@ -13,9 +13,9 @@ public interface ToStringFunction<T> {
 		return i -> this.toString(i) + func.toString(i);
 	}
 
-	static String getName(Class<?> cls, String prefix) {
+	static String getName(Class<?> cls, String prefix, int version) {
 		String str = Type.getInternalName(cls);
-		str = str.replace("net/minecraft/", "io/github/f2bb/");
+		str = str.replace("net/minecraft/", "v" + version + "/io/github/f2bb/");
 		int last = str.lastIndexOf('/') + 1;
 		return str.substring(0, last) + prefix + str.substring(last);
 	}

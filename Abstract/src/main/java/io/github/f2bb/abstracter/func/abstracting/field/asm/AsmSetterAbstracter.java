@@ -12,6 +12,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+@SuppressWarnings ("UnstableApiUsage")
 public class AsmSetterAbstracter implements FieldAbstracter<ClassNode> {
 	private final boolean iface;
 
@@ -25,7 +26,7 @@ public class AsmSetterAbstracter implements FieldAbstracter<ClassNode> {
 		String descriptor = Type.getDescriptor(token.getRawType());
 		String name = field.getName();
 		String signature = TypeUtil.toSignature(token.getType());
-		if (iface) {
+		if (this.iface) {
 			access &= ~ACC_FINAL;
 		} else {
 			access |= ACC_FINAL;

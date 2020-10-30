@@ -12,7 +12,7 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import io.github.f2bb.ImplementationHiddenException;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
-import io.github.f2bb.abstracter.impl.JavaUtil;
+import io.github.f2bb.abstracter.util.java.JavaUtil;
 
 public class JavaMethodAbstracter implements MethodAbstracter<TypeSpec.Builder> {
 	private final boolean iface;
@@ -35,7 +35,7 @@ public class JavaMethodAbstracter implements MethodAbstracter<TypeSpec.Builder> 
 		}
 
 		Set<Modifier> mods = JavaUtil.getModifiers(method.getModifiers());
-		if (iface) {
+		if (this.iface) {
 			mods.remove(javax.lang.model.element.Modifier.FINAL);
 			// if instance method
 			if (!mods.contains(javax.lang.model.element.Modifier.STATIC)) {

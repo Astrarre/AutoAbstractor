@@ -10,7 +10,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import io.github.f2bb.abstracter.func.abstracting.constructor.ConstructorAbstracter;
-import io.github.f2bb.abstracter.impl.JavaUtil;
+import io.github.f2bb.abstracter.util.java.JavaUtil;
 
 public class JavaBaseConstructorAbstracter implements ConstructorAbstracter<TypeSpec.Builder> {
 	@Override
