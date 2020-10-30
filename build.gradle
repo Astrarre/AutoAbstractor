@@ -9,6 +9,9 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven {
+        url = 'http://maven.modmuss50.me/'
+    }
 }
 
 dependencies {

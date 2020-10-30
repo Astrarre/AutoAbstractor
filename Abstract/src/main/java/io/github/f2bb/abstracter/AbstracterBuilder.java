@@ -12,6 +12,7 @@ import io.github.f2bb.abstracter.func.elements.MethodSupplier;
 import io.github.f2bb.abstracter.func.header.HeaderFunction;
 import io.github.f2bb.abstracter.func.inheritance.InterfaceFunction;
 import io.github.f2bb.abstracter.func.inheritance.SuperFunction;
+import io.github.f2bb.abstracter.func.postprocess.PostProcessor;
 import io.github.f2bb.abstracter.func.serialization.SerializingFunction;
 import io.github.f2bb.abstracter.func.string.ToStringFunction;
 import org.objectweb.asm.tree.ClassNode;
@@ -34,6 +35,7 @@ public class AbstracterBuilder {
 	private MethodAbstracter<TypeSpec.Builder> methodAbstracterJava;
 	private ConstructorAbstracter<TypeSpec.Builder> constructorAbstracterJava;
 	private SerializingFunction<TypeSpec.Builder> serializerJava;
+	private PostProcessor processor;
 
 	public AbstracterBuilder setAsm(HeaderFunction<ClassNode> asm) {
 		this.asm = asm;
@@ -120,23 +122,29 @@ public class AbstracterBuilder {
 		return this;
 	}
 
+	public AbstracterBuilder setPostProcessor(PostProcessor processor) {
+		this.processor = processor;
+		return this;
+	}
+
 	public Abstracter build() {
-		return new Abstracter(asm,
-				java,
-				supplier,
-				fieldSupplier,
-				methodSupplier,
-				interfaceFunction,
-				superFunction,
-				nameFunction,
-				accessOperator,
-				fieldAbstracterAsm,
-				methodAbstracterAsm,
-				constructorAbstracterAsm,
-				serializerAsm,
-				fieldAbstracterJava,
-				methodAbstracterJava,
-				constructorAbstracterJava,
-				serializerJava);
+		return new Abstracter(this.asm,
+				this.java,
+				this.supplier,
+				this.fieldSupplier,
+				this.methodSupplier,
+				this.interfaceFunction,
+				this.superFunction,
+				this.nameFunction,
+				this.accessOperator,
+				this.fieldAbstracterAsm,
+				this.methodAbstracterAsm,
+				this.constructorAbstracterAsm,
+				this.serializerAsm,
+				this.fieldAbstracterJava,
+				this.methodAbstracterJava,
+				this.constructorAbstracterJava,
+				this.serializerJava,
+				this.processor);
 	}
 }

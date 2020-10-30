@@ -15,13 +15,13 @@ public class AbstractTest {
 		}
 		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
-		ToStringFunction<Class<?>> abstractSettings = ToStringFunction
-				                                              .constant("io/github/f2bb/block" + "/IBlock$Settings");
 		AbstracterConfig.registerInterface("net.minecraft.block.AbstractBlock$Settings",
-				Abstracter.INTERFACE.asBuilder().setNameFunction(abstractSettings).build());
+				Abstracter.INTERFACE.asBuilder().setNameFunction(ToStringFunction
+						                                                 .constant("io/github/f2bb/block" +
+						                                                           "/IBlock$Settings"))
+				                    .build());
 		AbstracterConfig
 				.registerInnerOverride("net.minecraft.block.Block", "net.minecraft.block.AbstractBlock$Settings");
-
 
 		registerDefaultInterface("net.minecraft.block.Block");
 		registerDefaultInterface("net.minecraft.item.Item");

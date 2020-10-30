@@ -17,38 +17,15 @@ import io.github.f2bb.abstracter.func.elements.MethodSupplier;
 import io.github.f2bb.abstracter.func.header.HeaderFunction;
 import io.github.f2bb.abstracter.func.inheritance.InterfaceFunction;
 import io.github.f2bb.abstracter.func.inheritance.SuperFunction;
+import io.github.f2bb.abstracter.func.postprocess.PostProcessor;
 import io.github.f2bb.abstracter.func.serialization.SerializingFunction;
 import io.github.f2bb.abstracter.func.string.ToStringFunction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 public class Abstracter implements Opcodes {
-	private static final IntUnaryOperator INTERFACE_OPERATOR =
-			i -> i & ~(ACC_ENUM | ACC_FINAL) | ACC_INTERFACE | ACC_ABSTRACT;
-	public static final Abstracter INTERFACE = new AbstracterBuilder().setAsm(HeaderFunction.ASM)
-	                                                                  .setJava(HeaderFunction.JAVA)
-	                                                                  .setSupplier(ConstructorSupplier.INTERFACE_DEFAULT)
-	                                                                  .setFieldSupplier(FieldSupplier.INTERFACE_DEFAULT)
-	                                                                  .setMethodSupplier(MethodSupplier.INTERFACE_DEFAULT)
-	                                                                  .setInterfaceFunction(InterfaceFunction.INTERFACE_DEFAULT)
-	                                                                  .setSuperFunction(SuperFunction.EMPTY)
-	                                                                  .setNameFunction(ToStringFunction.INTERFACE_DEFAULT)
-	                                                                  .setAccessOperator(INTERFACE_OPERATOR)
-	                                                                  .setFieldAbstracterAsm(FieldAbstracter.INTERFACE_ASM)
-	                                                                  .setMethodAbstracterAsm(MethodAbstracter.INTERFACE_ASM)
-	                                                                  .setConstructorAbstracterAsm(
-			                                                                      ConstructorAbstracter.INTERFACE_ASM)
-	                                                                  .setSerializerAsm(SerializingFunction.ASM)
-	                                                                  .setFieldAbstracterJava(FieldAbstracter.INTERFACE_JAVA)
-	                                                                  .setMethodAbstracterJava(MethodAbstracter.JAVA_INTERFACE)
-	                                                                  .setConstructorAbstracterJava(
-			                                                                      ConstructorAbstracter.INTERFACE_JAVA)
-	                                                                  .setSerializerJava(SerializingFunction
-			                                                                                         .getJava(true))
-	                                                                  .build();
-
-	public static final Abstracter BASE = new AbstracterBuilder().setAsm(HeaderFunction.ASM)
-	                                                             .setJava(HeaderFunction.JAVA)
+	public static final Abstracter BASE = new AbstracterBuilder().setAsm(HeaderFunction.getAsm(true))
+	                                                             .setJava(HeaderFunction.getJava(true))
 	                                                             .setSupplier(ConstructorSupplier.BASE_DEFAULT)
 	                                                             .setFieldSupplier(FieldSupplier.BASE_DEFAULT)
 	                                                             .setMethodSupplier(MethodSupplier.BASE_DEFAULT)
@@ -63,10 +40,30 @@ public class Abstracter implements Opcodes {
 	                                                             .setFieldAbstracterJava(FieldAbstracter.BASE_JAVA)
 	                                                             .setMethodAbstracterJava(MethodAbstracter.JAVA_BASE)
 	                                                             .setConstructorAbstracterJava(ConstructorAbstracter.BASE_JAVA)
-	                                                             .setSerializerJava(SerializingFunction
-			                                                                                    .getJava(false))
+	                                                             .setSerializerJava(SerializingFunction.getJava(false))
 	                                                             .build();
-
+	private static final IntUnaryOperator INTERFACE_OPERATOR =
+			i -> i & ~(ACC_ENUM | ACC_FINAL) | ACC_INTERFACE | ACC_ABSTRACT;
+	public static final Abstracter INTERFACE = new AbstracterBuilder().setAsm(HeaderFunction.getAsm(false))
+	                                                                  .setJava(HeaderFunction.getJava(false))
+	                                                                  .setSupplier(ConstructorSupplier.INTERFACE_DEFAULT)
+	                                                                  .setFieldSupplier(FieldSupplier.INTERFACE_DEFAULT)
+	                                                                  .setMethodSupplier(MethodSupplier.INTERFACE_DEFAULT)
+	                                                                  .setInterfaceFunction(InterfaceFunction.INTERFACE_DEFAULT)
+	                                                                  .setSuperFunction(SuperFunction.EMPTY)
+	                                                                  .setNameFunction(ToStringFunction.INTERFACE_DEFAULT)
+	                                                                  .setAccessOperator(INTERFACE_OPERATOR)
+	                                                                  .setFieldAbstracterAsm(FieldAbstracter.INTERFACE_ASM)
+	                                                                  .setMethodAbstracterAsm(MethodAbstracter.INTERFACE_ASM)
+	                                                                  .setConstructorAbstracterAsm(ConstructorAbstracter.INTERFACE_ASM)
+	                                                                  .setSerializerAsm(SerializingFunction.ASM)
+	                                                                  .setFieldAbstracterJava(FieldAbstracter.INTERFACE_JAVA)
+	                                                                  .setMethodAbstracterJava(MethodAbstracter.JAVA_INTERFACE)
+	                                                                  .setConstructorAbstracterJava(
+			                                                                  ConstructorAbstracter.INTERFACE_JAVA)
+	                                                                  .setSerializerJava(SerializingFunction
+			                                                                                     .getJava(true))
+	                                                                  .build();
 	protected final HeaderFunction<ClassNode> headerFunctionAsm;
 	protected final HeaderFunction<TypeSpec.Builder> headerFunctionJava;
 	protected final ConstructorSupplier constructorSupplier;
@@ -84,6 +81,7 @@ public class Abstracter implements Opcodes {
 	protected final MethodAbstracter<TypeSpec.Builder> methodAbstracterJava;
 	protected final ConstructorAbstracter<TypeSpec.Builder> constructorAbstracterJava;
 	protected final SerializingFunction<TypeSpec.Builder> serializerJava;
+	protected final PostProcessor processor;
 
 	public Abstracter(HeaderFunction<ClassNode> asm,
 			HeaderFunction<TypeSpec.Builder> java,
@@ -101,7 +99,8 @@ public class Abstracter implements Opcodes {
 			FieldAbstracter<TypeSpec.Builder> abstracterJava,
 			MethodAbstracter<TypeSpec.Builder> methodAbstracterJava,
 			ConstructorAbstracter<TypeSpec.Builder> constructorAbstracterJava,
-			SerializingFunction<TypeSpec.Builder> serializerJava) {
+			SerializingFunction<TypeSpec.Builder> serializerJava,
+			PostProcessor processor) {
 		this.headerFunctionAsm = asm;
 		this.headerFunctionJava = java;
 		this.constructorSupplier = supplier;
@@ -119,10 +118,12 @@ public class Abstracter implements Opcodes {
 		this.methodAbstracterJava = methodAbstracterJava;
 		this.constructorAbstracterJava = constructorAbstracterJava;
 		this.serializerJava = serializerJava;
+		this.processor = processor;
 	}
 
 	public ClassNode applyAsm(Class<?> cls, boolean impl) {
-		ClassNode header = this.headerFunctionAsm.createHeader(this.accessOperator.applyAsInt(cls.getModifiers()),
+		ClassNode header = this.headerFunctionAsm.createHeader(cls,
+				this.accessOperator.applyAsInt(cls.getModifiers()),
 				this.nameFunction.toString(cls),
 				cls.getTypeParameters(),
 				this.superFunction.findValidSuper(cls, impl),
@@ -140,16 +141,17 @@ public class Abstracter implements Opcodes {
 			this.methodAbstracterAsm.abstractMethod(header, cls, method, impl);
 		}
 
+		this.processor.processAsm(header, cls, impl);
 		return header;
 	}
 
 	public TypeSpec.Builder applyJava(Class<?> cls, boolean impl) {
-		TypeSpec.Builder header = this.headerFunctionJava
-				                          .createHeader(this.accessOperator.applyAsInt(cls.getModifiers()),
-						                          this.nameFunction.toString(cls),
-						                          cls.getTypeParameters(),
-						                          this.superFunction.findValidSuper(cls, impl),
-						                          this.interfaceFunction.getInterfaces(cls));
+		TypeSpec.Builder header = this.headerFunctionJava.createHeader(cls,
+				this.accessOperator.applyAsInt(cls.getModifiers()),
+				this.nameFunction.toString(cls),
+				cls.getTypeParameters(),
+				this.superFunction.findValidSuper(cls, impl),
+				this.interfaceFunction.getInterfaces(cls));
 
 		for (Field field : this.fieldSupplier.getFields(cls)) {
 			this.fieldAbstracterJava.abstractField(header, cls, field, impl);
@@ -163,6 +165,7 @@ public class Abstracter implements Opcodes {
 			this.methodAbstracterJava.abstractMethod(header, cls, method, impl);
 		}
 
+		this.processor.processJava(header, cls, impl);
 		return header;
 	}
 
@@ -199,6 +202,7 @@ public class Abstracter implements Opcodes {
 		                              .setFieldAbstracterJava(this.fieldAbstracterJava)
 		                              .setMethodAbstracterJava(this.methodAbstracterJava)
 		                              .setConstructorAbstracterJava(this.constructorAbstracterJava)
-		                              .setSerializerJava(this.serializerJava);
+		                              .setSerializerJava(this.serializerJava)
+		                              .setPostProcessor(PostProcessor.NOTHING);
 	}
 }

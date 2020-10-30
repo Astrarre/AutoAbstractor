@@ -4,8 +4,12 @@ import com.squareup.javapoet.TypeSpec;
 import org.objectweb.asm.tree.ClassNode;
 
 public interface PostProcessor {
-	void processAsm(ClassNode header, Class<?> cls, boolean impl);
-	void processJava(TypeSpec.Builder header, Class<?> cls, boolean impl);
+	PostProcessor NOTHING = new PostProcessor() {
+		// @formatter:off
+		@Override public void processAsm(ClassNode header, Class<?> cls, boolean impl) {}
+		@Override public void processJava(TypeSpec.Builder header, Class<?> cls, boolean impl) {}
+		// @formatter:on
+	};
 
 	default PostProcessor andThen(PostProcessor processor) {
 		return new PostProcessor() {
@@ -22,4 +26,8 @@ public interface PostProcessor {
 			}
 		};
 	}
+
+	void processAsm(ClassNode header, Class<?> cls, boolean impl);
+
+	void processJava(TypeSpec.Builder header, Class<?> cls, boolean impl);
 }

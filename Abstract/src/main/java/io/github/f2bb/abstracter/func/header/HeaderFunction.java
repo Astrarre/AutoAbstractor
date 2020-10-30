@@ -10,45 +10,61 @@ import java.util.Collection;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
-import io.github.f2bb.abstracter.util.java.JavaUtil;
+import io.github.f2bb.abstracter.AbstracterConfig;
+import io.github.f2bb.abstracter.util.ArrayUtil;
 import io.github.f2bb.abstracter.util.asm.TypeUtil;
+import io.github.f2bb.abstracter.util.java.JavaUtil;
 import org.objectweb.asm.tree.ClassNode;
 
 public interface HeaderFunction<T> {
-	HeaderFunction<TypeSpec.Builder> JAVA = (a, n, v, s, i) -> {
-		TypeSpec.Builder builder;
-		ClassName name = JavaUtil.getName(n);
-		if (Modifier.isInterface(a)) {
-			builder = TypeSpec.interfaceBuilder(name);
-		} else if ((ACC_ENUM & a) != 0) {
-			builder = TypeSpec.enumBuilder(name);
-		} else {
-			builder = TypeSpec.classBuilder(name);
-		}
+	static HeaderFunction<TypeSpec.Builder> getJava(boolean isBase) {
+		return (c, a, n, v, s, i) -> {
+			TypeSpec.Builder builder;
+			ClassName name = JavaUtil.getName(n);
+			if (Modifier.isInterface(a)) {
+				builder = TypeSpec.interfaceBuilder(name);
+			} else if ((ACC_ENUM & a) != 0) {
+				builder = TypeSpec.enumBuilder(name);
+			} else {
+				builder = TypeSpec.classBuilder(name);
+			}
 
-		JavaUtil.getModifiers(a).forEach(builder::addModifiers);
-		if (s != null) {
-			builder.superclass(JavaUtil.toTypeName(s));
-		}
+			JavaUtil.getModifiers(a).forEach(builder::addModifiers);
+			if (s != null) {
+				builder.superclass(JavaUtil.toTypeName(s));
+			}
 
-		i.forEach(builder::addSuperinterface);
-		return builder;
-	};
+			for (Type type : i) {
+				builder.addSuperinterface(JavaUtil.toTypeName(type));
+			}
 
-	HeaderFunction<ClassNode> ASM = (a, n, v, s, i) -> {
-		ClassNode node = new ClassNode();
-		node.visit(V1_8,
-				a,
-				n,
-				null,
-				TypeUtil.getRawName(s),
-				i.stream().map(TypeUtil::getRawName).toArray(String[]::new));
-		return node;
-	};
+			if (isBase) {
+				builder.addSuperinterface(JavaUtil.getName(AbstracterConfig.getInterfaceName(c)));
+			}
+			return builder;
+		};
+	}
 
-	T createHeader(int access, String name, TypeVariable<?>[] variables, Type sup, Collection<Type> interfaces);
+	static HeaderFunction<ClassNode> getAsm(boolean isBase) {
+		return (c, a, n, v, s, i) -> {
+			ClassNode node = new ClassNode();
+			String[] interfaces = i.stream().map(TypeUtil::getRawName).toArray(String[]::new);
+			if (isBase) {
+				interfaces = ArrayUtil.add(interfaces, AbstracterConfig.getInterfaceName(c));
+			}
+			node.visit(V1_8, a, n, null, TypeUtil.getRawName(s), interfaces);
+			return node;
+		};
+	}
 
 	static <T> HeaderFunction<T> nothing() {
-		return (a, n, v, s, i) -> null;
+		return (c, a, n, v, s, i) -> null;
 	}
+
+	T createHeader(Class<?> cls,
+			int access,
+			String name,
+			TypeVariable<?>[] variables,
+			Type sup,
+			Collection<Type> interfaces);
 }

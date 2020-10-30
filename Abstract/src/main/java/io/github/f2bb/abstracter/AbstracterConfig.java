@@ -17,6 +17,7 @@ import io.github.f2bb.abstracter.func.elements.FieldSupplier;
 import io.github.f2bb.abstracter.func.elements.MethodSupplier;
 import io.github.f2bb.abstracter.func.inheritance.InterfaceFunction;
 import io.github.f2bb.abstracter.func.inheritance.SuperFunction;
+import io.github.f2bb.abstracter.func.postprocess.PostProcessor;
 import io.github.f2bb.abstracter.func.serialization.SerializingFunction;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
 import io.github.f2bb.abstracter.util.ArrayUtil;
@@ -88,8 +89,8 @@ public class AbstracterConfig implements Opcodes {
 	public static void manualInterface(String mcClass, String abstraction) {
 		String internal = abstraction.replace('.', '/');
 		registerInterface(mcClass,
-				new Abstracter((access, name, variables, sup, interfaces) -> null,
-						(access, name, variables, sup, interfaces) -> null,
+				new Abstracter((cls, access, name, variables, sup, interfaces) -> null,
+						(cls, access, name, variables, sup, interfaces) -> null,
 						ConstructorSupplier.EMPTY,
 						FieldSupplier.EMPTY,
 						MethodSupplier.EMPTY,
@@ -104,7 +105,12 @@ public class AbstracterConfig implements Opcodes {
 						FieldAbstracter.nothing(),
 						MethodAbstracter.nothing(),
 						ConstructorAbstracter.nothing(),
-						SerializingFunction.nothing()));
+						SerializingFunction.nothing(),
+						PostProcessor.NOTHING));
+	}
+
+	public static void registerInterface(String cls, Abstracter abstracter) {
+		INTERFACE_ABSTRACTION.put(AbstracterLoader.getClass(cls), abstracter);
 	}
 
 	public static void registerInnerOverride(String cls, String... inners) {
@@ -117,10 +123,6 @@ public class AbstracterConfig implements Opcodes {
 
 	public static void makeOuter(String cls) {
 		IS_INNER.put(AbstracterLoader.getClass(cls), false);
-	}
-
-	public static void registerInterface(String cls, Abstracter abstracter) {
-		INTERFACE_ABSTRACTION.put(AbstracterLoader.getClass(cls), abstracter);
 	}
 
 	public static void registerBase(String cls, Abstracter abstracter) {

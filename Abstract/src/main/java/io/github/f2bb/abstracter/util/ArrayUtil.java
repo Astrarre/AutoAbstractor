@@ -1,6 +1,8 @@
 package io.github.f2bb.abstracter.util;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -20,5 +22,11 @@ public class ArrayUtil {
 			array.add(func.apply(a));
 		}
 		return array;
+	}
+
+	public static <A> A[] add(A[] as, A a) {
+		A[] bs = Arrays.copyOf(as, as.length + 1);
+		bs[as.length] = a;
+		return bs;
 	}
 }

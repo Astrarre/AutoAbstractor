@@ -68,6 +68,34 @@ public class JavaUtil {
 		}
 	}
 
+	public static TypeName toTypeName(org.objectweb.asm.Type type) {
+		switch (type.getSort()) {
+		case org.objectweb.asm.Type.VOID:
+			return TypeName.VOID;
+		case org.objectweb.asm.Type.BOOLEAN:
+			return TypeName.BOOLEAN;
+		case org.objectweb.asm.Type.BYTE:
+			return TypeName.BYTE;
+		case org.objectweb.asm.Type.SHORT:
+			return TypeName.SHORT;
+		case org.objectweb.asm.Type.CHAR:
+			return TypeName.CHAR;
+		case org.objectweb.asm.Type.INT:
+			return TypeName.INT;
+		case org.objectweb.asm.Type.FLOAT:
+			return TypeName.FLOAT;
+		case org.objectweb.asm.Type.LONG:
+			return TypeName.LONG;
+		case org.objectweb.asm.Type.DOUBLE:
+			return TypeName.DOUBLE;
+		case org.objectweb.asm.Type.ARRAY:
+			return ArrayTypeName.of(toTypeName(type.getElementType()));
+		case org.objectweb.asm.Type.OBJECT:
+			return getName(type.getInternalName());
+		default: throw new UnsupportedOperationException();
+		}
+	}
+
 	// automatically remapped
 	public static TypeName toTypeName(Type type) {
 		if (type instanceof Class<?>) {
