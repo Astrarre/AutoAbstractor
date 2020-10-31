@@ -1,3 +1,5 @@
+import static io.github.f2bb.abstracter.func.string.ToStringFunction.constant;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -5,7 +7,6 @@ import java.util.zip.ZipOutputStream;
 
 import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.AbstracterConfig;
-import io.github.f2bb.abstracter.func.string.ToStringFunction;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
 
 public class AbstractTest {
@@ -16,9 +17,7 @@ public class AbstractTest {
 		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
 		AbstracterConfig.registerInterface("net.minecraft.block.AbstractBlock$Settings",
-				Abstracter.INTERFACE.asBuilder().setNameFunction(ToStringFunction
-						                                                 .constant("io/github/f2bb/block" +
-						                                                           "/IBlock$Settings"))
+				Abstracter.INTERFACE.asBuilder().setNameFunction(constant("io/github/f2bb/block/IBlock$Settings"))
 				                    .build());
 		AbstracterConfig
 				.registerInnerOverride("net.minecraft.block.Block", "net.minecraft.block.AbstractBlock$Settings");

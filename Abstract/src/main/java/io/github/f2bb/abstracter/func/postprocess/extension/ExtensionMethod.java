@@ -20,13 +20,13 @@ import org.objectweb.asm.tree.MethodNode;
 /**
  * creates a stub method, use a mixin to actually implement the method
  */
-public class AsmExtensionMethod implements PostProcessor, Opcodes {
+public class ExtensionMethod implements PostProcessor, Opcodes {
 	private final int access;
 	private final String name, desc;
 	private final String[] parameters;
 	@Nullable private final String comment;
 
-	public AsmExtensionMethod(int access, String name, String desc, String[] parameters, @Nullable String comment) {
+	public ExtensionMethod(int access, String name, String desc, String[] parameters, @Nullable String comment) {
 		this.access = access;
 		this.name = name;
 		this.desc = desc;
