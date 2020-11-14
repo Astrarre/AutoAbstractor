@@ -1,5 +1,10 @@
 package io.github.f2bb.abstracter.func.elements;
 
+import static io.github.f2bb.abstracter.func.filter.MemberFilter.PROTECTED;
+import static io.github.f2bb.abstracter.func.filter.MemberFilter.PUBLIC;
+import static io.github.f2bb.abstracter.func.filter.MemberFilter.STATIC;
+import static io.github.f2bb.abstracter.func.filter.MemberFilter.VALID_TYPE;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,34 +14,18 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Collections2;
-import io.github.f2bb.abstracter.func.filter.Filters;
 import io.github.f2bb.abstracter.func.filter.MemberFilter;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
 
+@SuppressWarnings ("unchecked")
 public interface FieldSupplier {
 	FieldSupplier EMPTY = c -> Collections.emptySet();
 
 	FieldSupplier INTERFACE_DEFAULT = create(AbstracterLoader::isUnabstractedClass)
-			                                  .filtered(MemberFilter.withType(Filters.IS_ABSTRACTED)
-			                                                        .and(MemberFilter.withAccess(Filters.PUBLIC)));
-	FieldSupplier BASE_DEFAULT = create(AbstracterLoader::isMinecraft).filtered(MemberFilter.withType(Filters.IS_ABSTRACTED)
-	                                                                                        .and(// and must be protected
-			                                                                                  MemberFilter.<Field>withAccess(
-					                                                                                  Filters.PROTECTED)
-					                                                                                  // or public but
-					                                                                                  // not
-					                                                                                  // static
-					                                                                                  .or(MemberFilter.<Field>withAccess(
-							                                                                                  Filters.PUBLIC)
-							                                                                                      .and(MemberFilter.<Field>withAccess(
-									                                                                                      Filters.STATIC)
-									                                                                                           .negate()))));
+			                                  .filtered(VALID_TYPE.and((MemberFilter) PUBLIC));
 
-	Collection<Field> getFields(Class<?> cls);
-
-	default FieldSupplier filtered(MemberFilter<Field> filter) {
-		return c -> Collections2.filter(this.getFields(c), m -> filter.test(c, m));
-	}
+	FieldSupplier BASE_DEFAULT =
+			create(AbstracterLoader::isMinecraft).filtered(VALID_TYPE.and((MemberFilter) (PUBLIC.and(STATIC.negate())).or(PROTECTED)));
 
 	static FieldSupplier create(Predicate<Class<?>> filter) {
 		return c -> {
@@ -49,4 +38,10 @@ public interface FieldSupplier {
 			return fields;
 		};
 	}
+
+	default FieldSupplier filtered(MemberFilter<Field> filter) {
+		return c -> Collections2.filter(this.getFields(c), m -> filter.test(c, m));
+	}
+
+	Collection<Field> getFields(Class<?> cls);
 }

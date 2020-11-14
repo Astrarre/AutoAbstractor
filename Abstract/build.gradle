@@ -19,26 +19,17 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 
     implementation parent
+    testImplementation parent
 
-    // fast util go brrr
-    implementation 'it.unimi.dsi:fastutil:8.4.1'
-
-    // ini config
-    implementation 'org.ini4j:ini4j:0.5.4'
     // documentation
     compileOnly 'org.jetbrains:annotations:19.0.0'
 
     // gib bimap
     compile 'com.google.guava:guava:29.0-jre'
 
-    // command line
-    implementation 'commons-cli:commons-cli:1.4'
-    implementation 'com.squareup:javapoet:1.13.0'
-
-    // mappings
-    implementation 'net.fabricmc:tiny-mappings-parser:0.3.0+build.17'
-
-    // https://mvnrepository.com/artifact/org.ow2.asm/asm
     implementation 'org.ow2.asm:asm:9.0'
     implementation 'org.ow2.asm:asm-commons:9.0'
+
+    testImplementation files("$parent.projectDir/run/fodder.jar")
+    testCompileOnly files("$parent.projectDir/run/api.jar")
 }

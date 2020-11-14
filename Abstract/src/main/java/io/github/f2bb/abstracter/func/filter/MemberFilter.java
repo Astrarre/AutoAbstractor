@@ -4,44 +4,40 @@ import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
-import io.github.f2bb.abstracter.util.AbstracterLoader;
+import org.objectweb.asm.Opcodes;
 
 @SuppressWarnings ("unchecked")
-public interface MemberFilter<T extends Member> {
+public interface MemberFilter<T extends Member> extends Opcodes {
 	Logger LOGGER = Logger.getLogger("Abstract");
-	MemberFilter<?> USER_DECLARED = withAccess(Filters.SYNTHETIC).or(withAccess(Filters.BRIDGE)).negate();
-	MemberFilter<Executable> VALID_PARAMETERS = withParameters(Filters.IS_ABSTRACTED);
-	MemberFilter<Method> VALID_PARAMS_AND_RETURN = (MemberFilter.<Method>withParameters(Filters.IS_ABSTRACTED).and(withReturn(
-			Filters.IS_ABSTRACTED))).or(MemberFilter.<Method>withAccess(Filters.ABSTRACT).and((c, m) -> {
-		LOGGER.severe("Method " + m + " could not be abstracted because it contained a non" + "-abstracted class, but " +
-		              "it is `abstract`, if the method is not exposed, it will" + " cause an abstract exception " +
-		              "thing");
-		return false;
-	}));
-	MemberFilter<Field> MINECRAFT_TYPE = (c, f) -> AbstracterLoader.isMinecraft(TypeMappingFunction.raw(c, f.getGenericType()));
+	MemberFilter<Member> PUBLIC = withAccess(Modifier::isPublic);
+	MemberFilter<Member> PROTECTED = withAccess(Modifier::isProtected);
+	MemberFilter<Member> ABSTRACT = withAccess(Modifier::isAbstract);
+	MemberFilter<Member> STATIC = withAccess(Modifier::isStatic);
+	MemberFilter<Member> SYNTHETIC = withAccess(i -> (i & ACC_SYNTHETIC) != 0);
+	MemberFilter<Member> BRIDGE = withAccess(i -> (i & ACC_BRIDGE) != 0);
+	MemberFilter<Member> FINAL = withAccess(Modifier::isFinal);
+	MemberFilter<Member> USER_DECLARED = SYNTHETIC.or(BRIDGE).negate();
 
+	MemberFilter<Member> VISIBLE = PUBLIC.or(PROTECTED).and(USER_DECLARED);
+	MemberFilter<Member> ACCESSIBLE = PUBLIC.and(USER_DECLARED);
+
+
+	MemberFilter<Executable> VALID_PARAMETERS = withParameters(Filters.IS_VALID);
+	
+	MemberFilter<Method> VALID_PARAMS_AND_RETURN = MemberFilter.<Method>withParameters(Filters.IS_VALID)
+			                                               .and(withReturn(Filters.IS_VALID));
+
+	MemberFilter<Field> VALID_TYPE = MemberFilter.withType(Filters.IS_VALID);
+	
 	static <T extends Member> MemberFilter<T> userDeclared() {
 		return (MemberFilter<T>) USER_DECLARED;
-	}
-
-	boolean test(Class<?> abstracting, T method);
-
-	default MemberFilter<T> or(MemberFilter<T> filter) {
-		return (c, m) -> this.test(c, m) || filter.test(c, m);
-	}
-
-	default MemberFilter<T> and(MemberFilter<T> filter) {
-		return (c, m) -> this.test(c, m) && filter.test(c, m);
-	}
-
-	default MemberFilter<T> negate() {
-		return (c, m) -> !this.test(c, m);
 	}
 
 	static MemberFilter<Method> withName(Predicate<String> name) {
@@ -70,5 +66,19 @@ public interface MemberFilter<T extends Member> {
 
 	static MemberFilter<Method> withReturn(Predicate<Type> typePredicate) {
 		return (c, m) -> typePredicate.test(TypeMappingFunction.reify(c, m.getGenericReturnType()));
+	}
+
+	default MemberFilter<T> or(MemberFilter<T> filter) {
+		return (c, m) -> this.test(c, m) || filter.test(c, m);
+	}
+
+	boolean test(Class<?> abstracting, T method);
+
+	default MemberFilter<T> and(MemberFilter<T> filter) {
+		return (c, m) -> this.test(c, m) && filter.test(c, m);
+	}
+
+	default MemberFilter<T> negate() {
+		return (c, m) -> !this.test(c, m);
 	}
 }

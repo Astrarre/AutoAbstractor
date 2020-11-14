@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Collections2;
@@ -21,21 +21,14 @@ public interface InterfaceFunction {
 	InterfaceFunction EMPTY = c -> Collections.emptySet();
 
 	InterfaceFunction SIMPLE = c -> Arrays.asList(c.getGenericInterfaces());
-	// todo add `this` class
-	InterfaceFunction BASE_DEFAULT = branching(AbstracterLoader::isMinecraft).filtered(Filters.IS_ABSTRACTED);
-	InterfaceFunction INTERFACE_DEFAULT =
-			branching(AbstracterLoader::isUnabstractedClass).filtered(Filters.IS_ABSTRACTED)
-			                                                .add(c -> {
-		                                                                                    if (AbstracterConfig
-				                                                                                        .isInterfaceAbstracted(
-						                                                                                        c.getSuperclass())) {
-			                                                                                    return c.getGenericSuperclass();
-		                                                                                    } else {
-			                                                                                    return null;
-		                                                                                    }
-	                                                                                    });
-
-	Collection<Type> getInterfaces(Class<?> cls);
+	InterfaceFunction BASE_DEFAULT = branching(AbstracterLoader::isMinecraft).filtered(Filters.IS_VALID);
+	InterfaceFunction INTERFACE_DEFAULT = branching(AbstracterLoader::isUnabstractedClass)
+			                                      .filtered(Filters.IS_VALID)
+			                                      .and(c -> Optional.of(c)
+			                                                        .filter(c2 -> AbstracterConfig.isInterfaceAbstracted(c2.getSuperclass()))
+			                                                        .map(Class::getGenericSuperclass)
+			                                                        .map(Collections::singleton)
+			                                                        .orElseGet(Collections::emptySet));
 
 	static InterfaceFunction branching(Predicate<Class<?>> superFilter) {
 		return (BranchingInterfaceFunction) superFilter::test;
@@ -45,17 +38,16 @@ public interface InterfaceFunction {
 		return c -> Collections2.transform(this.getInterfaces(c), function::map);
 	}
 
+	Collection<Type> getInterfaces(Class<?> cls);
+
 	default InterfaceFunction filtered(Predicate<Type> predicate) {
 		return c -> Collections2.filter(this.getInterfaces(c), predicate::test);
 	}
 
-	default InterfaceFunction add(Function<Class<?>, Type> type) {
+	default InterfaceFunction and(InterfaceFunction function) {
 		return c -> {
-			List<Type> types = new ArrayList<>();
-			Type t = type.apply(c);
-			if (t != null) {
-				types.add(t);
-			}
+			Collection<Type> types = this.getInterfaces(c);
+			types.addAll(function.getInterfaces(c));
 			return types;
 		};
 	}

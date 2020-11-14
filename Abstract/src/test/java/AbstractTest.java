@@ -1,13 +1,32 @@
-import static io.github.f2bb.abstracter.func.string.ToStringFunction.constant;
+import static io.github.f2bb.abstracter.AbstracterConfig.registerBase;
+import static io.github.f2bb.abstracter.AbstracterConfig.registerInnerOverride;
+import static io.github.f2bb.abstracter.AbstracterConfig.registerInterface;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.function.Consumer;
 import java.util.zip.ZipOutputStream;
 
-import io.github.f2bb.abstracter.Abstracter;
 import io.github.f2bb.abstracter.AbstracterConfig;
+import io.github.f2bb.abstracter.Cls;
+import io.github.f2bb.abstracter.abs.BaseAbstracter;
+import io.github.f2bb.abstracter.abs.InterfaceAbstracter;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
+import org.objectweb.asm.tree.ClassNode;
+
+import net.minecraft.Bootstrap;
+import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.Material;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.entity.Entity;
+import net.minecraft.item.Item;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldAccess;
 
 public class AbstractTest {
 	public static void main(String[] args) throws IOException {
@@ -16,29 +35,29 @@ public class AbstractTest {
 		}
 		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
-		AbstracterConfig.registerInterface("net.minecraft.block.AbstractBlock$Settings",
-				Abstracter.INTERFACE.asBuilder().setNameFunction(constant("io/github/f2bb/block/IBlock$Settings"))
-				                    .build());
-		AbstracterConfig
-				.registerInnerOverride("net.minecraft.block.Block", "net.minecraft.block.AbstractBlock$Settings");
+		registerInterface(AbstractBlock.Settings.class,
+				c -> new InterfaceAbstracter(c, "v0/io/github/f2bb/block/IBlock$Settings"));
+		registerInnerOverride(Block.class, AbstractBlock.Settings.class);
 
-		registerDefaultInterface("net.minecraft.block.Block");
-		registerDefaultInterface("net.minecraft.item.Item");
-		registerDefaultInterface("net.minecraft.item.Item$Settings");
-		registerDefaultInterface("net.minecraft.block.Blocks");
-		registerDefaultInterface("net.minecraft.block.BlockState");
-		registerDefaultInterface("net.minecraft.block.Material");
-		registerDefaultInterface("net.minecraft.util.math.BlockPos");
-		registerDefaultInterface("net.minecraft.world.World");
-		registerDefaultInterface("net.minecraft.world.WorldAccess");
-		registerDefaultInterface("net.minecraft.entity.Entity");
-		registerDefaultInterface("net.minecraft.enchantment.Enchantment");
-		registerDefaultInterface("net.minecraft.Bootstrap");
+		// attachment interfaces > extension methods, cus no javadoc
+		registerDefaultInterface(Block.class);
+		registerDefaultInterface(Item.class);
+		registerDefaultInterface(Item.Settings.class);
+		registerDefaultInterface(Blocks.class);
+		registerDefaultInterface(BlockState.class);
+		registerDefaultInterface(Material.class);
+		registerDefaultInterface(BlockPos.class);
+		registerDefaultInterface(World.class);
+		registerDefaultInterface(WorldAccess.class);
+		registerDefaultInterface(Entity.class);
+		registerDefaultInterface(Enchantment.class);
+		registerDefaultInterface(Bootstrap.class);
 
-		registerDefaultBase("net.minecraft.block.Block");
-		registerDefaultBase("net.minecraft.entity.Entity");
-		registerDefaultBase("net.minecraft.enchantment.Enchantment");
-		registerDefaultBase("net.minecraft.item.Item");
+		// base
+		registerDefaultBase(Block.class);
+		registerDefaultBase(Entity.class);
+		registerDefaultBase(Enchantment.class);
+		registerDefaultBase(Item.class);
 
 		ZipOutputStream api = new ZipOutputStream(new FileOutputStream("api.jar"));
 		AbstracterConfig.writeJar(api, false);
@@ -53,11 +72,11 @@ public class AbstractTest {
 		manifest.close();
 	}
 
-	private static void registerDefaultInterface(String cls) {
-		AbstracterConfig.registerInterface(cls, Abstracter.INTERFACE);
+	private static void registerDefaultInterface(Class<?> cls) {
+		registerInterface(cls, InterfaceAbstracter::new);
 	}
 
-	private static void registerDefaultBase(String base) {
-		AbstracterConfig.registerBase(base, Abstracter.BASE);
+	private static void registerDefaultBase(Class<?> base) {
+		AbstracterConfig.registerBase(base, BaseAbstracter::new);
 	}
 }

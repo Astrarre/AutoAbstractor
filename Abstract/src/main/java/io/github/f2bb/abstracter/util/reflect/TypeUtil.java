@@ -1,4 +1,4 @@
-package io.github.f2bb.abstracter.util.asm;
+package io.github.f2bb.abstracter.util.reflect;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
@@ -11,11 +11,10 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import com.google.common.reflect.TypeToken;
+import com.sun.org.apache.bcel.internal.generic.FADD;
 import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
-import io.github.f2bb.abstracter.util.RawClassType;
 import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
@@ -23,7 +22,8 @@ public class TypeUtil {
 	public static final Remapper REMAPPER = new Remapper() {
 		@Override
 		public String map(String internalName) {
-			Class<?> cls = AbstracterLoader.getClass(org.objectweb.asm.Type.getObjectType(internalName).getClassName());
+			Class<?> cls =
+					AbstracterLoader.getClass(org.objectweb.asm.Type.getObjectType(internalName).getClassName());
 			return AbstracterConfig.getInterfaceName(cls);
 		}
 	};
@@ -36,6 +36,11 @@ public class TypeUtil {
 
 	public static String classSignature(TypeVariable<?>[] variables, Type superClass, Collection<Type> interfaces) {
 		SignatureWriter writer = new SignatureWriter();
+		if (variables.length == 0 && (superClass instanceof Class || superClass == null) && interfaces.stream()
+		                                                                                              .allMatch(t -> t instanceof Class)) {
+			return null;
+		}
+
 		visit(writer, variables);
 		visit(writer.visitSuperclass(), superClass);
 		for (Type iface : interfaces) {
@@ -65,6 +70,10 @@ public class TypeUtil {
 	}
 
 	public static void visit(SignatureVisitor visitor, Type type, boolean remap) {
+		visit(visitor, type, remap, true);
+	}
+
+	public static void visit(SignatureVisitor visitor, Type type, boolean remap, boolean visitEnd) {
 		if (type instanceof Class<?>) {
 			Class<?> c = (Class<?>) type;
 			if (c.isPrimitive()) {
@@ -75,7 +84,9 @@ public class TypeUtil {
 				} else {
 					visitor.visitClassType(org.objectweb.asm.Type.getInternalName(c));
 				}
-				visitor.visitEnd();
+				if (visitEnd) {
+					visitor.visitEnd();
+				}
 			}
 			return;
 		} else if (type instanceof GenericArrayType) {
@@ -83,12 +94,18 @@ public class TypeUtil {
 			return;
 		} else if (type instanceof ParameterizedType) {
 			ParameterizedType pt = (ParameterizedType) type;
-			// visit the type
+			Type owner = pt.getOwnerType();
 			Class<?> raw = (Class<?>) pt.getRawType();
-			if (raw.isPrimitive()) {
-				visitor.visitBaseType(org.objectweb.asm.Type.getDescriptor(raw).charAt(0));
+			if (owner != null) {
+				visit(visitor, owner, remap, false);
+				visitor.visitInnerClassType(raw.getSimpleName());
 			} else {
-				visitor.visitClassType(org.objectweb.asm.Type.getInternalName(raw));
+				// visit the type
+				if (raw.isPrimitive()) {
+					visitor.visitBaseType(org.objectweb.asm.Type.getDescriptor(raw).charAt(0));
+				} else {
+					visitor.visitClassType(org.objectweb.asm.Type.getInternalName(raw));
+				}
 			}
 
 			Type[] args = pt.getActualTypeArguments();
@@ -98,7 +115,10 @@ public class TypeUtil {
 				}
 				visit(visitor, arg, remap);
 			}
-			visitor.visitEnd();
+
+			if (visitEnd) {
+				visitor.visitEnd();
+			}
 			return;
 		} else if (type instanceof TypeVariable<?>) {
 			visitor.visitTypeVariable(((TypeVariable<?>) type).getName());
@@ -111,7 +131,7 @@ public class TypeUtil {
 			} else {
 				array = wt.getUpperBounds();
 				if (array.length == 1 && array[0] == Object.class) {
-					visitor.visitTypeArgument('*');
+					visitor.visitTypeArgument();
 				} else {
 					visitor.visitTypeArgument('+');
 				}
@@ -120,10 +140,6 @@ public class TypeUtil {
 			for (Type l : array) {
 				visit(visitor, l, remap);
 			}
-			return;
-		} else if (type instanceof RawClassType) {
-			SignatureReader reader = new SignatureReader(type.getTypeName());
-			reader.accept(visitor);
 			return;
 		} else if (type == null) {
 			return;
@@ -176,14 +192,11 @@ public class TypeUtil {
 	}
 
 	public static String getRawName(Type type) {
-		if (type instanceof RawClassType) {
-			return ((RawClassType) type).getInternalName();
-		}
 		return org.objectweb.asm.Type.getInternalName(raw(type));
 	}
 
 	public static String getInterfaceDesc(Class<?> cls) {
-		if(cls.isPrimitive()) {
+		if (cls.isPrimitive()) {
 			return org.objectweb.asm.Type.getDescriptor(cls);
 		} else {
 			return "L" + AbstracterConfig.getInterfaceName(cls) + ";";
@@ -217,6 +230,6 @@ public class TypeUtil {
 
 	public static String getInnerName(String str) {
 		int index = str.indexOf('$');
-		return str.substring(index+1);
+		return str.substring(index + 1);
 	}
 }
