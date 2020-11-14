@@ -1,19 +1,18 @@
-import static io.github.f2bb.abstracter.AbstracterConfig.registerBase;
 import static io.github.f2bb.abstracter.AbstracterConfig.registerInnerOverride;
 import static io.github.f2bb.abstracter.AbstracterConfig.registerInterface;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.function.Consumer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.zip.ZipOutputStream;
 
 import io.github.f2bb.abstracter.AbstracterConfig;
-import io.github.f2bb.abstracter.Cls;
 import io.github.f2bb.abstracter.abs.BaseAbstracter;
 import io.github.f2bb.abstracter.abs.InterfaceAbstracter;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
-import org.objectweb.asm.tree.ClassNode;
+import io.github.f2bb.decompiler.Decompile;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.block.AbstractBlock;
@@ -28,9 +27,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 
+@SuppressWarnings ("ConstantConditions")
 public class AbstractTest {
 	public static void main(String[] args) throws IOException {
-		for (File file : new File("classpath").listFiles()) {
+		List<File> classpath = Arrays.asList(new File("classpath").listFiles());
+		for (File file : classpath) {
 			AbstracterLoader.CLASSPATH.addURL(file.toURI().toURL());
 		}
 		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
@@ -70,6 +71,12 @@ public class AbstractTest {
 		FileOutputStream manifest = new FileOutputStream("manifest.properties");
 		AbstracterConfig.writeManifest(manifest);
 		manifest.close();
+
+		Decompile.decompile(classpath,
+				new File("api.jar"),
+				new File("api_sources.jar"),
+				new File("lines.lmap"),
+				new File("mappings.tiny"));
 	}
 
 	private static void registerDefaultInterface(Class<?> cls) {

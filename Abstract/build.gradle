@@ -9,6 +9,10 @@ version '1.0-SNAPSHOT'
 sourceCompatibility = 1.8
 
 repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
     mavenCentral()
     maven {
         url = 'http://maven.modmuss50.me/'
@@ -29,6 +33,10 @@ dependencies {
 
     implementation 'org.ow2.asm:asm:9.0'
     implementation 'org.ow2.asm:asm-commons:9.0'
+
+    // decompiler
+    implementation ('org.jetbrains:intellij-fernflower:1.2.1.16')
+    implementation ('net.fabricmc:tiny-mappings-parser:0.2.2.14')
 
     testImplementation files("$parent.projectDir/run/fodder.jar")
     testCompileOnly files("$parent.projectDir/run/api.jar")

@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import com.google.common.collect.BiMap;
 import io.github.f2bb.abstracter.abs.AbstractAbstracter;
 import io.github.f2bb.abstracter.abs.ManualAbstracter;
 import io.github.f2bb.abstracter.ex.InvalidClassException;
@@ -134,5 +135,15 @@ public class AbstracterConfig implements Opcodes {
 
 	public static String getBaseName(Class<?> cls) {
 		return BASE_ABSTRACTION.get(cls).name;
+	}
+
+	/**
+	 * @return abstracted class name -> minecraft class name
+	 */
+	public static Map<String, String> nameMap() {
+		Map<String, String> map = new HashMap<>();
+		BASE_ABSTRACTION.forEach((k, a) -> map.put(a.name, Type.getInternalName(k)));
+		INTERFACE_ABSTRACTION.forEach((k, a) -> map.put(a.name, Type.getInternalName(k)));
+		return map;
 	}
 }
