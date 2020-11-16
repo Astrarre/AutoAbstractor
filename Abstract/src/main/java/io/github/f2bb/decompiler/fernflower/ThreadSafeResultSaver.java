@@ -53,15 +53,13 @@ import net.fabricmc.fernflower.api.IFabricResultSaver;
  */
 public class ThreadSafeResultSaver implements IResultSaver, IFabricResultSaver {
 	private final Supplier<File> output;
-	private final Supplier<File> lineMapFile;
 
 	public Map<String, ZipOutputStream> outputStreams = new HashMap<>();
 	public Map<String, ExecutorService> saveExecutors = new HashMap<>();
 	public PrintWriter lineMapWriter;
 
-	public ThreadSafeResultSaver(Supplier<File> output, Supplier<File> lineMapFile) {
+	public ThreadSafeResultSaver(Supplier<File> output) {
 		this.output = output;
-		this.lineMapFile = lineMapFile;
 	}
 
 	@Override
@@ -76,14 +74,6 @@ public class ThreadSafeResultSaver implements IResultSaver, IFabricResultSaver {
 			saveExecutors.put(key, Executors.newSingleThreadExecutor());
 		} catch (IOException e) {
 			throw new RuntimeException("Unable to create archive: " + file, e);
-		}
-
-		if (lineMapFile.get() != null) {
-			try {
-				lineMapWriter = new PrintWriter(new FileWriter(lineMapFile.get()));
-			} catch (IOException e) {
-				throw new RuntimeException("Unable to create line mapping file: " + lineMapFile.get(), e);
-			}
 		}
 	}
 

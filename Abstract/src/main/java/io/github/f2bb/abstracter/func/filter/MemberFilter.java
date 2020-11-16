@@ -6,6 +6,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -29,13 +30,15 @@ public interface MemberFilter<T extends Member> extends Opcodes {
 	MemberFilter<Member> ACCESSIBLE = PUBLIC.and(USER_DECLARED);
 
 
-	MemberFilter<Executable> VALID_PARAMETERS = withParameters(Filters.IS_VALID);
-	
-	MemberFilter<Method> VALID_PARAMS_AND_RETURN = MemberFilter.<Method>withParameters(Filters.IS_VALID)
-			                                               .and(withReturn(Filters.IS_VALID));
+	MemberFilter<Executable> VALID_PARAMETERS = withParameters(Filters.IS_VALID).and(withFormals(Filters.IS_VALID));
+
+	MemberFilter<Method> VALID_PARAMS_VARS_AND_RETURN = MemberFilter.<Method>withParameters(Filters.IS_VALID)
+			                                                    .and(withReturn(Filters.IS_VALID))
+			                                                    .and(withFormals(Filters.IS_VALID));
+
 
 	MemberFilter<Field> VALID_TYPE = MemberFilter.withType(Filters.IS_VALID);
-	
+
 	static <T extends Member> MemberFilter<T> userDeclared() {
 		return (MemberFilter<T>) USER_DECLARED;
 	}
@@ -50,6 +53,20 @@ public interface MemberFilter<T extends Member> extends Opcodes {
 
 	static <T extends Member> MemberFilter<T> withAccess(IntPredicate access) {
 		return (c, m) -> access.test(m.getModifiers());
+	}
+
+	static <T extends Executable> MemberFilter<T> withFormals(Predicate<Type> formalTypePredicate) {
+		return (c, m) -> {
+			TypeMappingFunction function = TypeMappingFunction.reify(c);
+			for (TypeVariable<?> parameter : m.getTypeParameters()) {
+				for (Type bound : parameter.getBounds()) {
+					if (!formalTypePredicate.test(function.map(bound))) {
+						return false;
+					}
+				}
+			}
+			return true;
+		};
 	}
 
 	static <T extends Executable> MemberFilter<T> withParameters(Predicate<Type> typePredicate) {

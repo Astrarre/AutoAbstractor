@@ -4,7 +4,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.objectweb.asm.Opcodes;
 
 /**
@@ -18,6 +23,23 @@ public class ReflectUtil implements Opcodes {
 	private static final Method FIELD_SIGNATURE = find(Field.class, "getGenericSignature");
 	private static final Method METHOD_SIGNATURE = find(Method.class, "getGenericSignature");
 	private static final Method CONSTRUCTOR_SIGNATURE = find(Constructor.class, "getSignature");
+	private static final Field PAR_NAMES = findField(AnnotationExprent.class, "parNames");
+	private static final Field PAR_VALUES = findField(AnnotationExprent.class, "parValues");
+
+	public static Map<String, Exprent> getValues(AnnotationExprent exprent) {
+		try {
+			List<Exprent> values =  (List<Exprent>) PAR_VALUES.get(exprent);
+			List<String> keys = (List<String>) PAR_NAMES.get(exprent);
+			Map<String, Exprent> annotation = new HashMap<>();
+			for (int i = 0; i < values.size(); i++) {
+				annotation.put(keys.get(i), values.get(i));
+			}
+			return annotation;
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 
 	public static String getSignature(Class<?> cls) {
 		try {
@@ -59,6 +81,18 @@ public class ReflectUtil implements Opcodes {
 			}
 			return method;
 		} catch (NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static Field findField(Class<?> obj, String name) {
+		try {
+			Field method = obj.getDeclaredField(name);
+			if (!method.isAccessible()) {
+				method.setAccessible(true);
+			}
+			return method;
+		} catch (ReflectiveOperationException e) {
 			throw new RuntimeException(e);
 		}
 	}

@@ -4,7 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import io.github.f2bb.ImplementationHiddenException;
+import io.github.f2bb.Impl;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -105,9 +105,6 @@ public class InvokeUtil implements Opcodes {
 			}
 		}
 
-		if (name.equals("prepare")) {
-			System.out.println(owner);
-		}
 		from.visitMethodInsn(opcode, owner, name, desc);
 		Type targetReturn = targetType.getReturnType();
 		Type originReturn = originType.getReturnType();
@@ -124,10 +121,9 @@ public class InvokeUtil implements Opcodes {
 		}
 	}
 
-	public static final String INTERNAL = org.objectweb.asm.Type.getInternalName(ImplementationHiddenException.class);
-
+	public static final String INTERNAL = org.objectweb.asm.Type.getInternalName(Impl.class);
 	public static void visitStub(MethodVisitor visitor) {
-		visitor.visitMethodInsn(INVOKESTATIC, INTERNAL, "create", "()L" + INTERNAL + ';', false);
+		visitor.visitMethodInsn(INVOKESTATIC, INTERNAL, Impl.EXCEPTION, "()L" + INTERNAL + ';', false);
 		visitor.visitInsn(ATHROW);
 	}
 }

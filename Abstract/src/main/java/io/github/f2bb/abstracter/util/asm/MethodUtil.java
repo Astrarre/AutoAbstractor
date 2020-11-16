@@ -2,13 +2,17 @@ package io.github.f2bb.abstracter.util.asm;
 
 import static io.github.f2bb.abstracter.util.ArrayUtil.map;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.function.Function;
 
 import com.google.common.reflect.TypeToken;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
+import io.github.f2bb.abstracter.util.AnnotationReader;
 import io.github.f2bb.abstracter.util.reflect.TypeUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
@@ -51,6 +55,10 @@ public class MethodUtil {
 		}
 
 		MethodNode node = new MethodNode(access, method.getName(), desc, sign, null);
+		for (Annotation annotation : method.getAnnotations()) {
+			if(node.visibleAnnotations == null) node.visibleAnnotations = new ArrayList<>();
+			node.visibleAnnotations.add(AnnotationReader.accept(annotation));
+		}
 		boolean identical = desc.equals(org.objectweb.asm.Type
 				                                .getMethodDescriptor(method)) && !Modifier.isStatic(access);
 		if (identical && impl) {
@@ -66,10 +74,17 @@ public class MethodUtil {
 						visitBridge(header, method, desc);
 					}
 				} else {
-					InvokeUtil.visitStub(node);
+					if(iface && !Modifier.isStatic(node.access)) {
+						node.access |= Opcodes.ACC_ABSTRACT;
+					} else {
+						InvokeUtil.visitStub(node);
+					}
 				}
 			}
 
+			for (Parameter parameter : method.getParameters()) {
+				node.visitParameter(parameter.getName(), 0);
+			}
 			header.methods.add(node);
 		}
 	}

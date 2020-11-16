@@ -7,7 +7,6 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
 
 import io.github.f2bb.abstracter.AbstracterConfig;
-import io.github.f2bb.abstracter.Cls;
 import io.github.f2bb.abstracter.func.elements.ConstructorSupplier;
 import io.github.f2bb.abstracter.func.elements.FieldSupplier;
 import io.github.f2bb.abstracter.func.elements.MethodSupplier;
@@ -21,11 +20,7 @@ import io.github.f2bb.abstracter.util.asm.MethodUtil;
 import io.github.f2bb.abstracter.util.reflect.ReflectUtil;
 import io.github.f2bb.abstracter.util.reflect.TypeUtil;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.signature.SignatureReader;
-import org.objectweb.asm.signature.SignatureVisitor;
-import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class BaseAbstracter extends AbstractAbstracter {
@@ -70,22 +65,18 @@ public class BaseAbstracter extends AbstractAbstracter {
 			if (!Modifier.isFinal(field.getModifiers())) {
 				MethodNode setter = FieldUtil.createSetter(this.cls, field, impl);
 				if (!MethodUtil.conflicts(setter.name, setter.desc, node)) {
+					this.addFieldRefAnnotation(setter, field);
 					node.methods.add(setter);
 				}
 			}
 			MethodNode getter = FieldUtil.createGetter(this.cls, field, impl);
 			if (!MethodUtil.conflicts(getter.name, getter.desc, node)) {
+				this.addFieldRefAnnotation(getter, field);
 				node.methods.add(getter);
 			}
 		} else {
-			if (!impl) {
-				java.lang.reflect.Type reified = TypeMappingFunction.reify(this.cls, field.getGenericType());
-				FieldNode fieldNode = new FieldNode(field.getModifiers(),
-						field.getName(),
-						Type.getDescriptor(field.getType()),
-						TypeUtil.toSignature(reified),
-						null);
-				node.fields.add(fieldNode);
+			if(!impl || Modifier.isStatic(field.getModifiers())) {
+				FieldUtil.createConstant(node, this.cls, field, impl);
 			}
 		}
 	}
@@ -130,65 +121,10 @@ public class BaseAbstracter extends AbstractAbstracter {
 			signature.append(';');
 			node.signature += signature;
 		}
+
+		// run post processors last
+		super.postProcess(node, impl);
 	}
 
-	public Builder toBuild() {
-		return new Builder(this.cls, this.name).interfaces(this.interfaces).superClass(this.superFunction)
-		                                       .constructors(this.constructorSupplier).fields(this.fieldSupplier)
-		                                       .methods(this.methodSupplier);
-	}
 
-	public static class Builder {
-		private Class<?> cls;
-		private String name;
-		private InterfaceFunction interfaces = InterfaceFunction.BASE_DEFAULT;
-		private SuperFunction function = SuperFunction.BASE_DEFAULT;
-		private ConstructorSupplier supplier = ConstructorSupplier.BASE_DEFAULT;
-		private FieldSupplier fieldSupplier = FieldSupplier.BASE_DEFAULT;
-		private MethodSupplier methodSupplier = MethodSupplier.BASE_DEFAULT;
-
-		public Builder(Class<?> cls) {
-			this(cls, getName(cls, "Base", 0));
-		}
-
-		public Builder(Class<?> cls, String name) {
-			this.cls = cls;
-			this.name = name;
-		}
-
-		public Builder interfaces(InterfaceFunction interfaces) {
-			this.interfaces = interfaces;
-			return this;
-		}
-
-		public Builder superClass(SuperFunction function) {
-			this.function = function;
-			return this;
-		}
-
-		public Builder constructors(ConstructorSupplier supplier) {
-			this.supplier = supplier;
-			return this;
-		}
-
-		public Builder fields(FieldSupplier supplier) {
-			this.fieldSupplier = supplier;
-			return this;
-		}
-
-		public Builder methods(MethodSupplier supplier) {
-			this.methodSupplier = supplier;
-			return this;
-		}
-
-		public BaseAbstracter build() {
-			return new BaseAbstracter(this.cls,
-					this.name,
-					this.interfaces,
-					this.function,
-					this.supplier,
-					this.fieldSupplier,
-					this.methodSupplier);
-		}
-	}
 }

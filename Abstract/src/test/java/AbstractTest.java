@@ -1,18 +1,20 @@
+import static io.github.f2bb.AbstracterUtil.registerDefaultBase;
+import static io.github.f2bb.AbstracterUtil.registerDefaultInterface;
 import static io.github.f2bb.abstracter.AbstracterConfig.registerInnerOverride;
 import static io.github.f2bb.abstracter.AbstracterConfig.registerInterface;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
-import java.util.zip.ZipOutputStream;
+import java.util.function.Consumer;
 
-import io.github.f2bb.abstracter.AbstracterConfig;
-import io.github.f2bb.abstracter.abs.BaseAbstracter;
+import com.google.common.reflect.TypeToken;
+import io.github.f2bb.AbstracterUtil;
+import io.github.f2bb.Access;
 import io.github.f2bb.abstracter.abs.InterfaceAbstracter;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
-import io.github.f2bb.decompiler.Decompile;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.block.AbstractBlock;
@@ -20,16 +22,24 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.Material;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 
-@SuppressWarnings ("ConstantConditions")
+@SuppressWarnings ({
+		"ConstantConditions",
+		"UnstableApiUsage"
+})
 public class AbstractTest {
 	public static void main(String[] args) throws IOException {
+		// todo wait for player's TR patch to go on maven
 		List<File> classpath = Arrays.asList(new File("classpath").listFiles());
 		for (File file : classpath) {
 			AbstracterLoader.CLASSPATH.addURL(file.toURI().toURL());
@@ -37,53 +47,40 @@ public class AbstractTest {
 		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
 		registerInterface(AbstractBlock.Settings.class,
-				c -> new InterfaceAbstracter(c, "v0/io/github/f2bb/block/IBlock$Settings"));
+				c -> new InterfaceAbstracter(c, "v0/io/github/f2bb/block/IBlock$Settings")
+						     .extension(AbstractTest::test)
+		.attach(new TypeToken<Consumer<String>>() {}));
+
 		registerInnerOverride(Block.class, AbstractBlock.Settings.class);
 
 		// attachment interfaces > extension methods, cus no javadoc
-		registerDefaultInterface(Block.class);
-		registerDefaultInterface(Item.class);
-		registerDefaultInterface(Item.Settings.class);
-		registerDefaultInterface(Blocks.class);
-		registerDefaultInterface(BlockState.class);
-		registerDefaultInterface(Material.class);
-		registerDefaultInterface(BlockPos.class);
-		registerDefaultInterface(World.class);
-		registerDefaultInterface(WorldAccess.class);
-		registerDefaultInterface(Entity.class);
-		registerDefaultInterface(Enchantment.class);
-		registerDefaultInterface(Bootstrap.class);
-
+		registerDefaultInterface(Block.class,
+				Item.class,
+				ItemStack.class,
+				Item.Settings.class,
+				Blocks.class,
+				BlockState.class,
+				Material.class,
+				BlockPos.class,
+				World.class,
+				WorldAccess.class,
+				Entity.class,
+				Enchantment.class,
+				Bootstrap.class,
+				StatusEffectInstance.class,
+				MinecraftClient.class,
+				ClientWorld.class);
 		// base
 		registerDefaultBase(Block.class);
 		registerDefaultBase(Entity.class);
 		registerDefaultBase(Enchantment.class);
 		registerDefaultBase(Item.class);
 
-		ZipOutputStream api = new ZipOutputStream(new FileOutputStream("api.jar"));
-		AbstracterConfig.writeJar(api, false);
-		api.close();
-
-		ZipOutputStream impl = new ZipOutputStream(new FileOutputStream("impl.jar"));
-		AbstracterConfig.writeJar(impl, true);
-		impl.close();
-
-		FileOutputStream manifest = new FileOutputStream("manifest.properties");
-		AbstracterConfig.writeManifest(manifest);
-		manifest.close();
-
-		Decompile.decompile(classpath,
-				new File("api.jar"),
-				new File("api_sources.jar"),
-				new File("lines.lmap"),
-				new File("mappings.tiny"));
+		AbstracterUtil
+				.apply(classpath, "api.jar", "api_sources.jar", "impl.jar", "manifest.properties", "mappings.tiny");
 	}
 
-	private static void registerDefaultInterface(Class<?> cls) {
-		registerInterface(cls, InterfaceAbstracter::new);
-	}
+	@Access(Modifier.STATIC | Modifier.PUBLIC)
+	public static void test(Object _this) {}
 
-	private static void registerDefaultBase(Class<?> base) {
-		AbstracterConfig.registerBase(base, BaseAbstracter::new);
-	}
 }

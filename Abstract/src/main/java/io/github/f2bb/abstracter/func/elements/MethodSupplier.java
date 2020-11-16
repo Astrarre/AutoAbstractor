@@ -4,7 +4,7 @@ import static io.github.f2bb.abstracter.func.filter.MemberFilter.ACCESSIBLE;
 import static io.github.f2bb.abstracter.func.filter.MemberFilter.PROTECTED;
 import static io.github.f2bb.abstracter.func.filter.MemberFilter.PUBLIC;
 import static io.github.f2bb.abstracter.func.filter.MemberFilter.STATIC;
-import static io.github.f2bb.abstracter.func.filter.MemberFilter.VALID_PARAMS_AND_RETURN;
+import static io.github.f2bb.abstracter.func.filter.MemberFilter.VALID_PARAMS_VARS_AND_RETURN;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -23,9 +23,10 @@ import io.github.f2bb.abstracter.util.AbstracterLoader;
 })
 public interface MethodSupplier {
 	MethodSupplier EMPTY = c -> Collections.emptySet();
+	// todo check formal parameters
 	MethodSupplier BASE_DEFAULT = create(AbstracterLoader::isMinecraft)
 			                              // neither bridge nor synthetic
-			                              .filtered(VALID_PARAMS_AND_RETURN
+			                              .filtered(VALID_PARAMS_VARS_AND_RETURN
 					                                        .and((MemberFilter) (PUBLIC.and(STATIC.negate()))
 							                                                            .or(PROTECTED)));
 
@@ -33,7 +34,7 @@ public interface MethodSupplier {
 	 * all public methods are exposed from classes inside the 'umbrella'
 	 */
 	MethodSupplier INTERFACE_DEFAULT = create(AbstracterLoader::isUnabstractedClass)
-			                                   .filtered(VALID_PARAMS_AND_RETURN.and((MemberFilter) ACCESSIBLE));
+			                                   .filtered(VALID_PARAMS_VARS_AND_RETURN.and((MemberFilter) ACCESSIBLE));
 
 	static MethodSupplier create(Predicate<Class<?>> filter) {
 		return c -> {

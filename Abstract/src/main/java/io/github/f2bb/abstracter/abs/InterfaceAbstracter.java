@@ -20,6 +20,7 @@ import io.github.f2bb.abstracter.util.asm.FieldUtil;
 import io.github.f2bb.abstracter.util.asm.InvokeUtil;
 import io.github.f2bb.abstracter.util.asm.MethodUtil;
 import io.github.f2bb.abstracter.util.reflect.TypeUtil;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -64,17 +65,21 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 	public void abstractField(ClassNode node, Field field, boolean impl) {
 		int access = field.getModifiers();
 		if (Modifier.isStatic(access) && Modifier.isFinal(access)) {
-			node.fields.add(FieldUtil.createConstant(node, this.cls, field, impl));
+			FieldUtil.createConstant(node, this.cls, field, impl);
 		} else {
 			if (!Modifier.isFinal(access)) {
 				MethodNode setter = FieldUtil.createSetter(this.cls, field, impl);
 				if(!MethodUtil.conflicts(setter.name, setter.desc, node)) {
+					this.addFieldRefAnnotation(setter, field);
+					setter.access &= ~ACC_FINAL;
 					node.methods.add(setter);
 				}
 			}
 
 			MethodNode getter = FieldUtil.createGetter(this.cls, field, impl);
 			if(!MethodUtil.conflicts(getter.name, getter.desc, node)) {
+				this.addFieldRefAnnotation(getter, field);
+				getter.access &= ~ACC_FINAL;
 				node.methods.add(getter);
 			}
 		}
@@ -101,57 +106,5 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 			InvokeUtil.visitStub(method);
 		}
 		node.methods.add(method);
-	}
-
-	@Override
-	public void postProcess(ClassNode node, boolean impl) {}
-
-	public static class Builder {
-		private Class<?> cls;
-		private String name;
-		private InterfaceFunction interfaces = InterfaceFunction.INTERFACE_DEFAULT;
-		private SuperFunction function = SuperFunction.EMPTY;
-		private ConstructorSupplier supplier = ConstructorSupplier.INTERFACE_DEFAULT;
-		private FieldSupplier fieldSupplier = FieldSupplier.INTERFACE_DEFAULT;
-		private MethodSupplier methodSupplier = MethodSupplier.INTERFACE_DEFAULT;
-
-		public Builder(Class<?> cls, String name) {
-			this.cls = cls;
-			this.name = name;
-		}
-
-		public Builder(Class<?> cls) {
-			this(cls, getName(cls, "I", 0));
-		}
-
-		public InterfaceAbstracter.Builder setInterfaces(InterfaceFunction interfaces) {
-			this.interfaces = interfaces;
-			return this;
-		}
-
-		public InterfaceAbstracter.Builder setFunction(SuperFunction function) {
-			this.function = function;
-			return this;
-		}
-
-		public InterfaceAbstracter.Builder setSupplier(ConstructorSupplier supplier) {
-			this.supplier = supplier;
-			return this;
-		}
-
-		public InterfaceAbstracter.Builder setFieldSupplier(FieldSupplier supplier) {
-			this.fieldSupplier = supplier;
-			return this;
-		}
-
-		public InterfaceAbstracter.Builder setMethodSupplier(MethodSupplier supplier) {
-			this.methodSupplier = supplier;
-			return this;
-		}
-
-		public InterfaceAbstracter build() {
-			return new InterfaceAbstracter(this.cls,
-					this.name, this.interfaces, this.function, this.supplier, this.fieldSupplier, this.methodSupplier);
-		}
 	}
 }

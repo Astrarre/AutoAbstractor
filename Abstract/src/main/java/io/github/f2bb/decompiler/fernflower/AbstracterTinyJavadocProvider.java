@@ -10,9 +10,16 @@ import java.util.List;
 import java.util.Map;
 
 import io.github.f2bb.abstracter.AbstracterConfig;
+import io.github.f2bb.abstracter.abs.AbstractAbstracter;
+import io.github.f2bb.abstracter.util.AbstracterLoader;
+import io.github.f2bb.abstracter.util.reflect.ReflectUtil;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructAnnotationAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.objectweb.asm.commons.Remapper;
 
 import net.fabricmc.fernflower.api.IFabricJavadocProvider;
@@ -24,6 +31,7 @@ import net.fabricmc.mapping.tree.TinyMappingFactory;
 import net.fabricmc.mapping.tree.TinyTree;
 import net.fabricmc.mappings.EntryTriple;
 
+@SuppressWarnings ("unchecked")
 public class AbstracterTinyJavadocProvider implements IFabricJavadocProvider {
 	private static final Remapper REMAPPER = new Remapper() {
 		private final Map<String, String> map = AbstracterConfig.nameMap();
@@ -38,6 +46,7 @@ public class AbstracterTinyJavadocProvider implements IFabricJavadocProvider {
 	private final Map<EntryTriple, FieldDef> fields = new HashMap<>();
 	private final Map<EntryTriple, MethodDef> methods = new HashMap<>();
 	private final String namespace = "named";
+
 	public AbstracterTinyJavadocProvider(File tinyFile) {
 		TinyTree result;
 		try (BufferedReader reader = Files.newBufferedReader(tinyFile.toPath())) {
@@ -74,18 +83,42 @@ public class AbstracterTinyJavadocProvider implements IFabricJavadocProvider {
 
 	@Override
 	public String getFieldDoc(StructClass structClass, StructField structField) {
-		FieldDef fieldDef = this.fields.get(new EntryTriple(REMAPPER.map(structClass.qualifiedName),
+		return this.getFieldDoc(REMAPPER.map(structClass.qualifiedName),
 				structField.getName(),
-				REMAPPER.mapDesc(structField.getDescriptor())));
+				REMAPPER.mapDesc(structField.getDescriptor()));
+	}
+
+	private String getFieldDoc(String owner, String name, String type) {
+		FieldDef fieldDef = this.fields.get(new EntryTriple(owner, name, type));
 		return fieldDef != null ? fieldDef.getComment() : null;
 	}
 
+
 	@Override
 	public String getMethodDoc(StructClass structClass, StructMethod structMethod) {
-		MethodDef methodDef = this.methods.get(new EntryTriple(structClass.qualifiedName,
-				structMethod.getName(),
-				REMAPPER.mapMethodDesc(structMethod.getDescriptor())));
+		if (structMethod.hasAttribute(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS)) {
+			StructAnnotationAttribute attribute = structMethod
+					                                      .getAttribute(StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS);
+			List<AnnotationExprent> annos = attribute.getAnnotations();
+			for (AnnotationExprent anno : annos) {
+				if (AbstractAbstracter.FIELD_REF_NAME.equals(anno.getClassName())) {
+					Map<String, ConstExprent> vals = (Map) ReflectUtil.getValues(anno);
+					String owner = (String) vals.get("owner").getValue();
+					String name = (String) vals.get("name").getValue();
+					String type = (String) vals.get("type").getValue();
+					return this.getFieldDoc(owner, name, type);
+				}
+			}
+		}
 
+		String owner = REMAPPER.map(structClass.qualifiedName);
+		String name = structMethod.getName();
+		String desc = REMAPPER.mapMethodDesc(structMethod.getDescriptor());
+		return this.getMethodDocRecurse(owner, name, desc);
+	}
+
+	private String getMethodDoc(String owner, String name, String desc) {
+		MethodDef methodDef = this.methods.get(new EntryTriple(owner, name, desc));
 		if (methodDef != null) {
 			List<String> parts = new ArrayList<>();
 
@@ -118,4 +151,35 @@ public class AbstracterTinyJavadocProvider implements IFabricJavadocProvider {
 
 		return null;
 	}
+
+	private String getMethodDocRecurse(String owner, String name, String desc) {
+		String doc = this.getMethodDoc(owner.replace('.', '/'), name, desc);
+		if (doc != null) {
+			return doc;
+		}
+		Class<?> cls = AbstracterLoader.getClass(owner.replace('/', '.'));
+		if (!AbstracterLoader.isMinecraft(cls)) {
+			return null;
+		}
+
+		// todo deal with bridge methods
+		Class<?> sup = cls.getSuperclass();
+		if (sup != null) {
+			doc = this.getMethodDocRecurse(sup.getName(), name, desc);
+		}
+
+		if (doc != null) {
+			return doc;
+		}
+
+		for (Class<?> iface : cls.getInterfaces()) {
+			doc = this.getMethodDocRecurse(iface.getName(), name, desc);
+			if (doc != null) {
+				return doc;
+			}
+		}
+
+		return null;
+	}
+
 }

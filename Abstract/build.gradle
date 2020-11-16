@@ -35,9 +35,11 @@ dependencies {
     implementation 'org.ow2.asm:asm-commons:9.0'
 
     // decompiler
-    implementation ('org.jetbrains:intellij-fernflower:1.2.1.16')
+    implementation ('net.fabricmc:fabric-fernflower:1.3.0')
     implementation ('net.fabricmc:tiny-mappings-parser:0.2.2.14')
 
     testImplementation files("$parent.projectDir/run/fodder.jar")
     testCompileOnly files("$parent.projectDir/run/api.jar")
+    testCompileOnly files("$parent.projectDir/run/api_sources.jar")
+    compile fileTree(include: ['*.jar'], dir: "$parent.projectDir/run/classpath")
 }

@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import com.google.common.reflect.TypeToken;
-import com.sun.org.apache.bcel.internal.generic.FADD;
 import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
 import org.objectweb.asm.commons.Remapper;
@@ -76,7 +75,9 @@ public class TypeUtil {
 	public static void visit(SignatureVisitor visitor, Type type, boolean remap, boolean visitEnd) {
 		if (type instanceof Class<?>) {
 			Class<?> c = (Class<?>) type;
-			if (c.isPrimitive()) {
+			if (c.isArray()) {
+				visit(visitor.visitArrayType(), c.getComponentType(), remap);
+			} else if (c.isPrimitive()) {
 				visitor.visitBaseType(org.objectweb.asm.Type.getDescriptor(c).charAt(0));
 			} else {
 				if (remap) {
@@ -110,7 +111,7 @@ public class TypeUtil {
 
 			Type[] args = pt.getActualTypeArguments();
 			for (Type arg : args) {
-				if (arg instanceof Class<?>) {
+				if (!(arg instanceof WildcardType)) {
 					visitor.visitTypeArgument('=');
 				}
 				visit(visitor, arg, remap);
@@ -198,6 +199,8 @@ public class TypeUtil {
 	public static String getInterfaceDesc(Class<?> cls) {
 		if (cls.isPrimitive()) {
 			return org.objectweb.asm.Type.getDescriptor(cls);
+		} else if(cls.isArray()) {
+			return '[' + getInterfaceDesc(cls.getComponentType());
 		} else {
 			return "L" + AbstracterConfig.getInterfaceName(cls) + ";";
 		}
