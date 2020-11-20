@@ -1,3 +1,4 @@
 rootProject.name = 'F2bb'
 include 'Abstract'
+include 'Stripper'
 

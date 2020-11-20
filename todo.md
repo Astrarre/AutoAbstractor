@@ -1,5 +1,5 @@
 ### For Curseforge
-make a mod called "Iridis API Index" or include it in "Iridis Loader", and make it just have an index of version -> curseforge links
+make a mod called "Iridis API Index" or include it in "Iridis pkg.Loader", and make it just have an index of version -> curseforge links
 so when a mod requires X api, it automatically installs all the bridge versions and stuff
 ### Updating
 so, if a class abstraction can't be saved, let's say there's a conflict in return types or something, or a single

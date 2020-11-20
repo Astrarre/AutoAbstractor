@@ -61,7 +61,7 @@ public class MethodUtil {
 		}
 		boolean identical = desc.equals(org.objectweb.asm.Type
 				                                .getMethodDescriptor(method)) && !Modifier.isStatic(access);
-		if (identical && impl) {
+		if (identical && impl && !iface) {
 			// if instance, identical and impl, then virtual lookups go brr
 		} else {
 			if (!Modifier.isAbstract(access)) {

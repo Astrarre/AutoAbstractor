@@ -1,4 +1,6 @@
+import static io.github.f2bb.AbstracterUtil.registerConstantlessInterface;
 import static io.github.f2bb.AbstracterUtil.registerDefaultBase;
+import static io.github.f2bb.AbstracterUtil.registerDefaultConstants;
 import static io.github.f2bb.AbstracterUtil.registerDefaultInterface;
 import static io.github.f2bb.abstracter.AbstracterConfig.registerInnerOverride;
 import static io.github.f2bb.abstracter.AbstracterConfig.registerInterface;
@@ -29,6 +31,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
@@ -49,18 +52,22 @@ public class AbstractTest {
 		registerInterface(AbstractBlock.Settings.class,
 				c -> new InterfaceAbstracter(c, "v0/io/github/f2bb/block/IBlock$Settings")
 						     .extension(AbstractTest::test)
-		.attach(new TypeToken<Consumer<String>>() {}));
+						     .attach(new TypeToken<Consumer<String>>() {}));
 
 		registerInnerOverride(Block.class, AbstractBlock.Settings.class);
 
 		// attachment interfaces > extension methods, cus no javadoc
+		registerDefaultConstants(
+				Blocks.class, Items.class, Material.class
+		);
+
+		registerConstantlessInterface(Material.class);
+
 		registerDefaultInterface(Block.class,
-				Item.class,
 				ItemStack.class,
+				Item.class,
 				Item.Settings.class,
-				Blocks.class,
 				BlockState.class,
-				Material.class,
 				BlockPos.class,
 				World.class,
 				WorldAccess.class,
@@ -75,7 +82,7 @@ public class AbstractTest {
 		registerDefaultBase(Entity.class);
 		registerDefaultBase(Enchantment.class);
 		registerDefaultBase(Item.class);
-
+		registerDefaultBase(Material.class);
 		AbstracterUtil
 				.apply(classpath, "api.jar", "api_sources.jar", "impl.jar", "manifest.properties", "mappings.tiny");
 	}

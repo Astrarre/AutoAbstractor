@@ -15,6 +15,7 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile project(":Abstract")
+    testCompileOnly files('run/api.jar')
+    testImplementation 'org.ow2.asm:asm:9.0'
+    testImplementation 'org.ow2.asm:asm-commons:9.0'
 }

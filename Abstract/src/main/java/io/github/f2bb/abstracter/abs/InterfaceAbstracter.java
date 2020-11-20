@@ -29,18 +29,16 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 	public InterfaceAbstracter(Class<?> cls,
 			String name,
 			InterfaceFunction interfaces,
-			SuperFunction function,
 			ConstructorSupplier supplier,
 			FieldSupplier fieldSupplier,
 			MethodSupplier methodSupplier) {
-		super(cls, name, interfaces, function, supplier, fieldSupplier, methodSupplier);
+		super(cls, name, interfaces, SuperFunction.EMPTY, supplier, fieldSupplier, methodSupplier);
 	}
 
 	public InterfaceAbstracter(Class<?> cls) {
 		this(cls,
 				getName(cls, "I", 0),
 				InterfaceFunction.INTERFACE_DEFAULT,
-				SuperFunction.EMPTY,
 				ConstructorSupplier.INTERFACE_DEFAULT,
 				FieldSupplier.INTERFACE_DEFAULT,
 				MethodSupplier.INTERFACE_DEFAULT);
@@ -50,7 +48,6 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 		this(cls,
 				name,
 				InterfaceFunction.INTERFACE_DEFAULT,
-				SuperFunction.EMPTY,
 				ConstructorSupplier.INTERFACE_DEFAULT,
 				FieldSupplier.INTERFACE_DEFAULT,
 				MethodSupplier.INTERFACE_DEFAULT);
@@ -68,7 +65,7 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 			FieldUtil.createConstant(node, this.cls, field, impl);
 		} else {
 			if (!Modifier.isFinal(access)) {
-				MethodNode setter = FieldUtil.createSetter(this.cls, field, impl);
+				MethodNode setter = FieldUtil.createSetter(this.cls, field, impl, true);
 				if(!MethodUtil.conflicts(setter.name, setter.desc, node)) {
 					this.addFieldRefAnnotation(setter, field);
 					setter.access &= ~ACC_FINAL;
@@ -76,7 +73,7 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 				}
 			}
 
-			MethodNode getter = FieldUtil.createGetter(this.cls, field, impl);
+			MethodNode getter = FieldUtil.createGetter(this.cls, field, impl, true);
 			if(!MethodUtil.conflicts(getter.name, getter.desc, node)) {
 				this.addFieldRefAnnotation(getter, field);
 				getter.access &= ~ACC_FINAL;

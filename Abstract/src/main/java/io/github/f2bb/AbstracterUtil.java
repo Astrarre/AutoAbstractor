@@ -1,5 +1,6 @@
 package io.github.f2bb;
 
+import static io.github.f2bb.abstracter.AbstracterConfig.registerConstants;
 import static io.github.f2bb.abstracter.AbstracterConfig.registerInterface;
 
 import java.io.BufferedReader;
@@ -8,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -16,7 +18,10 @@ import java.util.zip.ZipOutputStream;
 
 import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.abs.BaseAbstracter;
+import io.github.f2bb.abstracter.abs.ConstantsAbstracter;
 import io.github.f2bb.abstracter.abs.InterfaceAbstracter;
+import io.github.f2bb.abstracter.func.elements.FieldSupplier;
+import io.github.f2bb.abstracter.func.filter.MemberFilter;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
 import io.github.f2bb.decompiler.Decompile;
 
@@ -53,6 +58,19 @@ public class AbstracterUtil {
 	public static void registerDefaultInterface(Class<?>... cls) {
 		for (Class<?> cl : cls) {
 			registerInterface(cl, InterfaceAbstracter::new);
+		}
+	}
+
+	public static void registerDefaultConstants(Class<?>... cls) {
+		for (Class<?> cl : cls) {
+			registerConstants(cl, ConstantsAbstracter::new);
+		}
+	}
+
+	public static void registerConstantlessInterface(Class<?>...cls) {
+		for (Class<?> cl : cls) {
+			registerInterface(cl, c -> new InterfaceAbstracter(c).fields(FieldSupplier.INTERFACE_DEFAULT.filtered((MemberFilter)
+					MemberFilter.PUBLIC.and(MemberFilter.STATIC).negate())));
 		}
 	}
 

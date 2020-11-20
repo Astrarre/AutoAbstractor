@@ -23,9 +23,9 @@ import org.objectweb.asm.tree.MethodNode;
 @SuppressWarnings ("UnstableApiUsage")
 public class FieldUtil implements Opcodes {
 	// todo annotations
-	public static MethodNode createGetter(Class<?> cls, Field field, boolean impl) {
+	public static MethodNode createGetter(Class<?> cls, Field field, boolean impl, boolean iface) {
 		int access = field.getModifiers();
-		String owner = org.objectweb.asm.Type.getInternalName(field.getType());
+		String owner = org.objectweb.asm.Type.getInternalName(field.getDeclaringClass());
 		TypeToken<?> token = TypeToken.of(cls).resolveType(field.getGenericType());
 		String descriptor = TypeUtil.getInterfaceDesc(token.getRawType());
 		String name = field.getName();
@@ -44,6 +44,9 @@ public class FieldUtil implements Opcodes {
 				node.visitFieldInsn(GETSTATIC, owner, name, descriptor);
 			} else {
 				node.visitVarInsn(ALOAD, 0);
+				if(iface) {
+					node.visitTypeInsn(CHECKCAST, owner);
+				}
 				node.visitFieldInsn(GETFIELD, owner, name, descriptor);
 			}
 			node.visitInsn(org.objectweb.asm.Type.getType(descriptor).getOpcode(IRETURN));
@@ -58,9 +61,9 @@ public class FieldUtil implements Opcodes {
 		return prefix + Character.toUpperCase(name.charAt(0)) + name.substring(1);
 	}
 
-	public static MethodNode createSetter(Class<?> cls, Field field, boolean impl) {
+	public static MethodNode createSetter(Class<?> cls, Field field, boolean impl, boolean iface) {
 		int access = field.getModifiers();
-		String owner = Type.getInternalName(field.getType());
+		String owner = Type.getInternalName(field.getDeclaringClass());
 		TypeToken<?> token = TypeToken.of(cls).resolveType(field.getGenericType());
 		String descriptor = TypeUtil.getInterfaceDesc(token.getRawType());
 		String name = field.getName();
@@ -81,9 +84,12 @@ public class FieldUtil implements Opcodes {
 				node.visitFieldInsn(PUTSTATIC, owner, name, descriptor);
 			} else {
 				node.visitVarInsn(ALOAD, 0);
+				if(iface) {
+					node.visitTypeInsn(CHECKCAST, owner);
+				}
 				node.visitVarInsn(type.getOpcode(ILOAD), 1);
 				if (!Type.getDescriptor(field.getType()).equals(descriptor)) {
-					node.visitTypeInsn(CHECKCAST, Type.getInternalName(field.getType()));
+					node.visitTypeInsn(CHECKCAST, Type.getInternalName(field.getDeclaringClass()));
 				}
 				node.visitFieldInsn(PUTFIELD, owner, name, descriptor);
 			}

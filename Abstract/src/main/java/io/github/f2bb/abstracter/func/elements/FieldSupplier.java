@@ -21,6 +21,8 @@ import io.github.f2bb.abstracter.util.AbstracterLoader;
 public interface FieldSupplier {
 	FieldSupplier EMPTY = c -> Collections.emptySet();
 
+	FieldSupplier CONSTANTS = ((FieldSupplier)c -> Arrays.asList(c.getDeclaredFields())).filtered((MemberFilter)PUBLIC.and(STATIC));
+
 	FieldSupplier INTERFACE_DEFAULT = create(AbstracterLoader::isUnabstractedClass)
 			                                  .filtered(VALID_TYPE.and((MemberFilter) PUBLIC));
 

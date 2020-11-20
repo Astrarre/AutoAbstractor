@@ -17,6 +17,6 @@ public class Impl extends IllegalStateException {
 
 	public static Impl call() {
 		// todo add a help link
-		throw new Impl("Someone didn't set up their dependencies correctly");
+		return new Impl("Someone didn't set up their dependencies correctly");
 	}
 }

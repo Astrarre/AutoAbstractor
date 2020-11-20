@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings ("UnstableApiUsage")
 public interface SuperFunction {
-	SuperFunction EMPTY = (c, i) -> null;
+	SuperFunction EMPTY = (c, i) -> Object.class;
 
 	SuperFunction BASE_DEFAULT = (c, i) -> {
 		if(i) {

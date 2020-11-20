@@ -9,7 +9,6 @@ import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import com.google.common.collect.BiMap;
 import io.github.f2bb.abstracter.abs.AbstractAbstracter;
 import io.github.f2bb.abstracter.abs.ManualAbstracter;
 import io.github.f2bb.abstracter.ex.InvalidClassException;
@@ -23,9 +22,11 @@ import org.objectweb.asm.tree.ClassNode;
 
 @SuppressWarnings ("unchecked")
 public class AbstracterConfig implements Opcodes {
-	private static final Map<Class<?>, AbstractAbstracter> INTERFACE_ABSTRACTION = new HashMap<>(), BASE_ABSTRACTION = new HashMap<>();
+	private static final Map<Class<?>, AbstractAbstracter> INTERFACE_ABSTRACTION = new HashMap<>();
+	private static final Map<Class<?>, AbstractAbstracter> BASE_ABSTRACTION = new HashMap<>();
+	private static final Map<Class<?>, AbstractAbstracter> CONSTANT_ABSTRACTIONS = new HashMap<>();
+
 	private static final Map<Class<?>, Class<?>[]> INNER_CLASS_OVERRIDES = new HashMap<>();
-	private static final Map<Class<?>, Boolean> IS_INNER = new HashMap<>();
 
 	public static void writeManifest(OutputStream stream) throws IOException {
 		Properties properties = new Properties();
@@ -37,13 +38,14 @@ public class AbstracterConfig implements Opcodes {
 	public static void writeJar(ZipOutputStream out, boolean impl) {
 		write(out, INTERFACE_ABSTRACTION, impl);
 		write(out, BASE_ABSTRACTION, impl);
+		write(out, CONSTANT_ABSTRACTIONS, impl);
 	}
 
 	private static void write(ZipOutputStream out, Map<Class<?>, AbstractAbstracter> abstraction, boolean impl) {
 		Map<Class<?>, ClassNode> cache = new HashMap<>();
 		abstraction.forEach((cls, abs) -> {
 			ClassNode node = cache.computeIfAbsent(cls, c -> asm(abstraction, cache, c, impl));
-			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 			node.accept(writer);
 			try {
 				out.putNextEntry(new ZipEntry(node.name + ".class"));
@@ -74,6 +76,10 @@ public class AbstracterConfig implements Opcodes {
 		return node;
 	}
 
+	public static void manualInterface(Class<?> mcClass, String abstraction) {
+		registerInterface(mcClass, c -> new ManualAbstracter(c, abstraction));
+	}
+
 	public static void manualInterface(String mcClass, String abstraction) {
 		registerInterface(mcClass, c -> new ManualAbstracter(c, abstraction));
 	}
@@ -81,15 +87,6 @@ public class AbstracterConfig implements Opcodes {
 	public static void registerInterface(String cls, Function<Class<?>, AbstractAbstracter> abstracter) {
 		Class<?> c = AbstracterLoader.getClass(cls);
 		INTERFACE_ABSTRACTION.put(c, abstracter.apply(c));
-	}
-
-	public static void registerBase(String cls, Function<Class<?>, AbstractAbstracter> abstracter) {
-		Class<?> c = AbstracterLoader.getClass(cls);
-		BASE_ABSTRACTION.put(c, abstracter.apply(c));
-	}
-
-	public static void manualInterface(Class<?> mcClass, String abstraction) {
-		registerInterface(mcClass, c -> new ManualAbstracter(c, abstraction));
 	}
 
 	public static void registerInterface(Class<?> cls, Function<Class<?>, AbstractAbstracter> abstracter) {
@@ -100,20 +97,27 @@ public class AbstracterConfig implements Opcodes {
 		registerBase(cls.getName(), abstracter);
 	}
 
-	public static void registerInnerOverride(Class<?> cls, Class<?>...inners) {
+	public static void registerBase(String cls, Function<Class<?>, AbstractAbstracter> abstracter) {
+		Class<?> c = AbstracterLoader.getClass(cls);
+		BASE_ABSTRACTION.put(c, abstracter.apply(c));
+	}
+
+	public static void registerConstants(String cls, Function<Class<?>, AbstractAbstracter> abstracter) {
+		Class<?> c = AbstracterLoader.getClass(cls);
+		CONSTANT_ABSTRACTIONS.put(c, abstracter.apply(c));
+	}
+
+	public static void registerConstants(Class<?> cls, Function<Class<?>, AbstractAbstracter> abstracter) {
+		registerConstants(cls.getName(), abstracter);
+	}
+
+	public static void registerInnerOverride(Class<?> cls, Class<?>... inners) {
 		registerInnerOverride(cls.getName(), ArrayUtil.map(inners, Class::getName, String[]::new));
 	}
 
 	public static void registerInnerOverride(String cls, String... inners) {
 		Class<?>[] innerClasses = ArrayUtil.map(inners, AbstracterLoader::getClass, Class[]::new);
-		for (Class<?> aClass : innerClasses) {
-			IS_INNER.put(aClass, true);
-		}
 		INNER_CLASS_OVERRIDES.put(AbstracterLoader.getClass(cls), innerClasses);
-	}
-
-	public static void makeOuter(String cls) {
-		IS_INNER.put(AbstracterLoader.getClass(cls), false);
 	}
 
 	public static boolean isInterfaceAbstracted(Class<?> cls) {
@@ -144,6 +148,7 @@ public class AbstracterConfig implements Opcodes {
 		Map<String, String> map = new HashMap<>();
 		BASE_ABSTRACTION.forEach((k, a) -> map.put(a.name, Type.getInternalName(k)));
 		INTERFACE_ABSTRACTION.forEach((k, a) -> map.put(a.name, Type.getInternalName(k)));
+		CONSTANT_ABSTRACTIONS.forEach((k, a) -> map.put(a.name, Type.getInternalName(k)));
 		return map;
 	}
 }
