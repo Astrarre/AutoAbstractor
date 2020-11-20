@@ -25,6 +25,7 @@ public class FieldUtil implements Opcodes {
 	// todo annotations
 	public static MethodNode createGetter(Class<?> cls, Field field, boolean impl, boolean iface) {
 		int access = field.getModifiers();
+		access &= ~ACC_ENUM;
 		String owner = org.objectweb.asm.Type.getInternalName(field.getDeclaringClass());
 		TypeToken<?> token = TypeToken.of(cls).resolveType(field.getGenericType());
 		String descriptor = TypeUtil.getInterfaceDesc(token.getRawType());
@@ -63,6 +64,7 @@ public class FieldUtil implements Opcodes {
 
 	public static MethodNode createSetter(Class<?> cls, Field field, boolean impl, boolean iface) {
 		int access = field.getModifiers();
+		access &= ~ACC_ENUM;
 		String owner = Type.getInternalName(field.getDeclaringClass());
 		TypeToken<?> token = TypeToken.of(cls).resolveType(field.getGenericType());
 		String descriptor = TypeUtil.getInterfaceDesc(token.getRawType());
@@ -103,7 +105,7 @@ public class FieldUtil implements Opcodes {
 
 	public static void createConstant(ClassNode header, Class<?> cls, Field field, boolean impl) {
 		java.lang.reflect.Type reified = TypeMappingFunction.reify(cls, field.getGenericType());
-		FieldNode node = new FieldNode(field.getModifiers(),
+		FieldNode node = new FieldNode(field.getModifiers() & ~ACC_ENUM,
 				field.getName(),
 				TypeUtil.getInterfaceDesc(TypeMappingFunction.raw(cls, field.getGenericType())),
 				TypeUtil.toSignature(reified),
