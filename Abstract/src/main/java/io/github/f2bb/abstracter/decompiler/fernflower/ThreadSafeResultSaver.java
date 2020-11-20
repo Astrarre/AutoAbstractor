@@ -22,11 +22,10 @@
  * SOFTWARE.
  */
 
-package io.github.f2bb.decompiler.fernflower;
+package io.github.f2bb.abstracter.decompiler.fernflower;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;

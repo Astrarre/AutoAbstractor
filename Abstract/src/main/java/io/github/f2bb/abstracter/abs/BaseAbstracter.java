@@ -25,9 +25,13 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class BaseAbstracter extends AbstractAbstracter {
 	public BaseAbstracter(Class<?> cls) {
-		this(cls,
-				getName(cls, "Base", 0),
-				InterfaceFunction.BASE_DEFAULT,
+		this(cls, getName(cls, "Base", 0));
+	}
+
+	public BaseAbstracter(Class<?> c, String s) {
+		this(c,
+				s,
+				InterfaceFunction.EMPTY,
 				SuperFunction.BASE_DEFAULT,
 				ConstructorSupplier.BASE_DEFAULT,
 				FieldSupplier.BASE_DEFAULT,
@@ -44,19 +48,30 @@ public class BaseAbstracter extends AbstractAbstracter {
 		super(cls, name, interfaces, function, supplier, fieldSupplier, methodSupplier);
 	}
 
-	public BaseAbstracter(Class<?> c, String s) {
-		this(c,
-				s,
-				InterfaceFunction.BASE_DEFAULT,
-				SuperFunction.BASE_DEFAULT,
-				ConstructorSupplier.BASE_DEFAULT,
-				FieldSupplier.BASE_DEFAULT,
-				MethodSupplier.BASE_DEFAULT);
-	}
-
 	@Override
 	public int getAccess() {
 		return this.cls.getModifiers();
+	}
+
+	@Override
+	public void abstractConstructor(ClassNode node, Constructor<?> constructor, boolean impl) {
+		String desc = Type.getConstructorDescriptor(constructor);
+		MethodNode method = new MethodNode(constructor.getModifiers(),
+				"<init>",
+				TypeUtil.REMAPPER.mapSignature(desc, false),
+				impl ? null : TypeUtil.REMAPPER.mapSignature(ReflectUtil.getSignature(constructor), false),
+				null);
+		if (impl) {
+			InvokeUtil.invokeConstructor(method, constructor, false);
+		} else {
+			InvokeUtil.visitStub(method);
+		}
+		node.methods.add(method);
+	}
+
+	@Override
+	public void abstractMethod(ClassNode node, Method method, boolean impl) {
+		MethodUtil.abstractMethod(node, this.cls, method, impl, false);
 	}
 
 	@Override
@@ -80,27 +95,6 @@ public class BaseAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public void abstractMethod(ClassNode node, Method method, boolean impl) {
-		MethodUtil.abstractMethod(node, this.cls, method, impl, false);
-	}
-
-	@Override
-	public void abstractConstructor(ClassNode node, Constructor<?> constructor, boolean impl) {
-		String desc = Type.getConstructorDescriptor(constructor);
-		MethodNode method = new MethodNode(constructor.getModifiers(),
-				"<init>",
-				TypeUtil.REMAPPER.mapSignature(desc, false),
-				impl ? null : TypeUtil.REMAPPER.mapSignature(ReflectUtil.getSignature(constructor), false),
-				null);
-		if (impl) {
-			InvokeUtil.invokeConstructor(method, constructor, false);
-		} else {
-			InvokeUtil.visitStub(method);
-		}
-		node.methods.add(method);
-	}
-
-	@Override
 	public void postProcess(ClassNode node, boolean impl) {
 		node.interfaces.add(AbstracterConfig.getInterfaceName(this.cls));
 		if (node.signature != null) {
@@ -109,7 +103,7 @@ public class BaseAbstracter extends AbstractAbstracter {
 			TypeVariable<?>[] variable = this.cls.getTypeParameters();
 			StringBuilder signature = new StringBuilder(name.length() + 2 + variable.length * 3);
 			signature.append('L').append(name);
-			if(variable.length != 0) {
+			if (variable.length != 0) {
 				signature.append('<');
 				for (TypeVariable<?> var : variable) {
 					signature.append('T').append(var.getName()).append(';');

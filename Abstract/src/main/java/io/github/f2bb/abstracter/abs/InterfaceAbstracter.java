@@ -61,7 +61,7 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 	@Override
 	public void abstractField(ClassNode node, Field field, boolean impl) {
 		int access = field.getModifiers();
-		if (Modifier.isStatic(access) && Modifier.isFinal(access)) {
+		if ((access & ACC_ENUM) != 0) {
 			FieldUtil.createConstant(node, this.cls, field, impl);
 		} else {
 			if (!Modifier.isFinal(access)) {

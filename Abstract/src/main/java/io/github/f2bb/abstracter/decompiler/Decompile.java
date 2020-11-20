@@ -1,20 +1,16 @@
-package io.github.f2bb.decompiler;
+package io.github.f2bb.abstracter.decompiler;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import io.github.f2bb.decompiler.fernflower.AbstracterTinyJavadocProvider;
-import io.github.f2bb.decompiler.fernflower.ThreadIDFFLogger;
-import io.github.f2bb.decompiler.fernflower.ThreadSafeResultSaver;
+import io.github.f2bb.abstracter.decompiler.fernflower.AbstracterTinyJavadocProvider;
+import io.github.f2bb.abstracter.decompiler.fernflower.ThreadIDFFLogger;
+import io.github.f2bb.abstracter.decompiler.fernflower.ThreadSafeResultSaver;
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;

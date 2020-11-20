@@ -1,4 +1,4 @@
-package io.github.f2bb.decompiler.fernflower;
+package io.github.f2bb.abstracter.decompiler.fernflower;
 
 import java.io.BufferedReader;
 import java.io.File;

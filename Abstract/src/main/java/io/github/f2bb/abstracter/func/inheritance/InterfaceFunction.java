@@ -16,12 +16,24 @@ import io.github.f2bb.abstracter.func.filter.Filters;
 import io.github.f2bb.abstracter.func.map.TypeMappingFunction;
 import io.github.f2bb.abstracter.util.AbstracterLoader;
 
-// automatically reified
+/**
+ * This finds the interfaces to expose for the class
+ */
 public interface InterfaceFunction {
+	/**
+	 * No interfaces, base classes add themselves as interface abstraction in their post processor
+	 */
 	InterfaceFunction EMPTY = c -> Collections.emptySet();
 
 	InterfaceFunction SIMPLE = c -> Arrays.asList(c.getGenericInterfaces());
-	InterfaceFunction BASE_DEFAULT = branching(AbstracterLoader::isMinecraft).filtered(Filters.IS_VALID);
+
+	/**
+	 * if a base class doesn't have an interface abstraction, and since they can't extend each other we need to find all
+	 * of the interfaces in the hierarchy
+	 */
+	InterfaceFunction BASE_NO_INTERFACE = branching(AbstracterLoader::isMinecraft).filtered(Filters.IS_VALID);
+
+
 	InterfaceFunction INTERFACE_DEFAULT = branching(AbstracterLoader::isUnabstractedClass)
 			                                      .filtered(Filters.IS_VALID)
 			                                      .and(c -> Optional.of(c)

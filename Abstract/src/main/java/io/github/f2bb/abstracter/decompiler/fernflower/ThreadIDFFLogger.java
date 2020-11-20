@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package io.github.f2bb.decompiler.fernflower;
+package io.github.f2bb.abstracter.decompiler.fernflower;
 
 import java.io.PrintStream;
 import java.text.MessageFormat;

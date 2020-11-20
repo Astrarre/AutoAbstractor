@@ -15,6 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.google.common.reflect.TypeToken;
+import io.github.f2bb.abstracter.AbstracterUtil;
 import io.github.f2bb.FieldRef;
 import io.github.f2bb.abstracter.AbstracterConfig;
 import io.github.f2bb.abstracter.func.elements.ConstructorSupplier;
@@ -33,6 +34,9 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+/**
+ * an abstract class for abstracting a class, this contains shell logic
+ */
 @SuppressWarnings ("UnstableApiUsage")
 public abstract class AbstractAbstracter implements Opcodes {
 	public static final String FIELD_REF = org.objectweb.asm.Type.getDescriptor(FieldRef.class);
@@ -62,9 +66,9 @@ public abstract class AbstractAbstracter implements Opcodes {
 		this.methodSupplier = methodSupplier;
 	}
 
-	static String getName(Class<?> cls, String prefix, int version) {
+	public static String getName(Class<?> cls, String prefix, int version) {
 		String str = getInternalName(cls);
-		str = str.replace("net/minecraft/", "v" + version + "/io/github/f2bb/");
+		str = str.replace("net/minecraft/", "v" + version + AbstracterUtil.pkg);
 		int last = str.lastIndexOf('/') + 1;
 		return str.substring(0, last) + prefix + str.substring(last);
 	}
@@ -77,6 +81,10 @@ public abstract class AbstractAbstracter implements Opcodes {
 		visit.visitEnd();
 	}
 
+	/**
+	 * Create the abstracted classnode
+	 * @param impl true if output abstracted
+	 */
 	public ClassNode apply(boolean impl) {
 		ClassNode header = new ClassNode();
 		header.version = V1_8;

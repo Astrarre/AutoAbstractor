@@ -1,7 +1,7 @@
-import static io.github.f2bb.AbstracterUtil.registerConstantlessInterface;
-import static io.github.f2bb.AbstracterUtil.registerDefaultBase;
-import static io.github.f2bb.AbstracterUtil.registerDefaultConstants;
-import static io.github.f2bb.AbstracterUtil.registerDefaultInterface;
+import static io.github.f2bb.abstracter.AbstracterUtil.registerConstantlessInterface;
+import static io.github.f2bb.abstracter.AbstracterUtil.registerDefaultBase;
+import static io.github.f2bb.abstracter.AbstracterUtil.registerDefaultConstants;
+import static io.github.f2bb.abstracter.AbstracterUtil.registerDefaultInterface;
 import static io.github.f2bb.abstracter.AbstracterConfig.registerConstants;
 import static io.github.f2bb.abstracter.AbstracterConfig.registerInnerOverride;
 import static io.github.f2bb.abstracter.AbstracterConfig.registerInterface;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.google.common.reflect.TypeToken;
-import io.github.f2bb.AbstracterUtil;
+import io.github.f2bb.abstracter.AbstracterUtil;
 import io.github.f2bb.Access;
 import io.github.f2bb.abstracter.abs.ConstantsAbstracter;
 import io.github.f2bb.abstracter.abs.InterfaceAbstracter;
