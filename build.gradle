@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-group 'org.example'
+group 'io.github.astrarre'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
@@ -12,10 +12,4 @@ repositories {
     maven {
         url = 'http://maven.modmuss50.me/'
     }
-}
-
-dependencies {
-    testCompileOnly files('run/api.jar')
-    testImplementation 'org.ow2.asm:asm:9.0'
-    testImplementation 'org.ow2.asm:asm-commons:9.0'
 }

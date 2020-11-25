@@ -1,16 +1,13 @@
 plugins {
     id 'java'
-    id "com.github.johnrengelman.shadow" version "6.1.0"
-    id "com.jfrog.bintray" version "1.8.5"
+    id "com.jfrog.bintray" version "1.8.4"
     id 'maven-publish'
 }
 
-group 'io.github.f2bb'
-version '0.0.1'
+group 'io.github.astrarre'
+version '0.0.3'
 
 sourceCompatibility = 1.8
-
-shadowJar {}
 
 repositories {
     maven {
@@ -26,7 +23,7 @@ repositories {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 
-    implementation parent
+    implementation project(":Extra")
     // documentation
     compileOnly 'org.jetbrains:annotations:19.0.0'
     // gib typetoken
@@ -48,7 +45,7 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             groupId group
-            artifactId "autoabstracter"
+            artifactId "abstracter"
             version version
             from components.java
         }
@@ -62,8 +59,8 @@ bintray {
     publish = true //[Default: false] Whether version should be auto published after an upload
     pkg {
         repo = "maven"
-        name = "AutoAbstracter"
-        userOrg = "febb"
+        name = "abstracter"
+        userOrg = "astrarre"
         licenses = ["LGPL-3.0"]
         version {
             name = version

@@ -1,10 +1,10 @@
-import static io.github.f2bb.abstracter.AbstracterUtil.registerConstantlessInterface;
-import static io.github.f2bb.abstracter.AbstracterUtil.registerDefaultBase;
-import static io.github.f2bb.abstracter.AbstracterUtil.registerDefaultConstants;
-import static io.github.f2bb.abstracter.AbstracterUtil.registerDefaultInterface;
-import static io.github.f2bb.abstracter.AbstracterConfig.registerConstants;
-import static io.github.f2bb.abstracter.AbstracterConfig.registerInnerOverride;
-import static io.github.f2bb.abstracter.AbstracterConfig.registerInterface;
+import static io.github.astrarre.abstracter.AbstracterUtil.registerConstantlessInterface;
+import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultBase;
+import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultConstants;
+import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultInterface;
+import static io.github.astrarre.abstracter.AbstracterConfig.registerConstants;
+import static io.github.astrarre.abstracter.AbstracterConfig.registerInnerOverride;
+import static io.github.astrarre.abstracter.AbstracterConfig.registerInterface;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.google.common.reflect.TypeToken;
-import io.github.f2bb.abstracter.AbstracterUtil;
-import io.github.f2bb.Access;
-import io.github.f2bb.abstracter.abs.ConstantsAbstracter;
-import io.github.f2bb.abstracter.abs.InterfaceAbstracter;
-import io.github.f2bb.abstracter.util.AbstracterLoader;
+import io.github.astrarre.abstracter.AbstracterUtil;
+import astrarre.Access;
+import io.github.astrarre.abstracter.abs.ConstantsAbstracter;
+import io.github.astrarre.abstracter.abs.InterfaceAbstracter;
+import io.github.astrarre.abstracter.util.AbstracterLoader;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.block.AbstractBlock;
@@ -57,14 +57,14 @@ public class AbstractTest {
 		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
 		registerInterface(AbstractBlock.Settings.class,
-				c -> new InterfaceAbstracter(c, "v0/io/github/f2bb/block/IBlock$Settings").extension(AbstractTest::test)
+				c -> new InterfaceAbstracter(c, "v0/io/github/astrarre/block/IBlock$Settings").extension(AbstractTest::test)
 				                                                                          .attach(new TypeToken<Consumer<String>>() {}));
 
 		registerInnerOverride(Block.class, AbstractBlock.Settings.class);
 
 		// attachment interfaces > extension methods, cus no javadoc
 		registerDefaultConstants(Blocks.class, Items.class);
-		registerConstants(Material.class, c -> new ConstantsAbstracter(c, "v0/io/github/f2bb/block/Materials"));
+		registerConstants(Material.class, c -> new ConstantsAbstracter(c, "v0/io/github/astrarre/block/Materials"));
 
 		registerConstantlessInterface(Material.class);
 

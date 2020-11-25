@@ -1,4 +1,4 @@
-rootProject.name = 'F2bb'
+rootProject.name = 'Astrarre'
 include 'Abstract'
-include 'Stripper'
+include 'Extra'
 
