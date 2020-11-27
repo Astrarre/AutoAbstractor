@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -53,7 +54,11 @@ public interface InterfaceFunction {
 	Collection<Type> getInterfaces(Class<?> cls);
 
 	default InterfaceFunction filtered(Predicate<Type> predicate) {
-		return c -> Collections2.filter(this.getInterfaces(c), predicate::test);
+		return c -> {
+			Collection<Type> types = this.getInterfaces(c);
+			types.removeIf(type -> !predicate.test(type));
+			return types;
+		};
 	}
 
 	default InterfaceFunction and(InterfaceFunction function) {

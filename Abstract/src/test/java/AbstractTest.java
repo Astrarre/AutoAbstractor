@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.google.common.reflect.TypeToken;
+import io.github.astrarre.Access;
 import io.github.astrarre.abstracter.AbstracterUtil;
-import astrarre.Access;
 import io.github.astrarre.abstracter.abs.ConstantsAbstracter;
 import io.github.astrarre.abstracter.abs.InterfaceAbstracter;
 import io.github.astrarre.abstracter.util.AbstracterLoader;
