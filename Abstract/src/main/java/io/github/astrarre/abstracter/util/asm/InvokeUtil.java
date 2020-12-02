@@ -122,8 +122,15 @@ public class InvokeUtil implements Opcodes {
 	}
 
 	public static final String INTERNAL = org.objectweb.asm.Type.getInternalName(Impl.class);
-	public static void visitStub(MethodVisitor visitor) {
-		visitor.visitMethodInsn(INVOKESTATIC, INTERNAL, Impl.EXCEPTION, "()L" + INTERNAL + ';', false);
-		visitor.visitInsn(ATHROW);
+	private static final String DESC = "()" + Type.getDescriptor(Object.class);
+	public static void visitStub(MethodNode visitor) {
+		if(!Modifier.isAbstract(visitor.access)) {
+			int opcode = Type.getMethodType(visitor.desc).getReturnType().getOpcode(IRETURN);
+			if(opcode != RETURN) {
+				visitor.visitMethodInsn(INVOKESTATIC, INTERNAL, Impl.INIT, DESC, false);
+				visitor.visitInsn(opcode);
+			}
+
+		}
 	}
 }

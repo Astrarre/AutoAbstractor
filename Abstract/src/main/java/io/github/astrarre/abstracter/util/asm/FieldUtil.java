@@ -126,7 +126,7 @@ public class FieldUtil implements Opcodes {
 			} else {
 				insn.add(new MethodInsnNode(INVOKESTATIC,
 						Type.getInternalName(Impl.class),
-						Impl.FIELD_INIT,
+						Impl.INIT,
 						"()Ljava/lang/Object;"));
 			}
 			insn.add(new FieldInsnNode(PUTSTATIC, header.name, node.name, node.desc));

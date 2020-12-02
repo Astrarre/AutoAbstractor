@@ -91,7 +91,7 @@ public class MethodUtil {
 
 	private static void visitBridge(ClassNode header, Method method, String targetDesc) {
 		int access = method.getModifiers();
-		MethodNode node = new MethodNode((access & ~Opcodes.ACC_ABSTRACT) | Opcodes.ACC_FINAL,
+		MethodNode node = new MethodNode((access & ~Opcodes.ACC_ABSTRACT) | Opcodes.ACC_FINAL | Opcodes.ACC_BRIDGE | Opcodes.ACC_SYNTHETIC,
 				method.getName(),
 				org.objectweb.asm.Type.getMethodDescriptor(method),
 				null /*sign*/,

@@ -5,8 +5,8 @@
 /Extra/build/
 
 /run/
-/.idea/
 *.ipr
 *.iws
 *.iml
 *.classpath
+/.idea/

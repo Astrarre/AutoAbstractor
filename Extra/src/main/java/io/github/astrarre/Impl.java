@@ -1,8 +1,7 @@
 package io.github.astrarre;
 
 public class Impl extends IllegalStateException {
-	public static final String FIELD_INIT = "init";
-	public static final String EXCEPTION = "call";
+	public static final String INIT = "init";
 	public Impl(String s) {
 		super(s);
 	}
@@ -19,4 +18,6 @@ public class Impl extends IllegalStateException {
 		// todo add a help link
 		return new Impl("Someone didn't set up their dependencies correctly");
 	}
+
+
 }
