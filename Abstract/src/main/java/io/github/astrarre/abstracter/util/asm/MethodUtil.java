@@ -70,7 +70,7 @@ public class MethodUtil {
 					InvokeUtil
 							.invokeTarget(node, header.superName, method, iface ? Opcodes.INVOKEVIRTUAL : Opcodes.INVOKESPECIAL,
 									iface);
-					if (!iface && !Modifier.isFinal(access)) {
+					if (!iface && !Modifier.isFinal(access) && !Modifier.isStatic(access)) {
 						visitBridge(header, method, desc);
 					}
 				} else {

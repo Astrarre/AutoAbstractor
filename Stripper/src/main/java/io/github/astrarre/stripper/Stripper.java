@@ -1,15 +1,18 @@
 package io.github.astrarre.stripper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -18,11 +21,8 @@ import java.util.zip.ZipOutputStream;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Modifier;
-import com.github.javaparser.ast.Node;
-import io.github.astrarre.Hide;
-import io.github.astrarre.stripper.asm.EnumStripper;
 import io.github.astrarre.stripper.asm.ElementStripper;
+import io.github.astrarre.stripper.asm.EnumStripper;
 import io.github.astrarre.stripper.java.JavaStripper;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -34,22 +34,19 @@ public class Stripper {
 	}
 
 	/**
-	 * todo add in the api jar
-	 *
 	 * @param filter a list of regexes to filter out files or folders, the pattern must match both .class and .java!
 	 * @param inputFile the input jar
 	 * @param outputFile the output jar
 	 */
-	@Hide
 	public static void strip(List<String> filter, File inputFile, File outputFile) throws IOException {
 		Predicate<String> patterns = filter.stream().map(Pattern::compile).map(Pattern::asPredicate)
 		                           .reduce(Predicate::and).orElse(s -> false);
 
-		ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(outputFile));
 		ZipFile file = new ZipFile(inputFile);
 		Enumeration<? extends ZipEntry> enumeration = file.entries();
 		byte[] buffer = new byte[4096];
 
+		Map<String, byte[]> jar = new HashMap<>();
 		while (enumeration.hasMoreElements()) {
 			ZipEntry entry = enumeration.nextElement();
 			String name = entry.getName();
@@ -70,9 +67,10 @@ public class Stripper {
 					ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 					node.accept(writer);
 
-					zos.putNextEntry(new ZipEntry(entry.getName()));
-					zos.write(writer.toByteArray());
-					zos.closeEntry();
+					jar.put(entry.getName(), writer.toByteArray());
+					//zos.putNextEntry(new ZipEntry(entry.getName()));
+					//zos.write(writer.toByteArray());
+					//zos.closeEntry();
 				}
 			} else if (name.endsWith(".java")) {
 				// source strip
@@ -80,22 +78,34 @@ public class Stripper {
 				JavaStripper.stripAnnotations(unit);
 				JavaStripper.stripInaccessibles(unit);
 				JavaStripper.nukeImplementation(unit);
-				zos.putNextEntry(new ZipEntry(entry.getName()));
-				Writer writer = new OutputStreamWriter(zos);
-				writer.write(unit.toString());
-				writer.flush();
-				zos.closeEntry();
+				jar.put(entry.getName(), unit.toString().getBytes(StandardCharsets.UTF_8));
+				//zos.putNextEntry(new ZipEntry(entry.getName()));
+				//Writer writer = new OutputStreamWriter(zos);
+				//writer.write(unit.toString());
+				//writer.flush();
+				//zos.closeEntry();
 			} else {
-				zos.putNextEntry(entry);
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				InputStream stream = file.getInputStream(entry);
 				int i;
 				while ((i = stream.read(buffer)) != -1) {
-					zos.write(buffer, 0, i);
+					baos.write(buffer, 0, i);
 				}
-				zos.closeEntry();
+				jar.put(entry.getName(), baos.toByteArray());
 			}
 		}
 
+		ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(outputFile));
+		jar.forEach((s, b) -> {
+			try {
+				zos.putNextEntry(new ZipEntry(s));
+				zos.write(b);
+				zos.closeEntry();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
 		zos.close();
+		file.close();
 	}
 }
