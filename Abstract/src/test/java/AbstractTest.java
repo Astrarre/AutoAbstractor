@@ -19,6 +19,7 @@ import io.github.astrarre.abstracter.AbstracterUtil;
 import io.github.astrarre.abstracter.abs.ConstantsAbstracter;
 import io.github.astrarre.abstracter.abs.InterfaceAbstracter;
 import io.github.astrarre.abstracter.util.AbstracterLoader;
+import v0.io.github.astrarre.block.Materials;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.block.AbstractBlock;

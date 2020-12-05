@@ -21,7 +21,7 @@ import io.github.astrarre.Impl;
 
 public class JavaStripper extends VoidVisitorAdapter<Void> {
 	private static final JavaStripper INSTANCE = new JavaStripper();
-	private static final BlockStmt EMPTY = StaticJavaParser.parseBlock("{throw Impl.create();}");
+	private static final BlockStmt EMPTY = StaticJavaParser.parseBlock("{throw Impl.call();}");
 
 	public static void stripAnnotations(CompilationUnit unit) {
 		for (MarkerAnnotationExpr expr : unit.findAll(MarkerAnnotationExpr.class)) {
