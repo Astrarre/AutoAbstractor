@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id "com.jfrog.bintray" version "1.8.4"
+    id 'maven-publish'
+}
+
+group 'io.github.astrarre'
+version '1.0.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId group
+            artifactId "astrarre-stripper"
+            version version
+            from components.java
+        }
+    }
+}
+
+dependencies {
+    api('com.github.javaparser:javaparser-core:3.17.0')
+    // hide annotation
+    api(project(":Extra"))
+    // asm
+    api('org.ow2.asm:asm:9.0')
+    api('org.ow2.asm:asm-commons:9.0')
+}
+
+bintray {
+    user = project.hasProperty('bintray_user') ? project.property('bintray_user') : ""
+    key = project.hasProperty('bintray_api_key') ? project.property('bintray_api_key') : ""
+    publications = ["mavenJava"]
+    publish = true //[Default: false] Whether version should be auto published after an upload
+    pkg {
+        repo = "maven"
+        name = "astrarre-stripper"
+        userOrg = "astrarre"
+        licenses = ["LGPL-3.0"]
+        version {
+            name = version
+            released = new Date()
+        }
+    }
+}
