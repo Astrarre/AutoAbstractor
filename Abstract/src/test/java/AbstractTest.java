@@ -1,17 +1,20 @@
+import static io.github.astrarre.abstracter.AbstracterConfig.registerConstants;
+import static io.github.astrarre.abstracter.AbstracterConfig.registerInnerOverride;
+import static io.github.astrarre.abstracter.AbstracterConfig.registerInterface;
 import static io.github.astrarre.abstracter.AbstracterUtil.registerConstantlessInterface;
 import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultBase;
 import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultConstants;
 import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultInterface;
-import static io.github.astrarre.abstracter.AbstracterConfig.registerConstants;
-import static io.github.astrarre.abstracter.AbstracterConfig.registerInnerOverride;
-import static io.github.astrarre.abstracter.AbstracterConfig.registerInterface;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.List;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.google.common.reflect.TypeToken;
 import io.github.astrarre.Access;
@@ -19,7 +22,6 @@ import io.github.astrarre.abstracter.AbstracterUtil;
 import io.github.astrarre.abstracter.abs.ConstantsAbstracter;
 import io.github.astrarre.abstracter.abs.InterfaceAbstracter;
 import io.github.astrarre.abstracter.util.AbstracterLoader;
-import v0.io.github.astrarre.block.Materials;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.block.AbstractBlock;
@@ -49,12 +51,11 @@ import net.minecraft.world.WorldAccess;
 		"UnstableApiUsage"
 })
 public class AbstractTest {
+
 	public static void main(String[] args) throws IOException {
 		// todo wait for player's TR patch to go on maven
-		List<File> classpath = Arrays.asList(new File("classpath").listFiles());
-		for (File file : classpath) {
-			AbstracterLoader.CLASSPATH.addURL(file.toURI().toURL());
-		}
+
+		Files.newBufferedReader(Paths.get("classpath.txt")).lines().map(File::new).map(File::toURI).map((TFunction<URI, URL>) URI::toURL).forEach(AbstracterLoader.CLASSPATH::addURL);
 		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
 		registerInterface(AbstractBlock.Settings.class,
@@ -91,11 +92,23 @@ public class AbstractTest {
 		// base
 		registerDefaultBase(Block.class, Entity.class, Enchantment.class, Item.class, Material.class);
 
-		AbstracterUtil
-				.apply(classpath, "api.jar", "api_sources.jar", "impl.jar", "manifest.properties", "mappings.tiny");
+		AbstracterUtil.apply(AbstracterLoader.CLASSPATH.getURLs(), "api.jar", "api_sources.jar", "impl.jar", "manifest.properties", "mappings.tiny");
 	}
 
 	@Access (Modifier.STATIC | Modifier.PUBLIC)
 	public static void test(Object _this) {}
+
+	private interface TFunction<A, B> extends Function<A, B> {
+		B applyT(A val) throws Throwable;
+
+		@Override
+		default B apply(A a) {
+			try {
+				return this.applyT(a);
+			} catch (Throwable throwable) {
+				throw new RuntimeException(throwable);
+			}
+		}
+	}
 
 }

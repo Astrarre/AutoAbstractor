@@ -2,6 +2,9 @@ package io.github.astrarre.abstracter.decompiler;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +21,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import net.fabricmc.fernflower.api.IFabricJavadocProvider;
 
 public class Decompile {
-	public static void decompile(List<File> classpath, File input, File output, File mappings) {
+	public static void decompile(URL[] classpath, File input, File output, File mappings) throws URISyntaxException {
 		Map<String, Object> options = new HashMap<>();
 		options.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
 		options.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
@@ -27,7 +30,9 @@ public class Decompile {
 		options.put(IFernflowerPreferences.THREADS, Runtime.getRuntime().availableProcessors()-1 + "");
 		options.put(IFabricJavadocProvider.PROPERTY_NAME, new AbstracterTinyJavadocProvider(mappings));
 		Fernflower fernflower = new Fernflower(Decompile::getBytecode, new ThreadSafeResultSaver(() -> output), options, new ThreadIDFFLogger());
-		classpath.forEach(fernflower::addLibrary);
+		for (URL url : classpath) {
+			fernflower.addLibrary(Paths.get(url.toURI()).toFile());
+		}
 		fernflower.addSource(input);
 		fernflower.decompileContext();
 	}

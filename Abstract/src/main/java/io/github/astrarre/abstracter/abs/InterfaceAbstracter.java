@@ -52,9 +52,11 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 				MethodSupplier.INTERFACE_DEFAULT);
 	}
 
+	private static final int REMOVE_FLAGS = ACC_ENUM | ACC_FINAL;
+	private static final int ADD_FLAGS = ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT;
 	@Override
-	public int getAccess() {
-		return ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT;
+	public int getAccess(int modifiers) {
+		return (modifiers & ~REMOVE_FLAGS) | ADD_FLAGS;
 	}
 
 	@Override

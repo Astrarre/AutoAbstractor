@@ -17,7 +17,7 @@ public class ManualAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public int getAccess() {return 0;}
+	public int getAccess(int modifiers) {return 0;}
 
 	@Override
 	public void abstractField(ClassNode node, Field field, boolean impl) {}

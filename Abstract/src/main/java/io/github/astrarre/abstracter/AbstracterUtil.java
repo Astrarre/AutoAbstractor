@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
@@ -25,7 +26,7 @@ import io.github.astrarre.abstracter.decompiler.Decompile;
 
 public class AbstracterUtil {
 	public static String pkg = "/io/github/astrarre/";
-	public static void apply(List<File> classpath, String apiFile, String sourcesFile, String implFile, String manifestFile, String mappingsFile) {
+	public static void apply(URL[] classpath, String apiFile, String sourcesFile, String implFile, String manifestFile, String mappingsFile) {
 		try {
 			System.out.println("Writing api...");
 			ZipOutputStream api = new ZipOutputStream(new FileOutputStream(apiFile));
@@ -44,7 +45,7 @@ public class AbstracterUtil {
 
 			System.out.println("Decompiling api for api sources...");
 			Decompile.decompile(classpath, new File(apiFile), new File(sourcesFile), new File(mappingsFile));
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}

@@ -49,7 +49,7 @@ public class BaseAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public int getAccess() {
+	public int getAccess(int modifiers) {
 		return this.cls.getModifiers();
 	}
 

@@ -88,7 +88,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 	public ClassNode apply(boolean impl) {
 		ClassNode header = new ClassNode();
 		header.version = V1_8;
-		header.access = this.getAccess();
+		header.access = this.getAccess(this.cls.getModifiers());
 		header.name = this.name;
 		for (Annotation annotation : this.cls.getAnnotations()) {
 			if (header.visibleAnnotations == null) {
@@ -127,8 +127,9 @@ public abstract class AbstractAbstracter implements Opcodes {
 
 	/**
 	 * @return get a class's access flags
+	 * @param modifiers
 	 */
-	public abstract int getAccess();
+	public abstract int getAccess(int modifiers);
 
 	public abstract void abstractConstructor(ClassNode node, Constructor<?> constructor, boolean impl);
 
