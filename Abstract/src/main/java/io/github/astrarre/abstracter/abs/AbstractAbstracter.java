@@ -25,6 +25,7 @@ import io.github.astrarre.abstracter.func.inheritance.InterfaceFunction;
 import io.github.astrarre.abstracter.func.inheritance.SuperFunction;
 import io.github.astrarre.abstracter.func.post.AttachPostProcessor;
 import io.github.astrarre.abstracter.func.post.ExtensionMethodPostProcessor;
+import io.github.astrarre.abstracter.util.AbstracterLoader;
 import io.github.astrarre.abstracter.util.AnnotationReader;
 import io.github.astrarre.abstracter.util.reflect.TypeUtil;
 import io.github.astrarre.abstracter.func.post.PostProcessor;
@@ -57,7 +58,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 			ConstructorSupplier supplier,
 			FieldSupplier fieldSupplier,
 			MethodSupplier methodSupplier) {
-		this.cls = cls;
+		this.cls = AbstracterLoader.getClass(cls.getName());
 		this.name = name;
 		this.interfaces = interfaces;
 		this.superFunction = function;
@@ -146,6 +147,10 @@ public abstract class AbstractAbstracter implements Opcodes {
 		if (this.processor != null) {
 			this.processor.process(this.cls, node, impl);
 		}
+	}
+
+	public Class<?> getCls() {
+		return this.cls;
 	}
 
 	public AbstractAbstracter name(String name) {

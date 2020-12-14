@@ -77,38 +77,19 @@ public class AbstracterConfig implements Opcodes {
 	}
 
 	public static void manualInterface(Class<?> mcClass, String abstraction) {
-		registerInterface(mcClass, c -> new ManualAbstracter(c, abstraction));
+		registerInterface(new ManualAbstracter(mcClass, abstraction));
 	}
 
-	public static void manualInterface(String mcClass, String abstraction) {
-		registerInterface(mcClass, c -> new ManualAbstracter(c, abstraction));
+	public static void registerInterface(AbstractAbstracter abstracter) {
+		INTERFACE_ABSTRACTION.put(abstracter.getCls(), abstracter);
 	}
 
-	public static void registerInterface(String cls, Function<Class<?>, AbstractAbstracter> abstracter) {
-		Class<?> c = AbstracterLoader.getClass(cls);
-		INTERFACE_ABSTRACTION.put(c, abstracter.apply(c));
+	public static void registerBase(AbstractAbstracter abstracter) {
+		BASE_ABSTRACTION.put(abstracter.getCls(), abstracter);
 	}
 
-	public static void registerInterface(Class<?> cls, Function<Class<?>, AbstractAbstracter> abstracter) {
-		registerInterface(cls.getName(), abstracter);
-	}
-
-	public static void registerBase(Class<?> cls, Function<Class<?>, AbstractAbstracter> abstracter) {
-		registerBase(cls.getName(), abstracter);
-	}
-
-	public static void registerBase(String cls, Function<Class<?>, AbstractAbstracter> abstracter) {
-		Class<?> c = AbstracterLoader.getClass(cls);
-		BASE_ABSTRACTION.put(c, abstracter.apply(c));
-	}
-
-	public static void registerConstants(String cls, Function<Class<?>, AbstractAbstracter> abstracter) {
-		Class<?> c = AbstracterLoader.getClass(cls);
-		CONSTANT_ABSTRACTIONS.put(c, abstracter.apply(c));
-	}
-
-	public static void registerConstants(Class<?> cls, Function<Class<?>, AbstractAbstracter> abstracter) {
-		registerConstants(cls.getName(), abstracter);
+	public static void registerConstants(AbstractAbstracter abstracter) {
+		CONSTANT_ABSTRACTIONS.put(abstracter.getCls(), abstracter);
 	}
 
 	public static void registerInnerOverride(Class<?> cls, Class<?>... inners) {
