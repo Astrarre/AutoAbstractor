@@ -29,7 +29,7 @@ import org.zeroturnaround.zip.ZipUtil;
 import net.fabricmc.mappingpoet.Main;
 
 public class AbstracterUtil {
-	public static String pkg = "/io/github/astrarre/";
+	public static String pkg = "/io/github/astrarre/v%d/";
 
 	public static void applyParallel(String apiFile, String sourcesFile, String implFile, String manifestFile, String mappingsFile) {
 		ExecutorService service = Executors.newFixedThreadPool(2);

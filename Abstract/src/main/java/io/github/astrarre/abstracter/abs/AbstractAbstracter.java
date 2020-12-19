@@ -65,7 +65,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 
 	public static String getName(Class<?> cls, String prefix, int version) {
 		String str = getInternalName(cls);
-		str = str.replace("net/minecraft/", "v" + version + AbstracterUtil.pkg);
+		str = str.replace("net/minecraft/", String.format(AbstracterUtil.pkg, version));
 		int last = str.lastIndexOf('/') + 1;
 		return str.substring(0, last) + prefix + str.substring(last);
 	}
