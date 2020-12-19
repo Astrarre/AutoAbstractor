@@ -4,8 +4,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import io.github.astrarre.Impl;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -121,11 +119,12 @@ public class InvokeUtil implements Opcodes {
 		}
 	}
 
-	public static final String INTERNAL = org.objectweb.asm.Type.getInternalName(Impl.class);
-	private static final String DESC = "()" + Type.getDescriptor(Impl.class);
+	private static final String RUNTIME_EXCEPTION = Type.getInternalName(RuntimeException.class);
 	public static void visitStub(MethodNode visitor) {
 		if(!Modifier.isAbstract(visitor.access)) {
-			visitor.visitMethodInsn(INVOKESTATIC, INTERNAL, "call", DESC, false);
+			visitor.visitTypeInsn(NEW, RUNTIME_EXCEPTION);
+			visitor.visitInsn(DUP);
+			visitor.visitMethodInsn(INVOKESPECIAL, RUNTIME_EXCEPTION, "<init>", "()V", false);
 			visitor.visitInsn(ATHROW);
 		}
 	}

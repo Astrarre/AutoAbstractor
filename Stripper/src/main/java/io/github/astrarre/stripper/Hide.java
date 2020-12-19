@@ -1,4 +1,4 @@
-package io.github.astrarre;
+package io.github.astrarre.stripper;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

@@ -11,7 +11,7 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 import com.google.common.reflect.TypeToken;
-import io.github.astrarre.Access;
+import io.github.astrarre.abstracter.Access;
 import io.github.astrarre.abstracter.util.asm.InvokeUtil;
 import io.github.astrarre.abstracter.util.ArrayUtil;
 import io.github.astrarre.abstracter.util.reflect.TypeUtil;

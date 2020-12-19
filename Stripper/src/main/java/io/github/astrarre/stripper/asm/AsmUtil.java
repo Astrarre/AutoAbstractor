@@ -3,8 +3,7 @@ package io.github.astrarre.stripper.asm;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
-import io.github.astrarre.Hide;
-import io.github.astrarre.Impl;
+import io.github.astrarre.stripper.Hide;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -31,13 +30,15 @@ public class AsmUtil implements Opcodes {
 		return (access & flag) != 0;
 	}
 
-	public static final String INTERNAL = org.objectweb.asm.Type.getInternalName(Impl.class);
-	private static final String DESC = "()" + Type.getDescriptor(Object.class);
+	private static final String RUNTIME_EXCEPTION = Type.getInternalName(RuntimeException.class);
 	public static void visitStub(MethodNode visitor) {
 		if(!Modifier.isAbstract(visitor.access)) {
 			int opcode = Type.getMethodType(visitor.desc).getReturnType().getOpcode(IRETURN);
 			if(opcode != RETURN) {
-				visitor.visitMethodInsn(INVOKESTATIC, INTERNAL, Impl.INIT, DESC, false);
+				visitor.visitTypeInsn(NEW, RUNTIME_EXCEPTION);
+				visitor.visitInsn(DUP);
+				visitor.visitMethodInsn(INVOKESPECIAL, RUNTIME_EXCEPTION, "<init>", "()V", false);
+				visitor.visitInsn(ATHROW);
 			}
 			visitor.visitInsn(opcode);
 		}

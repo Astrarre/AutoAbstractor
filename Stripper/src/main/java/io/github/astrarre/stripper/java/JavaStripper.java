@@ -4,24 +4,22 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
-import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MarkerAnnotationExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import io.github.astrarre.Hide;
+import io.github.astrarre.stripper.Hide;
 import io.github.astrarre.Impl;
 
 public class JavaStripper extends VoidVisitorAdapter<Void> {
 	private static final JavaStripper INSTANCE = new JavaStripper();
-	private static final BlockStmt EMPTY = StaticJavaParser.parseBlock("{throw Impl.call();}");
+	private static final BlockStmt EMPTY = StaticJavaParser.parseBlock("{throw }");
 
 	public static void stripAnnotations(CompilationUnit unit) {
 		for (MarkerAnnotationExpr expr : unit.findAll(MarkerAnnotationExpr.class)) {
@@ -45,7 +43,6 @@ public class JavaStripper extends VoidVisitorAdapter<Void> {
 	@Override
 	public void visit(ConstructorDeclaration n, Void arg) {
 		n.setBody(EMPTY);
-		n.tryAddImportToParentCompilationUnit(Impl.class);
 		super.visit(n, arg);
 	}
 

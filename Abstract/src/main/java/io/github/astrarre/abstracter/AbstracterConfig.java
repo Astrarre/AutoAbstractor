@@ -80,16 +80,19 @@ public class AbstracterConfig implements Opcodes {
 		registerInterface(new ManualAbstracter(mcClass, abstraction));
 	}
 
-	public static void registerInterface(AbstractAbstracter abstracter) {
+	public static AbstractAbstracter registerInterface(AbstractAbstracter abstracter) {
 		INTERFACE_ABSTRACTION.put(abstracter.getCls(), abstracter);
+		return abstracter;
 	}
 
-	public static void registerBase(AbstractAbstracter abstracter) {
+	public static AbstractAbstracter registerBase(AbstractAbstracter abstracter) {
 		BASE_ABSTRACTION.put(abstracter.getCls(), abstracter);
+		return abstracter;
 	}
 
-	public static void registerConstants(AbstractAbstracter abstracter) {
+	public static AbstractAbstracter registerConstants(AbstractAbstracter abstracter) {
 		CONSTANT_ABSTRACTIONS.put(abstracter.getCls(), abstracter);
+		return abstracter;
 	}
 
 	public static void registerInnerOverride(Class<?> cls, Class<?>... inners) {

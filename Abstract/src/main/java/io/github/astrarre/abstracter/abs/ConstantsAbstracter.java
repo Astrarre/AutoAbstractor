@@ -18,7 +18,11 @@ public class ConstantsAbstracter extends InterfaceAbstracter {
 	}
 
 	public ConstantsAbstracter(Class<?> cls) {
-		this(cls, getName(cls, "C", 0));
+		this(cls, 0);
+	}
+
+	public ConstantsAbstracter(Class<?> cls, int version) {
+		this(cls, getName(cls, "Minecraft", version));
 	}
 
 	public ConstantsAbstracter(Class<?> cls, String name) {
@@ -32,5 +36,4 @@ public class ConstantsAbstracter extends InterfaceAbstracter {
 			FieldUtil.createConstant(node, this.cls, field, impl);
 		}
 	}
-
 }

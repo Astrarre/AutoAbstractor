@@ -8,12 +8,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.zip.ZipOutputStream;
 
 import io.github.astrarre.abstracter.abs.BaseAbstracter;
@@ -22,11 +22,18 @@ import io.github.astrarre.abstracter.abs.InterfaceAbstracter;
 import io.github.astrarre.abstracter.func.elements.FieldSupplier;
 import io.github.astrarre.abstracter.func.filter.MemberFilter;
 import io.github.astrarre.abstracter.util.AbstracterLoader;
-import io.github.astrarre.abstracter.decompiler.Decompile;
+import org.zeroturnaround.zip.ZipUtil;
+
+import net.fabricmc.mappingpoet.Main;
 
 public class AbstracterUtil {
 	public static String pkg = "/io/github/astrarre/";
-	public static void apply(URL[] classpath, String apiFile, String sourcesFile, String implFile, String manifestFile, String mappingsFile) {
+
+	public static void apply(String apiFile,
+			String sourcesFile,
+			String implFile,
+			String manifestFile,
+			String mappingsFile) {
 		try {
 			System.out.println("Writing api...");
 			ZipOutputStream api = new ZipOutputStream(new FileOutputStream(apiFile));
@@ -44,7 +51,9 @@ public class AbstracterUtil {
 			manifest.close();
 
 			System.out.println("Decompiling api for api sources...");
-			Decompile.decompile(classpath, new File(apiFile), new File(sourcesFile), new File(mappingsFile));
+			Path dir = Files.createTempDirectory("decomp");
+			Main.generate(Paths.get(mappingsFile), Paths.get(apiFile), dir, Paths.get(manifestFile));
+			ZipUtil.pack(dir.toFile(), Paths.get(sourcesFile).toFile());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -53,34 +62,13 @@ public class AbstracterUtil {
 	public static void loadFromTxt(File file) {
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(file));
-			reader.lines().map(File::new).map(File::toURI).map(AbstracterUtil::toURL).forEach(AbstracterLoader.CLASSPATH::addURL);
+			reader.lines()
+			      .map(File::new)
+			      .map(File::toURI)
+			      .map(AbstracterUtil::toURL)
+			      .forEach(AbstracterLoader.CLASSPATH::addURL);
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
-		}
-	}
-
-	public static void registerDefaultInterface(Class<?>... cls) {
-		for (Class<?> cl : cls) {
-			registerInterface(cl, InterfaceAbstracter::new);
-		}
-	}
-
-	public static void registerDefaultConstants(Class<?>... cls) {
-		for (Class<?> cl : cls) {
-			registerConstants(cl, ConstantsAbstracter::new);
-		}
-	}
-
-	public static void registerConstantlessInterface(Class<?>...cls) {
-		for (Class<?> cl : cls) {
-			registerInterface(cl, c -> new InterfaceAbstracter(c).fields(FieldSupplier.INTERFACE_DEFAULT.filtered((MemberFilter)
-					MemberFilter.PUBLIC.and(MemberFilter.STATIC).negate())));
-		}
-	}
-
-	public static void registerDefaultBase(Class<?>... base) {
-		for (Class<?> aClass : base) {
-			AbstracterConfig.registerBase(aClass, BaseAbstracter::new);
 		}
 	}
 
@@ -89,6 +77,32 @@ public class AbstracterUtil {
 			return u.toURL();
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	public static void registerDefaultInterface(Class<?>... cls) {
+		for (Class<?> cl : cls) {
+			registerInterface(new InterfaceAbstracter(cl));
+		}
+	}
+
+	public static void registerDefaultConstants(Class<?>... cls) {
+		for (Class<?> cl : cls) {
+			registerConstants(new ConstantsAbstracter(cl));
+		}
+	}
+
+	public static void registerConstantlessInterface(Class<?>... cls) {
+		for (Class<?> cl : cls) {
+			registerInterface(new InterfaceAbstracter(cl).fields(FieldSupplier.INTERFACE_DEFAULT.filtered((MemberFilter) MemberFilter.PUBLIC
+					                                                                                                             .and(MemberFilter.STATIC)
+					                                                                                                             .negate())));
+		}
+	}
+
+	public static void registerDefaultBase(Class<?>... base) {
+		for (Class<?> aClass : base) {
+			AbstracterConfig.registerBase(new BaseAbstracter(aClass));
 		}
 	}
 }

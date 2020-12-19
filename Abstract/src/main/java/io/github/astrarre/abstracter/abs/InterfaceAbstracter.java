@@ -25,6 +25,18 @@ import org.objectweb.asm.tree.MethodNode;
 
 @SuppressWarnings ("UnstableApiUsage")
 public class InterfaceAbstracter extends AbstractAbstracter {
+	private static final int REMOVE_FLAGS = ACC_ENUM | ACC_FINAL;
+	private static final int ADD_FLAGS = ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT;
+
+	public InterfaceAbstracter(Class<?> cls) {
+		this(cls,
+				getName(cls, "", 0),
+				InterfaceFunction.INTERFACE_DEFAULT,
+				ConstructorSupplier.INTERFACE_DEFAULT,
+				FieldSupplier.INTERFACE_DEFAULT,
+				MethodSupplier.INTERFACE_DEFAULT);
+	}
+
 	public InterfaceAbstracter(Class<?> cls,
 			String name,
 			InterfaceFunction interfaces,
@@ -34,13 +46,8 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 		super(cls, name, interfaces, SuperFunction.EMPTY, supplier, fieldSupplier, methodSupplier);
 	}
 
-	public InterfaceAbstracter(Class<?> cls) {
-		this(cls,
-				getName(cls, "I", 0),
-				InterfaceFunction.INTERFACE_DEFAULT,
-				ConstructorSupplier.INTERFACE_DEFAULT,
-				FieldSupplier.INTERFACE_DEFAULT,
-				MethodSupplier.INTERFACE_DEFAULT);
+	public InterfaceAbstracter(Class<?> cls, int version) {
+		this(cls, getName(cls, "", version));
 	}
 
 	public InterfaceAbstracter(Class<?> cls, String name) {
@@ -52,40 +59,9 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 				MethodSupplier.INTERFACE_DEFAULT);
 	}
 
-	private static final int REMOVE_FLAGS = ACC_ENUM | ACC_FINAL;
-	private static final int ADD_FLAGS = ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT;
 	@Override
 	public int getAccess(int modifiers) {
 		return (modifiers & ~REMOVE_FLAGS) | ADD_FLAGS;
-	}
-
-	@Override
-	public void abstractField(ClassNode node, Field field, boolean impl) {
-		int access = field.getModifiers();
-		if ((access & ACC_ENUM) != 0) {
-			FieldUtil.createConstant(node, this.cls, field, impl);
-		} else {
-			if (!Modifier.isFinal(access)) {
-				MethodNode setter = FieldUtil.createSetter(this.cls, field, impl, true);
-				if(!MethodUtil.conflicts(setter.name, setter.desc, node)) {
-					this.addFieldRefAnnotation(setter, field);
-					setter.access &= ~ACC_FINAL;
-					node.methods.add(setter);
-				}
-			}
-
-			MethodNode getter = FieldUtil.createGetter(this.cls, field, impl, true);
-			if(!MethodUtil.conflicts(getter.name, getter.desc, node)) {
-				this.addFieldRefAnnotation(getter, field);
-				getter.access &= ~ACC_FINAL;
-				node.methods.add(getter);
-			}
-		}
-	}
-
-	@Override
-	public void abstractMethod(ClassNode node, Method method, boolean impl) {
-		MethodUtil.abstractMethod(node, this.cls, method, impl, true);
 	}
 
 	@Override
@@ -104,5 +80,32 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 			InvokeUtil.visitStub(method);
 		}
 		node.methods.add(method);
+	}
+
+	@Override
+	public void abstractMethod(ClassNode node, Method method, boolean impl) {
+		MethodUtil.abstractMethod(node, this.cls, method, impl, true);
+	}
+
+	@Override
+	public void abstractField(ClassNode node, Field field, boolean impl) {
+		int access = field.getModifiers();
+		if ((access & ACC_ENUM) != 0) {
+			FieldUtil.createConstant(node, this.cls, field, impl);
+		} else {
+			if (!Modifier.isFinal(access)) {
+				MethodNode setter = FieldUtil.createSetter(this.cls, field, impl, true);
+				if (!MethodUtil.conflicts(setter.name, setter.desc, node)) {
+					setter.access &= ~ACC_FINAL;
+					node.methods.add(setter);
+				}
+			}
+
+			MethodNode getter = FieldUtil.createGetter(this.cls, field, impl, true);
+			if (!MethodUtil.conflicts(getter.name, getter.desc, node)) {
+				getter.access &= ~ACC_FINAL;
+				node.methods.add(getter);
+			}
+		}
 	}
 }

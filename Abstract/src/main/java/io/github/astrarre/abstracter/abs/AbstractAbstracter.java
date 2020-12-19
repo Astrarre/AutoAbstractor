@@ -1,6 +1,5 @@
 package io.github.astrarre.abstracter.abs;
 
-import static org.objectweb.asm.Type.getDescriptor;
 import static org.objectweb.asm.Type.getInternalName;
 
 import java.io.Serializable;
@@ -15,7 +14,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.google.common.reflect.TypeToken;
-import io.github.astrarre.FieldRef;
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.AbstracterUtil;
 import io.github.astrarre.abstracter.func.elements.ConstructorSupplier;
@@ -25,12 +23,12 @@ import io.github.astrarre.abstracter.func.inheritance.InterfaceFunction;
 import io.github.astrarre.abstracter.func.inheritance.SuperFunction;
 import io.github.astrarre.abstracter.func.post.AttachPostProcessor;
 import io.github.astrarre.abstracter.func.post.ExtensionMethodPostProcessor;
+import io.github.astrarre.abstracter.func.post.PostProcessor;
 import io.github.astrarre.abstracter.util.AbstracterLoader;
 import io.github.astrarre.abstracter.util.AnnotationReader;
+import io.github.astrarre.abstracter.util.asm.InvokeUtil;
 import io.github.astrarre.abstracter.util.reflect.TypeUtil;
-import io.github.astrarre.abstracter.func.post.PostProcessor;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.MethodVisitor;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -40,8 +38,6 @@ import org.objectweb.asm.tree.MethodNode;
  */
 @SuppressWarnings ("UnstableApiUsage")
 public abstract class AbstractAbstracter implements Opcodes {
-	public static final String FIELD_REF = org.objectweb.asm.Type.getDescriptor(FieldRef.class);
-	public static final String FIELD_REF_NAME = getInternalName(FieldRef.class);
 	protected final Class<?> cls;
 	public String name;
 	protected InterfaceFunction interfaces;
@@ -74,17 +70,8 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return str.substring(0, last) + prefix + str.substring(last);
 	}
 
-	public void addFieldRefAnnotation(MethodVisitor visitor, Field field) {
-		AnnotationVisitor visit = visitor.visitAnnotation(FIELD_REF, false);
-		visit.visit("owner", getInternalName(field.getDeclaringClass()));
-		visit.visit("name", field.getName());
-		visit.visit("type", getDescriptor(field.getType()));
-		visit.visitEnd();
-	}
-
 	/**
 	 * Create the abstracted classnode
-	 * @param impl true if output abstracted
 	 */
 	public ClassNode apply(boolean impl) {
 		ClassNode header = new ClassNode();
@@ -128,7 +115,6 @@ public abstract class AbstractAbstracter implements Opcodes {
 
 	/**
 	 * @return get a class's access flags
-	 * @param modifiers
 	 */
 	public abstract int getAccess(int modifiers);
 
@@ -183,11 +169,18 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return this;
 	}
 
+	public AbstractAbstracter filterMethod(String name, String desc) {
+		this.methodSupplier = this.methodSupplier.filtered((abstracting, method) -> method.getName().equals(name) && org.objectweb.asm.Type.getMethodDescriptor(method).equals(desc));
+		return this;
+	}
+
 	/**
 	 * attaches an extension method to the class in post-process
 	 * the method must be refered to by a method reference, and must be static
 	 */
-	public <A> AbstractAbstracter extension(SConsumer<A> consumer) {return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));}
+	public <A> AbstractAbstracter extension(SConsumer<A> consumer) {
+		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
+	}
 
 	public AbstractAbstracter extension(Method method) {
 		return this.post(new ExtensionMethodPostProcessor(method));
@@ -211,6 +204,15 @@ public abstract class AbstractAbstracter implements Opcodes {
 	public <A, B, C, D, E> AbstractAbstracter extension(SPentaConsumer<A, B, C, D, E> consumer) {return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));}
 
 	public AbstractAbstracter extension(Serializable consumer) {return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));}
+
+	public AbstractAbstracter extension(int access, String owner, String name, String desc, @Nullable String sign) {
+		return this.post((c, n, i) -> {
+			MethodNode node = new MethodNode(access, name, desc, sign, null);
+			if(i) {
+				InvokeUtil.invoke(node, 0, ACC_STATIC, owner, name, desc, INVOKESTATIC, false, this instanceof InterfaceAbstracter);
+			}
+		});
+	}
 
 	public AbstractAbstracter attach(TypeToken<?> token) {return this.attach(token.getType());}
 

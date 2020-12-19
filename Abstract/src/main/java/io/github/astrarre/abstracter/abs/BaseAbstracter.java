@@ -80,13 +80,11 @@ public class BaseAbstracter extends AbstractAbstracter {
 			if (!Modifier.isFinal(field.getModifiers())) {
 				MethodNode setter = FieldUtil.createSetter(this.cls, field, impl, false);
 				if (!MethodUtil.conflicts(setter.name, setter.desc, node)) {
-					this.addFieldRefAnnotation(setter, field);
 					node.methods.add(setter);
 				}
 			}
 			MethodNode getter = FieldUtil.createGetter(this.cls, field, impl, false);
 			if (!MethodUtil.conflicts(getter.name, getter.desc, node)) {
-				this.addFieldRefAnnotation(getter, field);
 				node.methods.add(getter);
 			}
 		} else if (!impl || Modifier.isStatic(field.getModifiers())) {

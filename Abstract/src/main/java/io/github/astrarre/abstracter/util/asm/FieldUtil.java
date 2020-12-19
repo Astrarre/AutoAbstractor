@@ -4,8 +4,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+
 import com.google.common.reflect.TypeToken;
-import io.github.astrarre.Impl;
 import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
 import io.github.astrarre.abstracter.util.AnnotationReader;
 import io.github.astrarre.abstracter.util.reflect.TypeUtil;
@@ -16,7 +16,6 @@ import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 @SuppressWarnings ("UnstableApiUsage")
@@ -110,6 +109,7 @@ public class FieldUtil implements Opcodes {
 				TypeUtil.toSignature(reified),
 				null);
 
+		// these actually exist
 		if(Modifier.isStatic(node.access)) {
 			MethodNode init = MethodUtil.findOrCreateMethod(ACC_STATIC | ACC_PUBLIC, header, "<clinit>", "()V");
 			InsnList list = init.instructions;
@@ -123,11 +123,6 @@ public class FieldUtil implements Opcodes {
 						Type.getInternalName(field.getDeclaringClass()),
 						field.getName(),
 						Type.getDescriptor(field.getType())));
-			} else {
-				insn.add(new MethodInsnNode(INVOKESTATIC,
-						Type.getInternalName(Impl.class),
-						Impl.INIT,
-						"()Ljava/lang/Object;"));
 			}
 			insn.add(new FieldInsnNode(PUTSTATIC, header.name, node.name, node.desc));
 			list.insert(insn);

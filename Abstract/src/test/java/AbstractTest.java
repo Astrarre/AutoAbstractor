@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.reflect.TypeToken;
-import io.github.astrarre.Access;
+import io.github.astrarre.abstracter.Access;
 import io.github.astrarre.abstracter.AbstracterUtil;
 import io.github.astrarre.abstracter.abs.ConstantsAbstracter;
 import io.github.astrarre.abstracter.abs.InterfaceAbstracter;
@@ -55,19 +55,23 @@ public class AbstractTest {
 	public static void main(String[] args) throws IOException {
 		// todo wait for player's TR patch to go on maven
 
-		Files.newBufferedReader(Paths.get("classpath.txt")).lines().map(File::new).map(File::toURI).map((TFunction<URI, URL>) URI::toURL).forEach(AbstracterLoader.CLASSPATH::addURL);
+		Files.newBufferedReader(Paths.get("classpath.txt"))
+		     .lines()
+		     .map(File::new)
+		     .map(File::toURI)
+		     .map((TFunction<URI, URL>) URI::toURL)
+		     .forEach(AbstracterLoader.CLASSPATH::addURL);
 		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
-		registerInterface(AbstractBlock.Settings.class,
-				c -> new InterfaceAbstracter(c, "v0/io/github/astrarre/block/IBlock$Settings").extension(AbstractTest::test)
-				                                                                          .attach(new TypeToken<Consumer<String>>() {}));
+		registerInterface(new InterfaceAbstracter(AbstractBlock.Settings.class,
+				"v0/io/github/astrarre/block/IBlock$Settings").extension(AbstractTest::test)
+		                                                      .attach(new TypeToken<Consumer<String>>() {}));
 
 		registerInnerOverride(Block.class, AbstractBlock.Settings.class);
 
 		// attachment interfaces > extension methods, cus no javadoc
 		registerDefaultConstants(Blocks.class, Items.class);
-		registerConstants(Material.class, c -> new ConstantsAbstracter(c, "v0/io/github/astrarre/block/Materials"));
-
+		registerConstants(new ConstantsAbstracter(Material.class, "v0/io/github/astrarre/block/Materials"));
 		registerConstantlessInterface(Material.class);
 
 		registerDefaultInterface(Block.class,
@@ -91,16 +95,13 @@ public class AbstractTest {
 				EntityPose.class);
 		// base
 		registerDefaultBase(Block.class, Entity.class, Enchantment.class, Item.class, Material.class);
-
-		AbstracterUtil.apply(AbstracterLoader.CLASSPATH.getURLs(), "api.jar", "api_sources.jar", "impl.jar", "manifest.properties", "mappings.tiny");
+		AbstracterUtil.apply("api.jar", "api_sources.jar", "impl.jar", "manifest.properties", "mappings.tiny");
 	}
 
 	@Access (Modifier.STATIC | Modifier.PUBLIC)
 	public static void test(Object _this) {}
 
 	private interface TFunction<A, B> extends Function<A, B> {
-		B applyT(A val) throws Throwable;
-
 		@Override
 		default B apply(A a) {
 			try {
@@ -109,6 +110,8 @@ public class AbstractTest {
 				throw new RuntimeException(throwable);
 			}
 		}
+
+		B applyT(A val) throws Throwable;
 	}
 
 }

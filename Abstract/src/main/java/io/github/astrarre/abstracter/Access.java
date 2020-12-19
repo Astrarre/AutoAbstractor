@@ -1,4 +1,4 @@
-package io.github.astrarre;
+package io.github.astrarre.abstracter;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
