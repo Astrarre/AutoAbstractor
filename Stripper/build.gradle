@@ -1,8 +1,8 @@
 plugins {
     id 'java'
     id 'java-library'
-    //id "com.jfrog.bintray" version "1.8.4"
-    //id 'maven-publish'
+    id "com.jfrog.bintray" version "1.8.4"
+    id 'maven-publish'
 }
 
 group 'io.github.astrarre'
@@ -14,7 +14,13 @@ repositories {
     mavenCentral()
 }
 
-/*
+dependencies {
+    api('com.github.javaparser:javaparser-core:3.17.0')
+    // asm
+    api('org.ow2.asm:asm:9.0')
+    api('org.ow2.asm:asm-commons:9.0')
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -26,14 +32,6 @@ publishing {
     }
 }
 
-dependencies {
-    api('com.github.javaparser:javaparser-core:3.17.0')
-    // hide annotation
-    api(project(":Extra"))
-    // asm
-    api('org.ow2.asm:asm:9.0')
-    api('org.ow2.asm:asm-commons:9.0')
-}
 
 bintray {
     user = project.hasProperty('bintray_user') ? project.property('bintray_user') : ""
@@ -50,4 +48,4 @@ bintray {
             released = new Date()
         }
     }
-}*/
+}
