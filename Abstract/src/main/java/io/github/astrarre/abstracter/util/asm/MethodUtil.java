@@ -19,7 +19,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-public class MethodUtil {
+public class MethodUtil implements Opcodes {
 	private static final String CONFLICTING_DEFAULT = org.objectweb.asm.Type.getDescriptor(ConflictingDefault.class);
 
 	public static MethodNode findOrCreateMethod(int access, ClassNode node, String name, String desc) {
@@ -42,11 +42,7 @@ public class MethodUtil {
 		return false;
 	}
 
-	public static void abstractMethod(ClassNode header,
-			Class<?> abstracting,
-			Method method,
-			boolean impl,
-			boolean iface) {
+	public static void abstractMethod(ClassNode header, Class<?> abstracting, Method method, boolean impl, boolean iface) {
 		Function<Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(abstracting);
 		TypeToken<?>[] params = map(method.getGenericParameterTypes(), resolve, TypeToken[]::new);
 		TypeToken<?> returnType = resolve.apply(method.getGenericReturnType());
@@ -54,7 +50,7 @@ public class MethodUtil {
 		String sign = impl ? null : TypeUtil.methodSignature(method.getTypeParameters(), params, returnType);
 		int access = method.getModifiers();
 		if (Modifier.isInterface(header.access)) {
-			access &= ~Opcodes.ACC_FINAL;
+			access &= ~ACC_FINAL;
 		}
 
 		MethodNode node = new MethodNode(access, method.getName(), desc, sign, null);
@@ -67,28 +63,33 @@ public class MethodUtil {
 
 
 		if (impl) {
+			boolean equalDesc = desc.equals(org.objectweb.asm.Type.getMethodDescriptor(method));
 			if (desc.equals(org.objectweb.asm.Type.getMethodDescriptor(method)) && method.isDefault()) {
 				node.visitAnnotation(CONFLICTING_DEFAULT, false);
 			}
 
 			// if abstract, and base then we don't invoke target, otherwise we're fine
 			if (!Modifier.isAbstract(access) || iface) {
+				node.access &= ~ACC_ABSTRACT;
 				// invoke target
-				InvokeUtil.invokeTarget(node,
-						header.superName,
-						method,
-						iface ? Opcodes.INVOKEVIRTUAL : Opcodes.INVOKESPECIAL,
-						iface);
+				InvokeUtil.invokeTarget(node, header.superName, method, iface ? INVOKEVIRTUAL : INVOKESPECIAL, iface);
+			}
+
+			if (equalDesc && Modifier.isFinal(access)) {
+				node.visitAnnotation(CONFLICTING_DEFAULT, false);
 			}
 
 			// if base, non-final and non-static we need a bridge method to complete the triangle method
 			if (!iface && !Modifier.isFinal(access) && !Modifier.isStatic(access)) {
-				visitBridge(header, method, desc);
+				MethodNode n = visitBridge(header, method, desc);
+				if (equalDesc) {
+					n.visitAnnotation(CONFLICTING_DEFAULT, false);
+				}
 			}
 		} else {
 			// if no implementation is needed, no implementation is needed
 			if (iface && !Modifier.isStatic(node.access)) {
-				node.access |= Opcodes.ACC_ABSTRACT;
+				node.access |= ACC_ABSTRACT;
 			} else {
 				InvokeUtil.visitStub(node);
 			}
@@ -100,10 +101,9 @@ public class MethodUtil {
 		header.methods.add(node);
 	}
 
-	private static void visitBridge(ClassNode header, Method method, String targetDesc) {
+	private static MethodNode visitBridge(ClassNode header, Method method, String targetDesc) {
 		int access = method.getModifiers();
-		MethodNode node =
-				new MethodNode((access & ~Opcodes.ACC_ABSTRACT) | Opcodes.ACC_FINAL | Opcodes.ACC_BRIDGE | Opcodes.ACC_SYNTHETIC,
+		MethodNode node = new MethodNode((access & ~ACC_ABSTRACT) | ACC_FINAL | ACC_BRIDGE | ACC_SYNTHETIC,
 				method.getName(),
 				org.objectweb.asm.Type.getMethodDescriptor(method),
 				null /*sign*/,
@@ -112,5 +112,6 @@ public class MethodUtil {
 		// triangular method
 		InvokeUtil.invokeBridged(node, header, targetDesc);
 		header.methods.add(node);
+		return node;
 	}
 }

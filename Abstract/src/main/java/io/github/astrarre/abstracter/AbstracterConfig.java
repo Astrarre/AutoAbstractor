@@ -33,6 +33,13 @@ public class AbstracterConfig implements Opcodes {
 		INTERFACE_ABSTRACTION.forEach((c, a) -> properties.setProperty(Type.getInternalName(c), a.name));
 		properties.store(stream, "F2bb Interface Manifest");
 		// todo store licence or something
+		// todo remap
+	}
+
+	public static void writeBaseManifest(OutputStream stream) throws IOException {
+		Properties properties = new Properties();
+		BASE_ABSTRACTION.forEach((c, a) -> properties.setProperty(Type.getInternalName(c), a.name));
+		properties.store(stream, "F2bb Base Manifest");
 	}
 
 	public static void writeJar(ZipOutputStream out, boolean impl) {

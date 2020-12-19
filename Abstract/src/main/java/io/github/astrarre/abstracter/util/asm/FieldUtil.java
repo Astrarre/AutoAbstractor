@@ -117,15 +117,15 @@ public class FieldUtil implements Opcodes {
 				list.insert(new InsnNode(RETURN));
 			}
 
-			InsnList insn = new InsnList();
 			if (impl) {
+				InsnList insn = new InsnList();
 				insn.add(new FieldInsnNode(GETSTATIC,
 						Type.getInternalName(field.getDeclaringClass()),
 						field.getName(),
 						Type.getDescriptor(field.getType())));
+				insn.add(new FieldInsnNode(PUTSTATIC, header.name, node.name, node.desc));
+				list.insert(insn);
 			}
-			insn.add(new FieldInsnNode(PUTSTATIC, header.name, node.name, node.desc));
-			list.insert(insn);
 		}
 		header.fields.add(node);
 	}
