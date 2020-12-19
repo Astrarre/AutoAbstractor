@@ -45,7 +45,7 @@ dependencies {
     api('net.fabricmc:fabric-fernflower:1.3.0')
     api('net.fabricmc:tiny-mappings-parser:0.2.2.14')
 
-    api('io.github.astrarre:mappingpoet:0.0.5')
+    api('io.github.astrarre:mappingpoet:0.0.6')
     api('org.zeroturnaround:zt-zip:1.14')
 
 
