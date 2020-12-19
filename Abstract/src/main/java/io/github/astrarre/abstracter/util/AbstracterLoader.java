@@ -9,6 +9,9 @@ public class AbstracterLoader extends URLClassLoader {
 	// isolated classloader
 	public static final AbstracterLoader CLASSPATH = new AbstracterLoader(ClassLoader.getSystemClassLoader().getParent());
 	public static final AbstracterLoader INSTANCE = new AbstracterLoader(CLASSPATH);
+	static {
+		registerAsParallelCapable();
+	}
 
 	public AbstracterLoader(ClassLoader parent) {
 		super(new URL[] {}, parent);
