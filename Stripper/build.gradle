@@ -1,8 +1,8 @@
 plugins {
     id 'java'
     id 'java-library'
-    id "com.jfrog.bintray" version "1.8.4"
-    id 'maven-publish'
+    //id "com.jfrog.bintray" version "1.8.4"
+    //id 'maven-publish'
 }
 
 group 'io.github.astrarre'
@@ -14,6 +14,7 @@ repositories {
     mavenCentral()
 }
 
+/*
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -49,4 +50,4 @@ bintray {
             released = new Date()
         }
     }
-}
+}*/

@@ -56,42 +56,40 @@ public class MethodUtil {
 
 		MethodNode node = new MethodNode(access, method.getName(), desc, sign, null);
 		for (Annotation annotation : method.getAnnotations()) {
-			if(node.visibleAnnotations == null) node.visibleAnnotations = new ArrayList<>();
+			if (node.visibleAnnotations == null) {
+				node.visibleAnnotations = new ArrayList<>();
+			}
 			node.visibleAnnotations.add(AnnotationReader.accept(annotation));
 		}
-		boolean identical = desc.equals(org.objectweb.asm.Type
-				                                .getMethodDescriptor(method)) && !Modifier.isStatic(access);
-		if (identical && impl && !iface) {
-			// if instance, identical and impl, then virtual lookups go brr
-		} else {
-			if (!Modifier.isAbstract(access)) {
-				if (impl) {
-					// triangular method
-					InvokeUtil
-							.invokeTarget(node, header.superName, method, iface ? Opcodes.INVOKEVIRTUAL : Opcodes.INVOKESPECIAL,
-									iface);
-					if (!iface && !Modifier.isFinal(access) && !Modifier.isStatic(access)) {
-						visitBridge(header, method, desc);
-					}
-				} else {
-					if(iface && !Modifier.isStatic(node.access)) {
-						node.access |= Opcodes.ACC_ABSTRACT;
-					} else {
-						InvokeUtil.visitStub(node);
-					}
-				}
-			}
 
-			for (Parameter parameter : method.getParameters()) {
-				node.visitParameter(parameter.getName(), 0);
+		if (impl) {
+			// triangular method
+			InvokeUtil.invokeTarget(node,
+					header.superName,
+					method,
+					iface ? Opcodes.INVOKEVIRTUAL : Opcodes.INVOKESPECIAL,
+					iface);
+			if (!iface && !Modifier.isFinal(access) && !Modifier.isStatic(access)) {
+				visitBridge(header, method, desc);
 			}
-			header.methods.add(node);
+		} else {
+			if (iface && !Modifier.isStatic(node.access)) {
+				node.access |= Opcodes.ACC_ABSTRACT;
+			} else {
+				InvokeUtil.visitStub(node);
+			}
 		}
+
+		for (Parameter parameter : method.getParameters()) {
+			node.visitParameter(parameter.getName(), 0);
+		}
+		header.methods.add(node);
 	}
 
 	private static void visitBridge(ClassNode header, Method method, String targetDesc) {
 		int access = method.getModifiers();
-		MethodNode node = new MethodNode((access & ~Opcodes.ACC_ABSTRACT) | Opcodes.ACC_FINAL | Opcodes.ACC_BRIDGE | Opcodes.ACC_SYNTHETIC,
+		MethodNode node =
+				new MethodNode((access & ~Opcodes.ACC_ABSTRACT) | Opcodes.ACC_FINAL | Opcodes.ACC_BRIDGE | Opcodes.ACC_SYNTHETIC,
 				method.getName(),
 				org.objectweb.asm.Type.getMethodDescriptor(method),
 				null /*sign*/,
