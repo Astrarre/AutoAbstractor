@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.function.Function;
 
 import com.google.common.reflect.TypeToken;
+import io.github.astrarre.abstracter.ConflictingDefault;
 import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
 import io.github.astrarre.abstracter.util.AnnotationReader;
 import io.github.astrarre.abstracter.util.reflect.TypeUtil;
@@ -19,6 +20,8 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class MethodUtil {
+	private static final String CONFLICTING_DEFAULT = org.objectweb.asm.Type.getDescriptor(ConflictingDefault.class);
+
 	public static MethodNode findOrCreateMethod(int access, ClassNode node, String name, String desc) {
 		for (MethodNode method : node.methods) {
 			if (name.equals(method.name) && desc.equals(method.desc)) {
@@ -62,17 +65,28 @@ public class MethodUtil {
 			node.visibleAnnotations.add(AnnotationReader.accept(annotation));
 		}
 
+
 		if (impl) {
-			// triangular method
-			InvokeUtil.invokeTarget(node,
-					header.superName,
-					method,
-					iface ? Opcodes.INVOKEVIRTUAL : Opcodes.INVOKESPECIAL,
-					iface);
+			if (desc.equals(org.objectweb.asm.Type.getMethodDescriptor(method)) && method.isDefault()) {
+				node.visitAnnotation(CONFLICTING_DEFAULT, false);
+			}
+
+			// if abstract, and base then we don't invoke target, otherwise we're fine
+			if (!Modifier.isAbstract(access) || iface) {
+				// invoke target
+				InvokeUtil.invokeTarget(node,
+						header.superName,
+						method,
+						iface ? Opcodes.INVOKEVIRTUAL : Opcodes.INVOKESPECIAL,
+						iface);
+			}
+
+			// if base, non-final and non-static we need a bridge method to complete the triangle method
 			if (!iface && !Modifier.isFinal(access) && !Modifier.isStatic(access)) {
 				visitBridge(header, method, desc);
 			}
 		} else {
+			// if no implementation is needed, no implementation is needed
 			if (iface && !Modifier.isStatic(node.access)) {
 				node.access |= Opcodes.ACC_ABSTRACT;
 			} else {
