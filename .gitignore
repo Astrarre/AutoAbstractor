@@ -1,12 +1,6 @@
-# Project exclude paths
-/.gradle/
 /build/
-/Abstract/build/
-/Extra/build/
-
-/run/
-*.ipr
-*.iws
+/.gradle/
 *.iml
-*.classpath
-/.idea/
+*.class
+*.jar
+run

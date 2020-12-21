@@ -1,5 +1,0 @@
-rootProject.name = 'Astrarre'
-include 'Abstract'
-include 'Extra'
-include 'Stripper'
-
