@@ -87,12 +87,12 @@ public class InvokeUtil implements Opcodes {
 			index += originArg.getSize();
 			// if type changed, generics or abstraction
 			if (!targetArg.equals(originArg)) {
+				// todo only cast when necessary
 				TypeUtil.cast(originArg.getInternalName(), targetArg.getInternalName(), from);
 			}
 		}
 
 		from.visitMethodInsn(opcode, owner, name, desc);
-		Type targetReturn = targetType.getReturnType();
 		Type originReturn = originType.getReturnType();
 
 		// cast if non-minecraft or generics
@@ -100,6 +100,7 @@ public class InvokeUtil implements Opcodes {
 			TypeUtil.cast(owner, originReturn.getInternalName(), from);
 			from.visitInsn(ARETURN);
 		} else {
+			Type targetReturn = targetType.getReturnType();
 			if (targetReturn.getSort() == originReturn.getSort() && !targetReturn.equals(originReturn)) {
 				TypeUtil.cast(targetReturn.getInternalName(), originReturn.getInternalName(), from);
 			}

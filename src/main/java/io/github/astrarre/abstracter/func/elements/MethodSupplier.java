@@ -63,7 +63,7 @@ public interface MethodSupplier {
 		}
 		for (Method method : cls.getDeclaredMethods()) {
 			String desc = org.objectweb.asm.Type.getMethodDescriptor(method);
-			map.put(method.getName() + ";" + desc, method);
+			map.putIfAbsent(method.getName() + ";" + desc, method);
 		}
 	}
 
