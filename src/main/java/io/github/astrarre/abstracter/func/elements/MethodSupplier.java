@@ -26,15 +26,13 @@ public interface MethodSupplier {
 	// todo check formal parameters
 	MethodSupplier BASE_DEFAULT = create(AbstracterLoader::isMinecraft)
 			                              // neither bridge nor synthetic
-			                              .filtered(VALID_PARAMS_VARS_AND_RETURN
-					                                        .and((MemberFilter) (PUBLIC.and(STATIC.negate()))
-							                                                            .or(PROTECTED)));
+			                              .filtered(VALID_PARAMS_VARS_AND_RETURN.and((MemberFilter) (PUBLIC.and(STATIC.negate())).or(PROTECTED)));
 
 	/**
 	 * all public methods are exposed from classes inside the 'umbrella'
 	 */
-	MethodSupplier INTERFACE_DEFAULT = create(AbstracterLoader::isUnabstractedClass)
-			                                   .filtered(VALID_PARAMS_VARS_AND_RETURN.and((MemberFilter) ACCESSIBLE));
+	MethodSupplier INTERFACE_DEFAULT =
+			create(AbstracterLoader::isUnabstractedClass).filtered(VALID_PARAMS_VARS_AND_RETURN.and((MemberFilter) ACCESSIBLE));
 
 	static MethodSupplier create(Predicate<Class<?>> filter) {
 		return c -> {
@@ -62,8 +60,12 @@ public interface MethodSupplier {
 			walk(filter, sup, map);
 		}
 		for (Method method : cls.getDeclaredMethods()) {
-			String desc = org.objectweb.asm.Type.getMethodDescriptor(method);
-			map.putIfAbsent(method.getName() + ";" + desc, method);
+			String fullDesc = method.getName() + ";" + org.objectweb.asm.Type.getMethodDescriptor(method);
+			if (method.isBridge()) {
+				map.remove(fullDesc);
+			} else {
+				map.putIfAbsent(fullDesc, method);
+			}
 		}
 	}
 
