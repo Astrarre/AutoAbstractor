@@ -12,7 +12,6 @@ import java.util.Iterator;
 
 import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.AbstracterConfig;
-import io.github.astrarre.abstracter.util.AbstracterLoader;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -23,7 +22,7 @@ public class TypeUtil {
 		@Override
 		public String map(String internalName) {
 			Class<?> cls =
-					AbstracterLoader.getClass(org.objectweb.asm.Type.getObjectType(internalName).getClassName());
+					AbstracterConfig.getClass(org.objectweb.asm.Type.getObjectType(internalName).getClassName());
 			return AbstracterConfig.getInterfaceName(cls);
 		}
 	};

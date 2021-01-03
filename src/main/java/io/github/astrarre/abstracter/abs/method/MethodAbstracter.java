@@ -3,9 +3,8 @@ package io.github.astrarre.abstracter.abs.method;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import io.github.astrarre.abstracter.util.AbstracterLoader;
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.util.reflect.TypeUtil;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -23,8 +22,8 @@ public class MethodAbstracter implements Opcodes {
 
 	public MethodAbstracter(ClassNode from, Method target, boolean isSpecial) {
 		Class<?> declaring = target.getDeclaringClass();
-		// todo reify
-		this.castThis = !declaring.isAssignableFrom(AbstracterLoader.getClass(from.superName.replace('.', '/')));
+		// todo reify, generate
+		this.castThis = !declaring.isAssignableFrom(AbstracterConfig.getClass(from.superName.replace('.', '/')));
 		this.isSpecial = isSpecial;
 		this.targetClassAccess = declaring.getModifiers();
 		this.targetMethodAccess = target.getModifiers();
@@ -51,7 +50,9 @@ public class MethodAbstracter implements Opcodes {
 	}
 
 	public MethodNode create() {
-
+		MethodNode node = new MethodNode();
+		// todo
+		return null;
 	}
 
 	protected int getAccess() {

@@ -28,6 +28,9 @@ public class AbstracterConfig implements Opcodes {
 	 * the map goes from the desired class to the casting function
 	 */
 	public static final Map<String, CastingFunction> TRANSLATION = new HashMap<>();
+	// isolated classloader
+	public static final AbstracterLoader CLASSPATH = new AbstracterLoader(ClassLoader.getSystemClassLoader().getParent());
+	public static final AbstracterLoader INSTANCE = new AbstracterLoader(CLASSPATH);
 	private static final Map<Class<?>, AbstractAbstracter> INTERFACE_ABSTRACTION = new HashMap<>();
 	private static final Map<Class<?>, AbstractAbstracter> BASE_ABSTRACTION = new HashMap<>();
 	private static final Map<Class<?>, AbstractAbstracter> CONSTANT_ABSTRACTIONS = new HashMap<>();
@@ -115,8 +118,8 @@ public class AbstracterConfig implements Opcodes {
 	}
 
 	public static void registerInnerOverride(String cls, String... inners) {
-		Class<?>[] innerClasses = ArrayUtil.map(inners, AbstracterLoader::getClass, Class[]::new);
-		INNER_CLASS_OVERRIDES.put(AbstracterLoader.getClass(cls), innerClasses);
+		Class<?>[] innerClasses = ArrayUtil.map(inners, AbstracterConfig::getClass, Class[]::new);
+		INNER_CLASS_OVERRIDES.put(getClass(cls), innerClasses);
 	}
 
 	public static boolean isInterfaceAbstracted(Class<?> cls) {
@@ -126,7 +129,7 @@ public class AbstracterConfig implements Opcodes {
 	public static String getInterfaceName(Class<?> cls) {
 		AbstractAbstracter abstraction = INTERFACE_ABSTRACTION.get(cls);
 		if (abstraction == null) {
-			if (AbstracterLoader.isMinecraft(cls)) {
+			if (isMinecraft(cls)) {
 				throw new InvalidClassException(cls);
 			} else {
 				return Type.getInternalName(cls);
@@ -149,6 +152,25 @@ public class AbstracterConfig implements Opcodes {
 		INTERFACE_ABSTRACTION.forEach((k, a) -> map.put(a.name, Type.getInternalName(k)));
 		CONSTANT_ABSTRACTIONS.forEach((k, a) -> map.put(a.name, Type.getInternalName(k)));
 		return map;
+	}
+
+	public static boolean isMinecraft(Class<?> cls) {
+		return cls != null && cls.getClassLoader() == INSTANCE;
+	}
+
+	public static Class<?> getClass(String reflectionName) {
+		try {
+			return INSTANCE.loadClass(reflectionName);
+		} catch (ClassNotFoundException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+
+	/**
+	 * @return true if the class is a minecraft class, but isn't supposed to be abstracted
+	 */
+	public static boolean isUnabstractedClass(Class<?> cls) {
+		return isMinecraft(cls) && !isInterfaceAbstracted(cls);
 	}
 
 	public interface CastingFunction {

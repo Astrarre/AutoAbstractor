@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -15,7 +14,6 @@ import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.func.filter.Filters;
 import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
-import io.github.astrarre.abstracter.util.AbstracterLoader;
 
 /**
  * This finds the interfaces to expose for the class
@@ -32,10 +30,10 @@ public interface InterfaceFunction {
 	 * if a base class doesn't have an interface abstraction, and since they can't extend each other we need to find all
 	 * of the interfaces in the hierarchy
 	 */
-	InterfaceFunction BASE_NO_INTERFACE = branching(AbstracterLoader::isMinecraft).filtered(Filters.IS_VALID);
+	InterfaceFunction BASE_NO_INTERFACE = branching(AbstracterConfig::isMinecraft).filtered(Filters.IS_VALID);
 
 
-	InterfaceFunction INTERFACE_DEFAULT = branching(AbstracterLoader::isUnabstractedClass)
+	InterfaceFunction INTERFACE_DEFAULT = branching(AbstracterConfig::isUnabstractedClass)
 			                                      .filtered(Filters.IS_VALID)
 			                                      .and(c -> Optional.of(c)
 			                                                        .filter(c2 -> AbstracterConfig.isInterfaceAbstracted(c2.getSuperclass()))
@@ -85,7 +83,7 @@ public interface InterfaceFunction {
 			for (Class<?> iface : cls.getInterfaces()) {
 				if (AbstracterConfig.isInterfaceAbstracted(iface)) {
 					classes.add(original.resolveType(iface).getType());
-				} else if (AbstracterLoader.isMinecraft(iface)) {
+				} else if (AbstracterConfig.isMinecraft(iface)) {
 					// if the minecraft class just wasn't abstracted
 					// then we need to find all it's interfaces and add them
 					this.visitInterfaces(original, iface, classes);

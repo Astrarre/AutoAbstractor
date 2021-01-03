@@ -3,7 +3,7 @@ package io.github.astrarre.abstracter.func.inheritance;
 import java.lang.reflect.Type;
 
 import com.google.common.reflect.TypeToken;
-import io.github.astrarre.abstracter.util.AbstracterLoader;
+import io.github.astrarre.abstracter.AbstracterConfig;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings ("UnstableApiUsage")
@@ -16,7 +16,7 @@ public interface SuperFunction {
 		}
 
 		Class<?> current = c;
-		while (AbstracterLoader.isMinecraft(current)) {
+		while (AbstracterConfig.isMinecraft(current)) {
 			current = current.getSuperclass();
 		}
 		return TypeToken.of(c).resolveType(current).getType();

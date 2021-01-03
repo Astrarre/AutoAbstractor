@@ -18,11 +18,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.reflect.TypeToken;
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.Access;
 import io.github.astrarre.abstracter.AbstracterUtil;
 import io.github.astrarre.abstracter.abs.ConstantsAbstracter;
 import io.github.astrarre.abstracter.abs.InterfaceAbstracter;
-import io.github.astrarre.abstracter.util.AbstracterLoader;
 
 import net.minecraft.Bootstrap;
 import net.minecraft.block.AbstractBlock;
@@ -64,8 +64,8 @@ public class AbstractTest {
 		     .map(File::new)
 		     .map(File::toURI)
 		     .map((TFunction<URI, URL>) URI::toURL)
-		     .forEach(AbstracterLoader.CLASSPATH::addURL);
-		AbstracterLoader.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
+		     .forEach(AbstracterConfig.CLASSPATH::addURL);
+		AbstracterConfig.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
 		registerInterface(new InterfaceAbstracter(AbstractBlock.Settings.class,
 				"io/github/astrarre/v0/block/Block$Settings").extension(AbstractTest::test)

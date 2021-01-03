@@ -24,7 +24,6 @@ import io.github.astrarre.abstracter.abs.EnumAbstracter;
 import io.github.astrarre.abstracter.abs.InterfaceAbstracter;
 import io.github.astrarre.abstracter.func.elements.FieldSupplier;
 import io.github.astrarre.abstracter.func.filter.MemberFilter;
-import io.github.astrarre.abstracter.util.AbstracterLoader;
 import org.zeroturnaround.zip.ZipUtil;
 
 import net.fabricmc.mappingpoet.Main;
@@ -97,7 +96,7 @@ public class AbstracterUtil {
 	public static void loadFromTxt(File file) {
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(file));
-			reader.lines().map(File::new).map(File::toURI).map(AbstracterUtil::toURL).forEach(AbstracterLoader.CLASSPATH::addURL);
+			reader.lines().map(File::new).map(File::toURI).map(AbstracterUtil::toURL).forEach(AbstracterConfig.CLASSPATH::addURL);
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
 		}

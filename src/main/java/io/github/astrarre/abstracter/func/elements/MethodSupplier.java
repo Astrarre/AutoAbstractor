@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Collections2;
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.func.filter.MemberFilter;
-import io.github.astrarre.abstracter.util.AbstracterLoader;
 
 @SuppressWarnings ({
 		"unchecked",
@@ -24,7 +24,7 @@ import io.github.astrarre.abstracter.util.AbstracterLoader;
 public interface MethodSupplier {
 	MethodSupplier EMPTY = c -> Collections.emptySet();
 	// todo check formal parameters
-	MethodSupplier BASE_DEFAULT = create(AbstracterLoader::isMinecraft)
+	MethodSupplier BASE_DEFAULT = create(AbstracterConfig::isMinecraft)
 			                              // neither bridge nor synthetic
 			                              .filtered(VALID_PARAMS_VARS_AND_RETURN.and((MemberFilter) (PUBLIC.and(STATIC.negate())).or(PROTECTED)));
 
@@ -32,7 +32,7 @@ public interface MethodSupplier {
 	 * all public methods are exposed from classes inside the 'umbrella'
 	 */
 	MethodSupplier INTERFACE_DEFAULT =
-			create(AbstracterLoader::isUnabstractedClass).filtered(VALID_PARAMS_VARS_AND_RETURN.and((MemberFilter) ACCESSIBLE));
+			create(AbstracterConfig::isUnabstractedClass).filtered(VALID_PARAMS_VARS_AND_RETURN.and((MemberFilter) ACCESSIBLE));
 
 	static MethodSupplier create(Predicate<Class<?>> filter) {
 		return c -> {

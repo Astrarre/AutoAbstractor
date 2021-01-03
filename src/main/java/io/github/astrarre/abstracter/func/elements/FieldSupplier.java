@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Collections2;
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.func.filter.MemberFilter;
-import io.github.astrarre.abstracter.util.AbstracterLoader;
 
 @SuppressWarnings ("unchecked")
 public interface FieldSupplier {
@@ -23,11 +23,11 @@ public interface FieldSupplier {
 
 	FieldSupplier CONSTANTS = ((FieldSupplier)c -> Arrays.asList(c.getDeclaredFields())).filtered((MemberFilter)PUBLIC.and(STATIC));
 
-	FieldSupplier INTERFACE_DEFAULT = create(AbstracterLoader::isUnabstractedClass)
+	FieldSupplier INTERFACE_DEFAULT = create(AbstracterConfig::isUnabstractedClass)
 			                                  .filtered(VALID_TYPE.and((MemberFilter) PUBLIC));
 
 	FieldSupplier BASE_DEFAULT =
-			create(AbstracterLoader::isMinecraft).filtered(VALID_TYPE.and((MemberFilter) (PUBLIC.and(STATIC.negate())).or(PROTECTED)));
+			create(AbstracterConfig::isMinecraft).filtered(VALID_TYPE.and((MemberFilter) (PUBLIC.and(STATIC.negate())).or(PROTECTED)));
 
 	static FieldSupplier create(Predicate<Class<?>> filter) {
 		return c -> {

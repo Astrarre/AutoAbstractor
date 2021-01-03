@@ -13,7 +13,6 @@ import io.github.astrarre.abstracter.func.elements.MethodSupplier;
 import io.github.astrarre.abstracter.func.inheritance.InterfaceFunction;
 import io.github.astrarre.abstracter.func.inheritance.SuperFunction;
 import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
-import io.github.astrarre.abstracter.util.AbstracterLoader;
 import io.github.astrarre.abstracter.util.asm.FieldUtil;
 import io.github.astrarre.abstracter.util.asm.InvokeUtil;
 import io.github.astrarre.abstracter.util.asm.MethodUtil;
@@ -76,7 +75,7 @@ public class BaseAbstracter extends AbstractAbstracter {
 
 	@Override
 	public void abstractField(ClassNode node, Field field, boolean impl) {
-		if (AbstracterLoader.isMinecraft(TypeMappingFunction.raw(this.cls, field.getGenericType()))) {
+		if (AbstracterConfig.isMinecraft(TypeMappingFunction.raw(this.cls, field.getGenericType()))) {
 			if (!Modifier.isFinal(field.getModifiers())) {
 				MethodNode setter = FieldUtil.createSetter(this.name, this.cls, field, impl, false);
 				if (!MethodUtil.conflicts(setter.name, setter.desc, node)) {
