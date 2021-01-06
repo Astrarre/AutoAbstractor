@@ -1,11 +1,7 @@
-import static io.github.astrarre.abstracter.AbstracterConfig.registerConstants;
 import static io.github.astrarre.abstracter.AbstracterConfig.registerInnerOverride;
 import static io.github.astrarre.abstracter.AbstracterConfig.registerInterface;
-import static io.github.astrarre.abstracter.AbstracterUtil.registerConstantlessInterface;
 import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultBase;
-import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultConstants;
 import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultInterface;
-import static io.github.astrarre.abstracter.AbstracterUtil.registerEnum;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,9 +15,8 @@ import java.util.function.Function;
 
 import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.AbstracterConfig;
-import io.github.astrarre.abstracter.Access;
 import io.github.astrarre.abstracter.AbstracterUtil;
-import io.github.astrarre.abstracter.abs.ConstantsAbstracter;
+import io.github.astrarre.abstracter.Access;
 import io.github.astrarre.abstracter.abs.InterfaceAbstracter;
 
 import net.minecraft.Bootstrap;
@@ -68,18 +63,19 @@ public class AbstractTest {
 		AbstracterConfig.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
 		registerInterface(new InterfaceAbstracter(AbstractBlock.Settings.class,
-				"io/github/astrarre/v0/block/Block$Settings").extension(AbstractTest::test)
-		                                                      .attach(new TypeToken<Consumer<String>>() {}));
+				"io/github/astrarre/v0/block/Block$Settings").extension(AbstractTest::test).attach(new TypeToken<Consumer<String>>() {}));
 
 		registerInnerOverride(Block.class, AbstractBlock.Settings.class);
 
 		// attachment interfaces > extension methods, cus no javadoc
-		registerDefaultConstants(Blocks.class, Items.class);
-		registerConstants(new ConstantsAbstracter(Material.class, "io/github/astrarre/v0/block/Materials"));
-		registerConstantlessInterface(Material.class);
+		AbstracterConfig.registerInterface(new InterfaceAbstracter(Material.class, "io/github/astrarre/v0/block/Materials"));
 
-		registerEnum(EntityPose.class, EnchantmentTarget.class, Hand.class);
-		registerDefaultInterface(Block.class,
+		registerDefaultInterface(EntityPose.class,
+				EnchantmentTarget.class,
+				Hand.class,
+				Blocks.class,
+				Items.class,
+				Block.class,
 				ItemStack.class,
 				Item.class,
 				Item.Settings.class,
@@ -96,7 +92,8 @@ public class AbstractTest {
 				EntityType.class,
 				MaterialColor.class,
 				Vec3d.class,
-				Vec3i.class, LivingEntity.class);
+				Vec3i.class,
+				LivingEntity.class);
 		// base
 		registerDefaultBase(Block.class, Entity.class, Enchantment.class, Item.class, Material.class);
 		AbstracterUtil.apply("api.jar", "api_sources.jar", "impl.jar", "manifest.properties", "mappings.tiny");

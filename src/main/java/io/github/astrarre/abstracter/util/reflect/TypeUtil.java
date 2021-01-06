@@ -34,7 +34,7 @@ public class TypeUtil {
 	}
 
 	public static void cast(String fromType, String toType, MethodVisitor visitor) {
-		AbstracterConfig.TRANSLATION.getOrDefault(fromType, AbstracterConfig.CastingFunction.DEFAULT).accept(fromType, toType, visitor);
+		AbstracterConfig.TRANSLATION.getOrDefault(toType, AbstracterConfig.CastingFunction.DEFAULT).accept(fromType, toType, visitor);
 	}
 
 	public static String classSignature(TypeVariable<?>[] variables, Type superClass, Collection<Type> interfaces) {

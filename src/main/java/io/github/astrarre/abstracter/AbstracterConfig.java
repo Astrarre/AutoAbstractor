@@ -38,11 +38,7 @@ public class AbstracterConfig implements Opcodes {
 
 	public static void writeManifest(OutputStream stream) throws IOException {
 		Properties properties = new Properties();
-		INTERFACE_ABSTRACTION.forEach((c, a) -> {
-			if (!c.isEnum()) {
-				properties.setProperty(Type.getInternalName(c), a.name);
-			}
-		});
+		INTERFACE_ABSTRACTION.forEach((c, a) -> properties.setProperty(Type.getInternalName(c), a.name));
 		properties.store(stream, "F2bb Interface Manifest");
 		// todo store licence or something
 		// todo remap
@@ -54,10 +50,15 @@ public class AbstracterConfig implements Opcodes {
 		properties.store(stream, "F2bb Base Manifest");
 	}
 
-	public static void writeJar(ZipOutputStream out, boolean impl) {
+	public static void writeJar(ZipOutputStream out, boolean impl) throws IOException {
 		write(out, INTERFACE_ABSTRACTION, impl);
 		write(out, BASE_ABSTRACTION, impl);
 		write(out, CONSTANT_ABSTRACTIONS, impl);
+		if (impl) {
+			out.putNextEntry(new ZipEntry("intr_manifest.properties"));
+			writeManifest(out);
+			out.closeEntry();
+		}
 	}
 
 	private static void write(ZipOutputStream out, Map<Class<?>, AbstractAbstracter> abstraction, boolean impl) {
@@ -122,8 +123,12 @@ public class AbstracterConfig implements Opcodes {
 		INNER_CLASS_OVERRIDES.put(getClass(cls), innerClasses);
 	}
 
-	public static boolean isInterfaceAbstracted(Class<?> cls) {
-		return INTERFACE_ABSTRACTION.containsKey(cls);
+	public static Class<?> getClass(String reflectionName) {
+		try {
+			return INSTANCE.loadClass(reflectionName);
+		} catch (ClassNotFoundException e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
 
 	public static String getInterfaceName(Class<?> cls) {
@@ -139,6 +144,10 @@ public class AbstracterConfig implements Opcodes {
 		return abstraction.name;
 	}
 
+	public static boolean isMinecraft(Class<?> cls) {
+		return cls != null && cls.getClassLoader() == INSTANCE;
+	}
+
 	public static String getBaseName(Class<?> cls) {
 		return BASE_ABSTRACTION.get(cls).name;
 	}
@@ -148,22 +157,10 @@ public class AbstracterConfig implements Opcodes {
 	 */
 	public static Map<String, String> nameMap() {
 		Map<String, String> map = new HashMap<>();
-		BASE_ABSTRACTION.forEach((k, a) -> map.put(a.name, Type.getInternalName(k)));
-		INTERFACE_ABSTRACTION.forEach((k, a) -> map.put(a.name, Type.getInternalName(k)));
-		CONSTANT_ABSTRACTIONS.forEach((k, a) -> map.put(a.name, Type.getInternalName(k)));
+		BASE_ABSTRACTION.forEach((k, a) -> map.put(Type.getInternalName(k), a.name));
+		INTERFACE_ABSTRACTION.forEach((k, a) -> map.put(Type.getInternalName(k), a.name));
+		CONSTANT_ABSTRACTIONS.forEach((k, a) -> map.put(Type.getInternalName(k), a.name));
 		return map;
-	}
-
-	public static boolean isMinecraft(Class<?> cls) {
-		return cls != null && cls.getClassLoader() == INSTANCE;
-	}
-
-	public static Class<?> getClass(String reflectionName) {
-		try {
-			return INSTANCE.loadClass(reflectionName);
-		} catch (ClassNotFoundException e) {
-			throw new IllegalArgumentException(e);
-		}
 	}
 
 	/**
@@ -171,6 +168,10 @@ public class AbstracterConfig implements Opcodes {
 	 */
 	public static boolean isUnabstractedClass(Class<?> cls) {
 		return isMinecraft(cls) && !isInterfaceAbstracted(cls);
+	}
+
+	public static boolean isInterfaceAbstracted(Class<?> cls) {
+		return INTERFACE_ABSTRACTION.containsKey(cls);
 	}
 
 	public interface CastingFunction {

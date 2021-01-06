@@ -96,6 +96,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 
 		header.signature = TypeUtil.classSignature(this.cls.getTypeParameters(), sup, interfaces);
 
+		this.preProcess(header, impl);
 		for (Constructor<?> constructor : this.constructorSupplier.getConstructors(this.cls)) {
 			this.abstractConstructor(header, constructor, impl);
 		}
@@ -123,6 +124,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 
 	public abstract void abstractField(ClassNode node, Field field, boolean impl);
 
+	protected void preProcess(ClassNode node, boolean impl) {}
 	protected void postProcess(ClassNode node, boolean impl) {
 		for (MethodNode method : node.methods) {
 			if (method.name.equals("<clinit>")) {

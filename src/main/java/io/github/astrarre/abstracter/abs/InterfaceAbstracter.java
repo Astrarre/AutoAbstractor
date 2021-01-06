@@ -108,4 +108,25 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 			}
 		}
 	}
+
+	@Override
+	protected void preProcess(ClassNode node, boolean impl) {
+		if(impl) {
+			MethodNode init = new MethodNode(ACC_STATIC | ACC_PUBLIC, "astrarre_artificial_clinit", "()V", null, null);
+			node.methods.add(init);
+		}
+	}
+
+	@Override
+	protected void postProcess(ClassNode node, boolean impl) {
+		if (impl) {
+			for (MethodNode method : node.methods) {
+				if ("astrarre_artificial_clinit".equals(method.name)) {
+					method.visitInsn(RETURN);
+					return;
+				}
+			}
+		}
+		super.postProcess(node, impl);
+	}
 }

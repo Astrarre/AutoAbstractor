@@ -118,7 +118,7 @@ public class FieldUtil implements Opcodes {
 
 		// these actually exist
 		if(Modifier.isStatic(node.access)) {
-			MethodNode init = MethodUtil.findOrCreateMethod(ACC_STATIC | ACC_PUBLIC, header, "<clinit>", "()V");
+			MethodNode init = MethodUtil.findOrCreateMethod(ACC_STATIC | ACC_PUBLIC, header, "astrarre_artificial_clinit", "()V");
 			InsnList list = init.instructions;
 			if (list.getLast() == null) {
 				list.insert(new InsnNode(RETURN));
