@@ -124,15 +124,25 @@ public abstract class AbstractAbstracter implements Opcodes {
 
 	public abstract void abstractField(ClassNode node, Field field, boolean impl);
 
-	protected void preProcess(ClassNode node, boolean impl) {}
-	protected void postProcess(ClassNode node, boolean impl) {
-		for (MethodNode method : node.methods) {
-			if (method.name.equals("<clinit>")) {
-				method.visitInsn(RETURN);
-			}
+	protected void preProcess(ClassNode node, boolean impl) {
+		if(impl) {
+			MethodNode init = new MethodNode(ACC_STATIC | ACC_PUBLIC, "astrarre_artificial_clinit", "()V", null, null);
+			node.methods.add(init);
 		}
+	}
+
+	protected void postProcess(ClassNode node, boolean impl) {
 		if (this.processor != null) {
 			this.processor.process(this.cls, node, impl);
+		}
+
+		if (impl) {
+			for (MethodNode method : node.methods) {
+				if ("astrarre_artificial_clinit".equals(method.name)) {
+					method.visitInsn(RETURN);
+					return;
+				}
+			}
 		}
 	}
 

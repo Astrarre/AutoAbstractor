@@ -18,6 +18,7 @@ import io.github.astrarre.abstracter.util.asm.InvokeUtil;
 import io.github.astrarre.abstracter.util.asm.MethodUtil;
 import io.github.astrarre.abstracter.util.reflect.ReflectUtil;
 import io.github.astrarre.abstracter.util.reflect.TypeUtil;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -93,6 +94,13 @@ public class BaseAbstracter extends AbstractAbstracter {
 
 	@Override
 	public void postProcess(ClassNode node, boolean impl) {
+		for (MethodNode method : node.methods) {
+			if (method.name.equals("<clinit>")) {
+				method.visitMethodInsn(INVOKESTATIC, node.name, "astrarre_artificial_clinit", "()V");
+				method.visitInsn(RETURN);
+			}
+		}
+
 		node.interfaces.add(AbstracterConfig.getInterfaceName(this.cls));
 		if (node.signature != null) {
 			// todo inner instance classes, god damnit

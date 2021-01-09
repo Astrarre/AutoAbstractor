@@ -33,7 +33,8 @@ public class AbstracterConfig implements Opcodes {
 	public static final AbstracterLoader INSTANCE = new AbstracterLoader(CLASSPATH);
 	private static final Map<Class<?>, AbstractAbstracter> INTERFACE_ABSTRACTION = new HashMap<>();
 	private static final Map<Class<?>, AbstractAbstracter> BASE_ABSTRACTION = new HashMap<>();
-	private static final Map<Class<?>, AbstractAbstracter> CONSTANT_ABSTRACTIONS = new HashMap<>();
+
+	// todo to Abstracter
 	private static final Map<Class<?>, Class<?>[]> INNER_CLASS_OVERRIDES = new HashMap<>();
 
 	public static void writeManifest(OutputStream stream) throws IOException {
@@ -53,7 +54,6 @@ public class AbstracterConfig implements Opcodes {
 	public static void writeJar(ZipOutputStream out, boolean impl) throws IOException {
 		write(out, INTERFACE_ABSTRACTION, impl);
 		write(out, BASE_ABSTRACTION, impl);
-		write(out, CONSTANT_ABSTRACTIONS, impl);
 		if (impl) {
 			out.putNextEntry(new ZipEntry("intr_manifest.properties"));
 			writeManifest(out);
@@ -109,11 +109,6 @@ public class AbstracterConfig implements Opcodes {
 		return abstracter;
 	}
 
-	public static AbstractAbstracter registerConstants(AbstractAbstracter abstracter) {
-		CONSTANT_ABSTRACTIONS.put(abstracter.getCls(), abstracter);
-		return abstracter;
-	}
-
 	public static void registerInnerOverride(Class<?> cls, Class<?>... inners) {
 		registerInnerOverride(cls.getName(), ArrayUtil.map(inners, Class::getName, String[]::new));
 	}
@@ -159,7 +154,6 @@ public class AbstracterConfig implements Opcodes {
 		Map<String, String> map = new HashMap<>();
 		BASE_ABSTRACTION.forEach((k, a) -> map.put(Type.getInternalName(k), a.name));
 		INTERFACE_ABSTRACTION.forEach((k, a) -> map.put(Type.getInternalName(k), a.name));
-		CONSTANT_ABSTRACTIONS.forEach((k, a) -> map.put(Type.getInternalName(k), a.name));
 		return map;
 	}
 
