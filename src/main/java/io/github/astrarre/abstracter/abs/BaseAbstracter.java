@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
+import java.util.function.Consumer;
 
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.func.elements.ConstructorSupplier;
@@ -13,11 +14,7 @@ import io.github.astrarre.abstracter.func.elements.MethodSupplier;
 import io.github.astrarre.abstracter.func.inheritance.InterfaceFunction;
 import io.github.astrarre.abstracter.func.inheritance.SuperFunction;
 import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
-import io.github.astrarre.abstracter.util.asm.FieldUtil;
-import io.github.astrarre.abstracter.util.asm.InvokeUtil;
-import io.github.astrarre.abstracter.util.asm.MethodUtil;
 import io.github.astrarre.abstracter.util.reflect.ReflectUtil;
-import io.github.astrarre.abstracter.util.reflect.TypeUtil;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -49,6 +46,14 @@ public class BaseAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
+	public void castToMinecraft(MethodVisitor visitor, Consumer<MethodVisitor> apply, boolean parameter) {}
+
+	@Override
+	public void castToCurrent(MethodVisitor visitor, Consumer<MethodVisitor> apply, boolean parameter) {
+		throw new IllegalStateException("what");
+	}
+
+	@Override
 	public int getAccess(int modifiers) {
 		return this.cls.getModifiers();
 	}
@@ -58,39 +63,48 @@ public class BaseAbstracter extends AbstractAbstracter {
 		String desc = Type.getConstructorDescriptor(constructor);
 		MethodNode method = new MethodNode(constructor.getModifiers(),
 				"<init>",
-				TypeUtil.REMAPPER.mapSignature(desc, false),
-				impl ? null : TypeUtil.REMAPPER.mapSignature(ReflectUtil.getSignature(constructor), false),
+				AbstractAbstracter.REMAPPER.mapSignature(desc, false),
+				impl ? null : AbstractAbstracter.REMAPPER.mapSignature(ReflectUtil.getSignature(constructor), false),
 				null);
 		if (impl) {
-			InvokeUtil.invokeConstructor(this.name, method, constructor, false);
+			this.invokeConstructor(method, constructor, false);
 		} else {
-			InvokeUtil.visitStub(method);
+			this.visitStub(method);
 		}
 		node.methods.add(method);
 	}
 
 	@Override
+	public MethodNode abstractMethod(ClassNode header, Method method, boolean impl, boolean iface) {
+		MethodNode node = super.abstractMethod(header, method, impl, iface);
+
+		return node;
+	}
+
+	@Override
 	public void abstractMethod(ClassNode node, Method method, boolean impl) {
-		MethodUtil.abstractMethod(node, this.cls, method, impl, false);
+		this.abstractMethod(node, method, impl, false);
 	}
 
 	@Override
 	public void abstractField(ClassNode node, Field field, boolean impl) {
 		if (AbstracterConfig.isMinecraft(TypeMappingFunction.raw(this.cls, field.getGenericType()))) {
 			if (!Modifier.isFinal(field.getModifiers())) {
-				MethodNode setter = FieldUtil.createSetter(this.name, this.cls, field, impl, false);
-				if (!MethodUtil.conflicts(setter.name, setter.desc, node)) {
+				MethodNode setter = this.createSetter(this.name, this.cls, field, impl, false);
+				if (!AbstractAbstracter.conflicts(setter.name, setter.desc, node)) {
 					node.methods.add(setter);
 				}
 			}
-			MethodNode getter = FieldUtil.createGetter(this.name, this.cls, field, impl, false);
-			if (!MethodUtil.conflicts(getter.name, getter.desc, node)) {
+			MethodNode getter = this.createGetter(this.name, this.cls, field, impl, false);
+			if (!AbstractAbstracter.conflicts(getter.name, getter.desc, node)) {
 				node.methods.add(getter);
 			}
 		} else if (!impl || Modifier.isStatic(field.getModifiers())) {
-			FieldUtil.createConstant(node, this.cls, field, impl);
+			this.createConstant(node, this.cls, field, impl);
 		}
 	}
+
+
 
 	@Override
 	public void postProcess(ClassNode node, boolean impl) {

@@ -29,6 +29,8 @@ dependencies {
     api('org.jetbrains:annotations:19.0.0')
     // gib typetoken
     api('com.google.guava:guava:29.0-jre')
+    api('org.apache.commons:commons-lang3:3.11')
+
     // asm
     api('org.ow2.asm:asm:9.0')
     api('org.ow2.asm:asm-commons:9.0')

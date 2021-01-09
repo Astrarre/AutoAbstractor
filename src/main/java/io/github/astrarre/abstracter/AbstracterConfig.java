@@ -13,7 +13,6 @@ import io.github.astrarre.abstracter.abs.ManualAbstracter;
 import io.github.astrarre.abstracter.ex.InvalidClassException;
 import io.github.astrarre.abstracter.util.AbstracterLoader;
 import io.github.astrarre.abstracter.util.ArrayUtil;
-import io.github.astrarre.abstracter.util.reflect.TypeUtil;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -83,7 +82,7 @@ public class AbstracterConfig implements Opcodes {
 			for (Class<?> inner : INNER_CLASS_OVERRIDES.getOrDefault(cls, cls.getClasses())) {
 				if (map.containsKey(inner)) {
 					ClassNode innerNode = cache.computeIfAbsent(inner, c -> asm(map, cache, c, impl));
-					node.visitInnerClass(innerNode.name, node.name, TypeUtil.getInnerName(innerNode.name), innerNode.access);
+					node.visitInnerClass(innerNode.name, node.name, AbstractAbstracter.getInnerName(innerNode.name), innerNode.access);
 				}
 			}
 		}

@@ -12,9 +12,8 @@ import java.util.Arrays;
 
 import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.Access;
-import io.github.astrarre.abstracter.util.asm.InvokeUtil;
+import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import io.github.astrarre.abstracter.util.ArrayUtil;
-import io.github.astrarre.abstracter.util.reflect.TypeUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -39,8 +38,8 @@ public class ExtensionMethodPostProcessor implements PostProcessor {
 
 		TypeToken<?> returnType = TypeToken.of(this.method.getGenericReturnType());
 		String name = this.method.getName();
-		String desc = TypeUtil.methodDescriptor(parameters, returnType);
-		String sign = TypeUtil.methodSignature(this.method.getTypeParameters(), parameters, returnType);
+		String desc = AbstractAbstracter.methodDescriptor(parameters, returnType);
+		String sign = AbstractAbstracter.methodSignature(this.method.getTypeParameters(), parameters, returnType);
 
 		MethodNode method = new MethodNode(access, name, desc, sign, null);
 
@@ -61,7 +60,7 @@ public class ExtensionMethodPostProcessor implements PostProcessor {
 						false);
 				method.visitInsn(type.getReturnType().getOpcode(Opcodes.IRETURN));
 			} else {
-				InvokeUtil.visitStub(method);
+				AbstractAbstracter.visitStub(method);
 			}
 		}
 
