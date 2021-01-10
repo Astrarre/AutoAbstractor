@@ -31,12 +31,8 @@ public class InterfaceConstructorAbstracter extends MethodAbstracter<Constructor
 	public Header getHeader() {
 		Header header = super.getHeader();
 		header.name = "newInstance";
+		header.access |= ACC_STATIC;
 		return header;
-	}
-
-	@Override
-	protected int getAccess() {
-		return super.getAccess() | ACC_STATIC;
 	}
 
 	@Override

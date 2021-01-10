@@ -61,16 +61,12 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 		return builder.toString();
 	}
 
-	protected int getAccess() {
-		return this.method.getModifiers();
-	}
 
 	public MethodNode abstractMethod(ClassNode header) {
 		Header methodHeader = this.getHeader();
 		String desc = methodHeader.desc;
 		String sign = methodHeader.sign;
-		int access = this.getAccess();
-		MethodNode node = new MethodNode(access, methodHeader.name, desc, sign, null);
+		MethodNode node = new MethodNode(methodHeader.access, methodHeader.name, desc, sign, null);
 		for (Annotation annotation : this.method.getAnnotations()) {
 			if (node.visibleAnnotations == null) {
 				node.visibleAnnotations = new ArrayList<>();
@@ -80,7 +76,7 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 
 		if (this.impl) {
 			// if abstract, and base then we don't invoke target, otherwise we're fine
-			if (!Modifier.isAbstract(access)) {
+			if (!Modifier.isAbstract(node.access)) {
 				// invoke target
 				this.invokeTarget(node);
 			}

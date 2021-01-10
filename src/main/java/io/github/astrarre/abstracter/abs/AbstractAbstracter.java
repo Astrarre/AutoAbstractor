@@ -516,7 +516,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 	public AbstractAbstracter addInner(AbstractAbstracter abstracter) {
 		if (abstracter.outer != null) {
 			throw new IllegalArgumentException("abstracter already has outer class");
-		}
+		} else abstracter.outer = this;
 		this.innerClasses.add(abstracter);
 		return this;
 	}
