@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -36,7 +37,7 @@ public interface InterfaceFunction {
 	InterfaceFunction INTERFACE_DEFAULT = branching(AbstracterConfig::isUnabstractedClass)
 			                                      .filtered(Filters.IS_VALID)
 			                                      .and(c -> Optional.of(c)
-			                                                        .filter(c2 -> AbstracterConfig.isInterfaceAbstracted(c2.getSuperclass()))
+			                                                        .filter(c2 -> c2.getSuperclass() != null && AbstracterConfig.isInterfaceAbstracted(c2.getSuperclass()))
 			                                                        .map(Class::getGenericSuperclass)
 			                                                        .map(Collections::singleton)
 			                                                        .orElseGet(Collections::emptySet));

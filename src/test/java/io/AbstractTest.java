@@ -1,4 +1,5 @@
-import static io.github.astrarre.abstracter.AbstracterConfig.registerInnerOverride;
+package io;
+
 import static io.github.astrarre.abstracter.AbstracterConfig.registerInterface;
 import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultBase;
 import static io.github.astrarre.abstracter.AbstracterUtil.registerDefaultInterface;
@@ -51,7 +52,7 @@ import net.minecraft.world.WorldAccess;
 })
 public class AbstractTest {
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 		// todo wait for player's TR patch to go on maven
 
 		Files.newBufferedReader(Paths.get("classpath.txt"))
@@ -65,7 +66,7 @@ public class AbstractTest {
 		registerInterface(new InterfaceAbstracter(AbstractBlock.Settings.class,
 				"io/github/astrarre/v0/block/Block$Settings").extension(AbstractTest::test).attach(new TypeToken<Consumer<String>>() {}));
 
-		registerInnerOverride(Block.class, AbstractBlock.Settings.class);
+		//registerInnerOverride(Block.class, AbstractBlock.Settings.class);
 
 		// attachment interfaces > extension methods, cus no javadoc
 		AbstracterConfig.registerInterface(new InterfaceAbstracter(Material.class, "io/github/astrarre/v0/block/Materials"));
@@ -96,7 +97,7 @@ public class AbstractTest {
 				LivingEntity.class);
 		// base
 		registerDefaultBase(Block.class, Entity.class, Enchantment.class, Item.class, Material.class);
-		AbstracterUtil.apply("api.jar", "api_sources.jar", "impl.jar", "manifest.properties", "mappings.tiny");
+		AbstracterUtil.applyParallel("api.jar", "api_sources.jar", "impl.jar", "mappings.tiny");
 	}
 
 	@Access (Modifier.STATIC | Modifier.PUBLIC)

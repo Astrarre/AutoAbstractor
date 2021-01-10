@@ -59,13 +59,10 @@ public interface MethodSupplier {
 		if (filter.test(sup)) {
 			walk(filter, sup, map);
 		}
+
 		for (Method method : cls.getDeclaredMethods()) {
-			String fullDesc = method.getName() + ";" + org.objectweb.asm.Type.getMethodDescriptor(method);
-			if (method.isBridge()) {
-				map.remove(fullDesc);
-			} else {
-				map.putIfAbsent(fullDesc, method);
-			}
+			String desc = org.objectweb.asm.Type.getMethodDescriptor(method);
+			map.put(method.getName() + ";" + desc, method);
 		}
 	}
 

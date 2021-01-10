@@ -8,6 +8,8 @@ import java.lang.reflect.TypeVariable;
 import java.util.function.Consumer;
 
 import io.github.astrarre.abstracter.AbstracterConfig;
+import io.github.astrarre.abstracter.abs.method.BaseMethodAbstracter;
+import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import io.github.astrarre.abstracter.func.elements.ConstructorSupplier;
 import io.github.astrarre.abstracter.func.elements.FieldSupplier;
 import io.github.astrarre.abstracter.func.elements.MethodSupplier;
@@ -46,10 +48,10 @@ public class BaseAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public void castToMinecraft(MethodVisitor visitor, Consumer<MethodVisitor> apply, boolean parameter) {}
+	public void castToMinecraft(MethodVisitor visitor, Consumer<MethodVisitor> apply, Location parameter) {apply.accept(visitor);}
 
 	@Override
-	public void castToCurrent(MethodVisitor visitor, Consumer<MethodVisitor> apply, boolean parameter) {
+	public void castToCurrent(MethodVisitor visitor, Consumer<MethodVisitor> apply, Location parameter) {
 		throw new IllegalStateException("what");
 	}
 
@@ -67,23 +69,17 @@ public class BaseAbstracter extends AbstractAbstracter {
 				impl ? null : AbstractAbstracter.REMAPPER.mapSignature(ReflectUtil.getSignature(constructor), false),
 				null);
 		if (impl) {
-			this.invokeConstructor(method, constructor, false);
+			// fixme: this.invokeConstructor(method, constructor, false);
 		} else {
-			this.visitStub(method);
+			AbstractAbstracter.visitStub(method);
 		}
 		node.methods.add(method);
 	}
 
-	@Override
-	public MethodNode abstractMethod(ClassNode header, Method method, boolean impl, boolean iface) {
-		MethodNode node = super.abstractMethod(header, method, impl, iface);
-
-		return node;
-	}
 
 	@Override
-	public void abstractMethod(ClassNode node, Method method, boolean impl) {
-		this.abstractMethod(node, method, impl, false);
+	public MethodAbstracter abstractMethod(Method method, boolean impl) {
+		return new BaseMethodAbstracter(this, method, impl);
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 package io.github.astrarre.abstracter.abs;
 
-import static io.github.astrarre.abstracter.util.ArrayUtil.map;
 import static org.objectweb.asm.Type.getInternalName;
 
 import java.io.Serializable;
@@ -11,7 +10,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -22,12 +20,12 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.AbstracterUtil;
 import io.github.astrarre.abstracter.ConflictingDefault;
+import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import io.github.astrarre.abstracter.func.elements.ConstructorSupplier;
 import io.github.astrarre.abstracter.func.elements.FieldSupplier;
 import io.github.astrarre.abstracter.func.elements.MethodSupplier;
@@ -38,7 +36,6 @@ import io.github.astrarre.abstracter.func.post.AttachPostProcessor;
 import io.github.astrarre.abstracter.func.post.ExtensionMethodPostProcessor;
 import io.github.astrarre.abstracter.func.post.PostProcessor;
 import io.github.astrarre.abstracter.util.AnnotationReader;
-import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.Remapper;
@@ -59,13 +56,11 @@ public abstract class AbstractAbstracter implements Opcodes {
 	public static final Remapper REMAPPER = new Remapper() {
 		@Override
 		public String map(String internalName) {
-			Class<?> cls =
-					AbstracterConfig.getClass(org.objectweb.asm.Type.getObjectType(internalName).getClassName());
+			Class<?> cls = AbstracterConfig.getClass(internalName);
 			return AbstracterConfig.getInterfaceName(cls);
 		}
 	};
 	private static final String RUNTIME_EXCEPTION = getInternalName(RuntimeException.class);
-	private static final String CONFLICTING_DEFAULT = org.objectweb.asm.Type.getDescriptor(ConflictingDefault.class);
 	public final Class<?> cls;
 	public String name;
 	protected InterfaceFunction interfaces;
@@ -82,7 +77,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 			ConstructorSupplier supplier,
 			FieldSupplier fieldSupplier,
 			MethodSupplier methodSupplier) {
-		this.cls = AbstracterConfig.getClass(cls.getName());
+		this.cls = AbstracterConfig.getClass(org.objectweb.asm.Type.getInternalName(cls));
 		this.name = name;
 		this.interfaces = interfaces;
 		this.superFunction = function;
@@ -107,205 +102,6 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return false;
 	}
 
-	/**
-	 * Create the abstracted classnode
-	 */
-	public ClassNode apply(boolean impl) {
-		ClassNode header = new ClassNode();
-		header.version = V1_8;
-		header.access = this.getAccess(this.cls.getModifiers());
-		header.name = this.name;
-		for (Annotation annotation : this.cls.getAnnotations()) {
-			if (header.visibleAnnotations == null) {
-				header.visibleAnnotations = new ArrayList<>();
-			}
-			header.visibleAnnotations.add(AnnotationReader.accept(annotation));
-		}
-
-		Collection<Type> interfaces = this.interfaces.getInterfaces(this.cls);
-		for (Type iface : interfaces) {
-			header.interfaces.add(AbstracterConfig.getInterfaceName(raw(iface)));
-		}
-
-		Type sup = this.superFunction.findValidSuper(this.cls, impl);
-		if (sup != null) {
-			header.superName = getRawName(sup);
-		}
-
-		header.signature = classSignature(this.cls.getTypeParameters(), sup, interfaces);
-
-		this.preProcess(header, impl);
-		for (Constructor<?> constructor : this.constructorSupplier.getConstructors(this.cls)) {
-			this.abstractConstructor(header, constructor, impl);
-		}
-
-		for (Method method : this.methodSupplier.getMethods(this.cls)) {
-			this.abstractMethod(header, method, impl);
-		}
-
-		for (Field field : this.fieldSupplier.getFields(this.cls)) {
-			this.abstractField(header, field, impl);
-		}
-
-		this.postProcess(header, impl);
-		return header;
-	}
-
-	/**
-	 * @return get a class's access flags
-	 */
-	public abstract int getAccess(int modifiers);
-
-	protected void preProcess(ClassNode node, boolean impl) {
-		if (impl) {
-			MethodNode init = new MethodNode(ACC_STATIC | ACC_PUBLIC, "astrarre_artificial_clinit", "()V", null, null);
-			node.methods.add(init);
-		}
-	}
-
-	public abstract void abstractConstructor(ClassNode node, Constructor<?> constructor, boolean impl);
-
-	public abstract void abstractMethod(ClassNode node, Method method, boolean impl);
-
-	public abstract void abstractField(ClassNode node, Field field, boolean impl);
-
-	protected void postProcess(ClassNode node, boolean impl) {
-		if (this.processor != null) {
-			this.processor.process(this.cls, node, impl);
-		}
-
-		if (impl) {
-			for (MethodNode method : node.methods) {
-				if ("astrarre_artificial_clinit".equals(method.name)) {
-					method.visitInsn(RETURN);
-					return;
-				}
-			}
-		}
-	}
-
-	/**
-	 * cast the current type to it's minecraft type
-	 *
-	 * @param visitor the method to visit the instructions
-	 * @param apply calling this function will put the desired value on the stack
-	 * @param parameter if true, `apply` gets it's value from a parameter
-	 */
-	public abstract void castToMinecraft(MethodVisitor visitor, Consumer<MethodVisitor> apply, boolean parameter);
-
-	/**
-	 * cast the this minecraft type to it's type
-	 *
-	 * @param visitor the method to visit the instructions
-	 * @param apply calling this function will put the desired value on the stack
-	 */
-	public abstract void castToCurrent(MethodVisitor visitor, Consumer<MethodVisitor> apply, boolean parameter);
-
-	public String getMethodParameterType() {
-		return 'L' + this.name + ';';
-	}
-
-	public String getReturnType() {
-		return 'L' + this.name + ';';
-	}
-
-	public Class<?> getCls() {
-		return this.cls;
-	}
-
-	public AbstractAbstracter name(String name) {
-		this.name = name;
-		return this;
-	}
-
-	public AbstractAbstracter interfaces(InterfaceFunction interfaces) {
-		this.interfaces = interfaces;
-		return this;
-	}
-
-	public AbstractAbstracter superClass(SuperFunction function) {
-		this.superFunction = function;
-		return this;
-	}
-
-	public AbstractAbstracter constructors(ConstructorSupplier supplier) {
-		this.constructorSupplier = supplier;
-		return this;
-	}
-
-	public AbstractAbstracter fields(FieldSupplier supplier) {
-		this.fieldSupplier = supplier;
-		return this;
-	}
-
-	public AbstractAbstracter methods(MethodSupplier supplier) {
-		this.methodSupplier = supplier;
-		return this;
-	}
-
-	public AbstractAbstracter filterMethod(String name, String desc) {
-		this.methodSupplier = this.methodSupplier.filtered((abstracting, method) -> method.getName()
-		                                                                                  .equals(name) && org.objectweb.asm.Type.getMethodDescriptor(
-				method).equals(desc));
-		return this;
-	}
-
-	public AbstractAbstracter filterMethod(String name) {
-		this.methodSupplier = this.methodSupplier.filtered((abstracting, method) -> method.getName().equals(name));
-		return this;
-	}
-
-	/**
-	 * attaches an extension method to the class in post-process the method must be refered to by a method reference, and must be static
-	 */
-	public <A> AbstractAbstracter extension(SConsumer<A> consumer) {
-		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
-	}
-
-	public AbstractAbstracter extension(Method method) {
-		return this.post(new ExtensionMethodPostProcessor(method));
-	}
-
-	public AbstractAbstracter post(PostProcessor processor) {
-		if (this.processor == null) {
-			this.processor = processor;
-		} else {
-			this.processor = this.processor.andThen(processor);
-		}
-		return this;
-	}
-
-	public <A, B> AbstractAbstracter extension(SBiConsumer<A, B> consumer) {
-		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
-	}
-
-	public <A, B, C> AbstractAbstracter extension(STriConsumer<A, B, C> consumer) {
-		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
-	}
-
-	public <A, B, C, D> AbstractAbstracter extension(SQuadConsumer<A, B, C, D> consumer) {
-		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
-	}
-
-	public <A, B, C, D, E> AbstractAbstracter extension(SPentaConsumer<A, B, C, D, E> consumer) {
-		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
-	}
-
-	public AbstractAbstracter extension(Serializable consumer) {return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));}
-
-
-
-
-	public AbstractAbstracter attach(TypeToken<?> token) {return this.attach(token.getType());}
-
-	public AbstractAbstracter attach(Type type) {return this.post(new AttachPostProcessor(type));}
-
-	/**
-	 * attaches an interface to the class in post-process. The interface signature and class is the first class the passed class implements, this is
-	 * useful for making interfaces that use the attached class's generic variables.
-	 */
-	public AbstractAbstracter attachFirstInterface(Class<?> cls) {return this.attach(cls.getGenericInterfaces()[0]);}
-
 	public static void visitStub(MethodNode visitor) {
 		if (!Modifier.isAbstract(visitor.access)) {
 			visitor.visitTypeInsn(NEW, RUNTIME_EXCEPTION);
@@ -315,137 +111,8 @@ public abstract class AbstractAbstracter implements Opcodes {
 		}
 	}
 
-
-
-	// todo annotations
-	public MethodNode createGetter(String abstractedName, Class<?> cls, Field field, boolean impl, boolean iface) {
-		int access = field.getModifiers();
-		access &= ~ACC_ENUM;
-		String owner = getInternalName(field.getDeclaringClass());
-		TypeToken<?> token = TypeToken.of(cls).resolveType(field.getGenericType());
-		String descriptor = getInterfaceDesc(token.getRawType());
-		String name = field.getName();
-		String signature = toSignature(token.getType());
-		MethodNode node = new MethodNode(access,
-				getEtterName("get", name),
-				"()" + descriptor,
-				signature.equals(descriptor) ? null : "()" + signature,
-				null);
-		for (Annotation annotation : field.getAnnotations()) {
-			if (node.visibleAnnotations == null) {
-				node.visibleAnnotations = new ArrayList<>();
-			}
-			node.visibleAnnotations.add(AnnotationReader.accept(annotation));
-		}
-		if (impl) {
-			org.objectweb.asm.Type ret = org.objectweb.asm.Type.getType(field.getType());
-			if (Modifier.isStatic(access)) {
-				node.visitFieldInsn(GETSTATIC, owner, name, ret.getDescriptor());
-			} else {
-				node.visitVarInsn(ALOAD, 0);
-				if (iface) {
-					cast(abstractedName, owner, node);
-				}
-
-				node.visitFieldInsn(GETFIELD, owner, name, ret.getDescriptor());
-			}
-
-			if (!ret.getDescriptor().equals(descriptor)) {
-				cast(ret.getInternalName(), org.objectweb.asm.Type.getType(descriptor).getInternalName(), node);
-			}
-			node.visitInsn(org.objectweb.asm.Type.getType(descriptor).getOpcode(IRETURN));
-		} else {
-			this.visitStub(node);
-		}
-
-		return node;
-	}
-
 	public static String getEtterName(String prefix, String name) {
 		return prefix + Character.toUpperCase(name.charAt(0)) + name.substring(1);
-	}
-
-	public MethodNode createSetter(String abstractedName, Class<?> cls, Field field, boolean impl, boolean iface) {
-		int access = field.getModifiers();
-		access &= ~ACC_ENUM;
-		String owner = getInternalName(field.getDeclaringClass());
-		TypeToken<?> token = TypeToken.of(cls).resolveType(field.getGenericType());
-		String descriptor = getInterfaceDesc(token.getRawType());
-		String name = field.getName();
-		String signature = toSignature(token.getType());
-		MethodNode node = new MethodNode(access,
-				getEtterName("set", name),
-				"(" + descriptor + ")V",
-				signature.equals(descriptor) ? null : "(" + signature + ")V",
-				null);
-		for (Annotation annotation : field.getAnnotations()) {
-			if (node.visibleAnnotations == null) {
-				node.visibleAnnotations = new ArrayList<>();
-			}
-			node.visibleAnnotations.add(AnnotationReader.accept(annotation));
-		}
-		org.objectweb.asm.Type type = org.objectweb.asm.Type.getType(descriptor);
-		if (impl) {
-			if (Modifier.isStatic(access)) {
-				node.visitVarInsn(type.getOpcode(ILOAD), 0);
-				node.visitFieldInsn(PUTSTATIC, owner, name, descriptor);
-			} else {
-				node.visitVarInsn(ALOAD, 0);
-				if (iface) {
-					cast(abstractedName, owner, node);
-				}
-				node.visitVarInsn(type.getOpcode(ILOAD), 1);
-				if (!org.objectweb.asm.Type.getDescriptor(field.getType()).equals(descriptor)) {
-					cast(type.getInternalName(), getInternalName(field.getType()), node);
-				}
-				node.visitFieldInsn(PUTFIELD, owner, name, org.objectweb.asm.Type.getDescriptor(field.getType()));
-			}
-		} else {
-			this.visitStub(node);
-		}
-		node.visitInsn(RETURN);
-		node.visitParameter(name, 0);
-		return node;
-	}
-
-	public void createConstant(ClassNode header, Class<?> cls, Field field, boolean impl) {
-		Type reified = TypeMappingFunction.reify(cls, field.getGenericType());
-		FieldNode node = new FieldNode(field.getModifiers() & ~ACC_ENUM,
-				field.getName(),
-				getInterfaceDesc(TypeMappingFunction.raw(cls, field.getGenericType())),
-				toSignature(reified),
-				null);
-
-		// these actually exist
-		if (Modifier.isStatic(node.access)) {
-			MethodNode init = this.findOrCreateMethod(ACC_STATIC | ACC_PUBLIC, header, "astrarre_artificial_clinit", "()V");
-			InsnList list = init.instructions;
-			if (list.getLast() == null) {
-				list.insert(new InsnNode(RETURN));
-			}
-
-			if (impl) {
-				InsnList insn = new InsnList();
-				insn.add(new FieldInsnNode(GETSTATIC,
-						getInternalName(field.getDeclaringClass()),
-						field.getName(),
-						org.objectweb.asm.Type.getDescriptor(field.getType())));
-				insn.add(new FieldInsnNode(PUTSTATIC, header.name, node.name, node.desc));
-				list.insert(insn);
-			}
-		}
-		header.fields.add(node);
-	}
-
-	public MethodNode findOrCreateMethod(int access, ClassNode node, String name, String desc) {
-		for (MethodNode method : node.methods) {
-			if (name.equals(method.name) && desc.equals(method.desc)) {
-				return method;
-			}
-		}
-		MethodNode method = new MethodNode(access, name, desc, null, null);
-		node.methods.add(method);
-		return method;
 	}
 
 	public static String toSignature(Type reified) {
@@ -454,17 +121,9 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return writer.toString();
 	}
 
-	public static void cast(String fromType, String toType, MethodVisitor visitor) {
-		org.objectweb.asm.Type from = org.objectweb.asm.Type.getType(fromType);
-		org.objectweb.asm.Type to = org.objectweb.asm.Type.getType(toType);
-
-		AbstracterConfig.TRANSLATION.getOrDefault(toType, AbstracterConfig.CastingFunction.DEFAULT).accept(fromType, toType, visitor);
-	}
-
 	public static String classSignature(TypeVariable<?>[] variables, Type superClass, Collection<Type> interfaces) {
 		SignatureWriter writer = new SignatureWriter();
-		if (variables.length == 0 && (superClass instanceof Class || superClass == null) && interfaces.stream()
-		                                                                                              .allMatch(t -> t instanceof Class)) {
+		if (variables.length == 0 && (superClass instanceof Class || superClass == null) && interfaces.stream().allMatch(t -> t instanceof Class)) {
 			return null;
 		}
 
@@ -596,9 +255,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return new StringBuilder();
 	}
 
-	public static String methodSignature(TypeVariable<?>[] variables,
-			TypeToken<?>[] parameters,
-			TypeToken<?> returnType) {
+	public static String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType) {
 		StringBuilder builder = typeVarsAsString(variables);
 		builder.append('(');
 		for (TypeToken<?> parameter : parameters) {
@@ -627,7 +284,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 	public static String getInterfaceDesc(Class<?> cls) {
 		if (cls.isPrimitive()) {
 			return org.objectweb.asm.Type.getDescriptor(cls);
-		} else if(cls.isArray()) {
+		} else if (cls.isArray()) {
 			return '[' + getInterfaceDesc(cls.getComponentType());
 		} else {
 			return "L" + AbstracterConfig.getInterfaceName(cls) + ";";
@@ -664,14 +321,333 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return str.substring(index + 1);
 	}
 
+	/**
+	 * Create the abstracted classnode
+	 */
+	public ClassNode apply(boolean impl) {
+		ClassNode header = new ClassNode();
+		header.version = V1_8;
+		header.access = this.getAccess(this.cls.getModifiers());
+		header.name = this.name;
+		for (Annotation annotation : this.cls.getAnnotations()) {
+			if (header.visibleAnnotations == null) {
+				header.visibleAnnotations = new ArrayList<>();
+			}
+			header.visibleAnnotations.add(AnnotationReader.accept(annotation));
+		}
+
+		Collection<Type> interfaces = this.interfaces.getInterfaces(this.cls);
+		for (Type iface : interfaces) {
+			header.interfaces.add(AbstracterConfig.getInterfaceName(raw(iface)));
+		}
+
+		Type sup = this.superFunction.findValidSuper(this.cls, impl);
+		if (sup != null) {
+			header.superName = getRawName(sup);
+		}
+
+		header.signature = classSignature(this.cls.getTypeParameters(), sup, interfaces);
+
+		this.preProcess(header, impl);
+		for (Constructor<?> constructor : this.constructorSupplier.getConstructors(this.cls)) {
+			this.abstractConstructor(header, constructor, impl);
+		}
+
+		for (Method method : this.methodSupplier.getMethods(this.cls)) {
+			this.abstractMethod(method, impl).abstractMethod(header);
+		}
+
+		for (Field field : this.fieldSupplier.getFields(this.cls)) {
+			this.abstractField(header, field, impl);
+		}
+
+		this.postProcess(header, impl);
+		return header;
+	}
+
+	/**
+	 * @return get a class's access flags
+	 */
+	public abstract int getAccess(int modifiers);
+
+	protected void preProcess(ClassNode node, boolean impl) {
+		if (impl) {
+			MethodNode init = new MethodNode(ACC_STATIC | ACC_PUBLIC, "astrarre_artificial_clinit", "()V", null, null);
+			node.methods.add(init);
+		}
+	}
+
+	public abstract void abstractConstructor(ClassNode node, Constructor<?> constructor, boolean impl);
+
+	public abstract MethodAbstracter abstractMethod(Method method, boolean impl);
+
+	public abstract void abstractField(ClassNode node, Field field, boolean impl);
+
+	protected void postProcess(ClassNode node, boolean impl) {
+		if (this.processor != null) {
+			this.processor.process(this.cls, node, impl);
+		}
+
+		if (impl) {
+			for (MethodNode method : node.methods) {
+				if ("astrarre_artificial_clinit".equals(method.name)) {
+					method.visitInsn(RETURN);
+					return;
+				}
+			}
+		}
+	}
+
+	/**
+	 * cast the current type to it's minecraft type
+	 *
+	 * @param visitor the method to visit the instructions
+	 * @param apply calling this function will put the desired value on the stack
+	 * @param parameter if true, `apply` gets it's value from a parameter
+	 */
+	public abstract void castToMinecraft(MethodVisitor visitor, Consumer<MethodVisitor> apply, Location parameter);
+
+	/**
+	 * cast the this minecraft type to it's type
+	 *
+	 * @param visitor the method to visit the instructions
+	 * @param apply calling this function will put the desired value on the stack
+	 */
+	public abstract void castToCurrent(MethodVisitor visitor, Consumer<MethodVisitor> apply, Location parameter);
+
+	public String getDesc(Location location) {
+		return 'L' + this.name + ';';
+	}
+
+	public Class<?> getCls() {
+		return this.cls;
+	}
+
+	public AbstractAbstracter name(String name) {
+		this.name = name;
+		return this;
+	}
+
+	public AbstractAbstracter interfaces(InterfaceFunction interfaces) {
+		this.interfaces = interfaces;
+		return this;
+	}
+
+	public AbstractAbstracter superClass(SuperFunction function) {
+		this.superFunction = function;
+		return this;
+	}
+
+	public AbstractAbstracter constructors(ConstructorSupplier supplier) {
+		this.constructorSupplier = supplier;
+		return this;
+	}
+
+	public AbstractAbstracter fields(FieldSupplier supplier) {
+		this.fieldSupplier = supplier;
+		return this;
+	}
+
+	public AbstractAbstracter methods(MethodSupplier supplier) {
+		this.methodSupplier = supplier;
+		return this;
+	}
+
+	public AbstractAbstracter filterMethod(String name, String desc) {
+		this.methodSupplier = this.methodSupplier.filtered((abstracting, method) -> method.getName()
+		                                                                                  .equals(name) && org.objectweb.asm.Type.getMethodDescriptor(
+				method).equals(desc));
+		return this;
+	}
+
+	public AbstractAbstracter filterMethod(String name) {
+		this.methodSupplier = this.methodSupplier.filtered((abstracting, method) -> method.getName().equals(name));
+		return this;
+	}
+
+	/**
+	 * attaches an extension method to the class in post-process the method must be refered to by a method reference, and must be static
+	 */
+	public <A> AbstractAbstracter extension(SConsumer<A> consumer) {
+		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
+	}
+
+	public AbstractAbstracter extension(Method method) {
+		return this.post(new ExtensionMethodPostProcessor(method));
+	}
+
+	public AbstractAbstracter post(PostProcessor processor) {
+		if (this.processor == null) {
+			this.processor = processor;
+		} else {
+			this.processor = this.processor.andThen(processor);
+		}
+		return this;
+	}
+
+	public <A, B> AbstractAbstracter extension(SBiConsumer<A, B> consumer) {
+		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
+	}
+
+	public <A, B, C> AbstractAbstracter extension(STriConsumer<A, B, C> consumer) {
+		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
+	}
+
+	public <A, B, C, D> AbstractAbstracter extension(SQuadConsumer<A, B, C, D> consumer) {
+		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
+	}
+
+	public <A, B, C, D, E> AbstractAbstracter extension(SPentaConsumer<A, B, C, D, E> consumer) {
+		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
+	}
+
+	public AbstractAbstracter extension(Serializable consumer) {return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));}
+
+	public AbstractAbstracter attach(TypeToken<?> token) {return this.attach(token.getType());}
+
+	public AbstractAbstracter attach(Type type) {return this.post(new AttachPostProcessor(type));}
+
+	/**
+	 * attaches an interface to the class in post-process. The interface signature and class is the first class the passed class implements, this is
+	 * useful for making interfaces that use the attached class's generic variables.
+	 */
+	public AbstractAbstracter attachFirstInterface(Class<?> cls) {return this.attach(cls.getGenericInterfaces()[0]);}
+
+	// todo annotations
+	public MethodNode createGetter(String abstractedName, Class<?> cls, Field field, boolean impl, boolean iface) {
+		int access = field.getModifiers();
+		access &= ~ACC_ENUM;
+		String owner = getInternalName(field.getDeclaringClass());
+		TypeToken<?> token = TypeToken.of(cls).resolveType(field.getGenericType());
+		String descriptor = getInterfaceDesc(token.getRawType());
+		String name = field.getName();
+		String signature = toSignature(token.getType());
+		MethodNode node = new MethodNode(access,
+				getEtterName("get", name),
+				"()" + descriptor,
+				signature.equals(descriptor) ? null : "()" + signature,
+				null);
+		for (Annotation annotation : field.getAnnotations()) {
+			if (node.visibleAnnotations == null) {
+				node.visibleAnnotations = new ArrayList<>();
+			}
+			node.visibleAnnotations.add(AnnotationReader.accept(annotation));
+		}
+		if (impl) {
+			org.objectweb.asm.Type ret = org.objectweb.asm.Type.getType(field.getType());
+			if (Modifier.isStatic(access)) {
+				node.visitFieldInsn(GETSTATIC, owner, name, ret.getDescriptor());
+			} else {
+				node.visitVarInsn(ALOAD, 0);
+				if (iface) {
+					// fixme: cast(abstractedName, owner, node);
+				}
+
+				node.visitFieldInsn(GETFIELD, owner, name, ret.getDescriptor());
+			}
+
+			if (!ret.getDescriptor().equals(descriptor)) {
+				// fixme: cast(ret.getInternalName(), org.objectweb.asm.Type.getType(descriptor).getInternalName(), node);
+			}
+			node.visitInsn(org.objectweb.asm.Type.getType(descriptor).getOpcode(IRETURN));
+		} else {
+			this.visitStub(node);
+		}
+
+		return node;
+	}
+
+	public MethodNode createSetter(String abstractedName, Class<?> cls, Field field, boolean impl, boolean iface) {
+		int access = field.getModifiers();
+		access &= ~ACC_ENUM;
+		String owner = getInternalName(field.getDeclaringClass());
+		TypeToken<?> token = TypeToken.of(cls).resolveType(field.getGenericType());
+		String descriptor = getInterfaceDesc(token.getRawType());
+		String name = field.getName();
+		String signature = toSignature(token.getType());
+		MethodNode node = new MethodNode(access,
+				getEtterName("set", name),
+				"(" + descriptor + ")V",
+				signature.equals(descriptor) ? null : "(" + signature + ")V",
+				null);
+		for (Annotation annotation : field.getAnnotations()) {
+			if (node.visibleAnnotations == null) {
+				node.visibleAnnotations = new ArrayList<>();
+			}
+			node.visibleAnnotations.add(AnnotationReader.accept(annotation));
+		}
+		org.objectweb.asm.Type type = org.objectweb.asm.Type.getType(descriptor);
+		if (impl) {
+			if (Modifier.isStatic(access)) {
+				node.visitVarInsn(type.getOpcode(ILOAD), 0);
+				node.visitFieldInsn(PUTSTATIC, owner, name, descriptor);
+			} else {
+				node.visitVarInsn(ALOAD, 0);
+				if (iface) {
+					// fixme: cast(abstractedName, owner, node);
+				}
+				node.visitVarInsn(type.getOpcode(ILOAD), 1);
+				if (!org.objectweb.asm.Type.getDescriptor(field.getType()).equals(descriptor)) {
+					// fixme: cast(type.getInternalName(), getInternalName(field.getType()), node);
+				}
+				node.visitFieldInsn(PUTFIELD, owner, name, org.objectweb.asm.Type.getDescriptor(field.getType()));
+			}
+		} else {
+			AbstractAbstracter.visitStub(node);
+		}
+		node.visitInsn(RETURN);
+		node.visitParameter(name, 0);
+		return node;
+	}
+
+	public void createConstant(ClassNode header, Class<?> cls, Field field, boolean impl) {
+		Type reified = TypeMappingFunction.reify(cls, field.getGenericType());
+		FieldNode node = new FieldNode(field.getModifiers() & ~ACC_ENUM,
+				field.getName(),
+				getInterfaceDesc(TypeMappingFunction.raw(cls, field.getGenericType())),
+				toSignature(reified),
+				null);
+
+		// these actually exist
+		if (Modifier.isStatic(node.access)) {
+			MethodNode init = this.findOrCreateMethod(ACC_STATIC | ACC_PUBLIC, header, "astrarre_artificial_clinit", "()V");
+			InsnList list = init.instructions;
+			if (list.getLast() == null) {
+				list.insert(new InsnNode(RETURN));
+			}
+
+			if (impl) {
+				InsnList insn = new InsnList();
+				insn.add(new FieldInsnNode(GETSTATIC,
+						getInternalName(field.getDeclaringClass()),
+						field.getName(),
+						org.objectweb.asm.Type.getDescriptor(field.getType())));
+				insn.add(new FieldInsnNode(PUTSTATIC, header.name, node.name, node.desc));
+				list.insert(insn);
+			}
+		}
+		header.fields.add(node);
+	}
+
+	public MethodNode findOrCreateMethod(int access, ClassNode node, String name, String desc) {
+		for (MethodNode method : node.methods) {
+			if (name.equals(method.name) && desc.equals(method.desc)) {
+				return method;
+			}
+		}
+		MethodNode method = new MethodNode(access, name, desc, null, null);
+		node.methods.add(method);
+		return method;
+	}
+
+	public enum Location {
+		THIS, PARAMETER, RETURN
+	}
+
 	// @formatter:off
 	public interface SConsumer<T> extends Consumer<T>, Serializable {}
-
 	public interface SBiConsumer<T, V> extends BiConsumer<T, V>, Serializable {}
-
 	public interface STriConsumer<A, B, C> extends Serializable {void accept(A a, B b, C c);}
-
 	public interface SQuadConsumer<A, B, C, D> extends Serializable {void accept(A a, B b, C c, D d);}
-
 	public interface SPentaConsumer<A, B, C, D, E> extends Serializable {void accept(A a, B b, C c, D d, E e);}
 }

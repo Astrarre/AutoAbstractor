@@ -11,6 +11,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.reflect.TypeToken;
+import io.github.astrarre.abstracter.abs.method.InterfaceMethodAbstracter;
+import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import io.github.astrarre.abstracter.func.elements.ConstructorSupplier;
 import io.github.astrarre.abstracter.func.elements.FieldSupplier;
 import io.github.astrarre.abstracter.func.elements.MethodSupplier;
@@ -58,13 +60,13 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public void castToMinecraft(MethodVisitor visitor, Consumer<MethodVisitor> apply, boolean parameter) {
+	public void castToMinecraft(MethodVisitor visitor, Consumer<MethodVisitor> apply, Location parameter) {
 		apply.accept(visitor);
 		visitor.visitTypeInsn(CHECKCAST, this.name);
 	}
 
 	@Override
-	public void castToCurrent(MethodVisitor visitor, Consumer<MethodVisitor> apply, boolean parameter) {
+	public void castToCurrent(MethodVisitor visitor, Consumer<MethodVisitor> apply, Location parameter) {
 		apply.accept(visitor);
 	}
 
@@ -84,7 +86,7 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 				AbstractAbstracter.methodSignature(constructor.getTypeParameters(), params, returnType),
 				null);
 		if (impl) {
-			AbstractAbstracter.invokeConstructor(this.name, method, constructor, true);
+			// fixme: AbstractAbstracter.invokeConstructor(this.name, method, constructor, true);
 		} else {
 			AbstractAbstracter.visitStub(method);
 		}
@@ -92,8 +94,8 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public void abstractMethod(ClassNode node, Method method, boolean impl) {
-		this.abstractMethod(node, method, impl, true);
+	public MethodAbstracter abstractMethod(Method method, boolean impl) {
+		return new InterfaceMethodAbstracter(this, method, impl);
 	}
 
 	@Override

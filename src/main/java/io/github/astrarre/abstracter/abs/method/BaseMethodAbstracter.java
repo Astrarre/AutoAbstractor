@@ -1,37 +1,47 @@
 package io.github.astrarre.abstracter.abs.method;
 
-import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class BaseMethodAbstracter extends MethodAbstracter {
-	public BaseMethodAbstracter(AbstractAbstracter abstracter, Method method) {
-		super(abstracter, method);
+
+	public BaseMethodAbstracter(AbstractAbstracter abstracter, Method method, boolean impl) {
+		super(abstracter, method, impl);
 	}
 
 	@Override
-	protected void invokeTarget(MethodNode node) {
-		this.invokeTarget(node, Type.getInternalName(this.abstracter.cls), this.method, INVOKEVIRTUAL, false);
-	}
-
-	@Override
-	public MethodNode abstractMethod(ClassNode header, boolean impl) {
-		MethodNode node = super.abstractMethod(header, impl);
-		if(impl) {
-			if (!Modifier.isFinal(node.access) && !Modifier.isStatic(node.access)) {
+	public MethodNode abstractMethod(ClassNode header) {
+		MethodNode node = super.abstractMethod(header);
+		if (this.impl) {
+			int access = this.method.getModifiers();
+			if (!Modifier.isFinal(access) && !Modifier.isStatic(access)) {
 				this.visitBridge(header, this.method, node.desc);
 			}
 		} else {
 			AbstractAbstracter.visitStub(node);
 		}
 		return node;
+	}
+
+	@Override
+	protected void invokeTarget(MethodNode node) {
+		Class<?> target;
+		if (Modifier.isStatic(this.method.getModifiers())) {
+			target = this.method.getDeclaringClass();
+		} else {
+			target = this.abstracter.cls;
+		}
+
+		this.invoke(node,
+				Type.getInternalName(target),
+				this.method.getName(),
+				Type.getMethodDescriptor(this.method),
+				this.getOpcode(this.method, INVOKESPECIAL));
 	}
 
 	private MethodNode visitBridge(ClassNode header, Method method, String targetDesc) {
@@ -43,12 +53,9 @@ public class BaseMethodAbstracter extends MethodAbstracter {
 				null);
 
 		// triangular method
-		this.invokeBridged(node, header, targetDesc);
+		this.invoke(node, header.name, node.name, targetDesc, this.getOpcode(this.method, INVOKEVIRTUAL));
 		header.methods.add(node);
 		return node;
 	}
 
-	public void invokeBridged(MethodNode from, ClassNode node, String desc) {
-		this.invoke(from, node.access, from.access, node.name, from.name, desc, INVOKEVIRTUAL, false, false);
-	}
 }
