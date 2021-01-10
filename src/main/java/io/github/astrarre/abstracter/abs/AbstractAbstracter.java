@@ -7,7 +7,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
@@ -17,7 +16,6 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.AbstracterUtil;
 import io.github.astrarre.abstracter.abs.field.FieldAbstracter;
@@ -27,13 +25,12 @@ import io.github.astrarre.abstracter.func.elements.FieldSupplier;
 import io.github.astrarre.abstracter.func.elements.MethodSupplier;
 import io.github.astrarre.abstracter.func.inheritance.InterfaceFunction;
 import io.github.astrarre.abstracter.func.inheritance.SuperFunction;
-import io.github.astrarre.abstracter.func.post.AttachPostProcessor;
-import io.github.astrarre.abstracter.func.post.ExtensionMethodPostProcessor;
 import io.github.astrarre.abstracter.func.post.PostProcessor;
 import io.github.astrarre.abstracter.util.AnnotationReader;
 import io.github.astrarre.abstracter.util.AsmUtil;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -43,7 +40,6 @@ import org.objectweb.asm.tree.MethodNode;
  */
 @SuppressWarnings ("UnstableApiUsage")
 public abstract class AbstractAbstracter implements Opcodes {
-	private static final String RUNTIME_EXCEPTION = getInternalName(RuntimeException.class);
 	public final String cls;
 	public String name;
 	protected InterfaceFunction interfaces;
@@ -80,43 +76,6 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return str.substring(0, last) + prefix + str.substring(last);
 	}
 
-	public static boolean conflicts(String name, String desc, ClassNode node) {
-		for (MethodNode method : node.methods) {
-			if (name.equals(method.name) && desc.equals(method.desc)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public static void visitStub(MethodNode visitor) {
-		if (!Modifier.isAbstract(visitor.access)) {
-			visitor.visitTypeInsn(NEW, RUNTIME_EXCEPTION);
-			visitor.visitInsn(DUP);
-			visitor.visitMethodInsn(INVOKESPECIAL, RUNTIME_EXCEPTION, "<init>", "()V", false);
-			visitor.visitInsn(ATHROW);
-		}
-	}
-
-	public static MethodNode findMethod(ClassNode node, String name, String desc) {
-		for (MethodNode method : node.methods) {
-			if (name.equals(method.name) && desc.equals(method.desc)) {
-				return method;
-			}
-		}
-		throw new IllegalArgumentException("unable to find " + name + desc + " in " + node.name);
-	}
-
-	public String getInterfaceDesc(AbstracterConfig config, Class<?> cls) {
-		if (cls.isPrimitive()) {
-			return org.objectweb.asm.Type.getDescriptor(cls);
-		} else if (cls.isArray()) {
-			return '[' + this.getInterfaceDesc(config, cls.getComponentType());
-		} else {
-			return "L" + config.getInterfaceName(cls) + ";";
-		}
-	}
-
 	/**
 	 * Create the abstracted classnode
 	 */
@@ -138,11 +97,19 @@ public abstract class AbstractAbstracter implements Opcodes {
 		}
 
 		Type sup = this.superFunction.findValidSuper(config, this.getCls(config), impl);
-		if (sup != null) {
-			header.superName = getInternalName(AsmUtil.raw(sup));
+		header.superName = getInternalName(AsmUtil.raw(sup));
+
+		TypeVariable<?>[] variables = this.getCls(config).getTypeParameters();
+		SignatureWriter writer = new SignatureWriter();
+		if (!(variables.length == 0 && sup instanceof Class && interfaces.stream().allMatch(t -> t instanceof Class))) {
+			AsmUtil.visit(config, writer, variables);
+			AsmUtil.visit(config, writer.visitSuperclass(), sup);
+			for (Type iface : interfaces) {
+				AsmUtil.visit(config, writer.visitInterface(), iface);
+			}
+			header.signature = writer.toString();
 		}
 
-		header.signature = this.classSignature(config, this.getCls(config).getTypeParameters(), sup, interfaces);
 
 		this.preProcess(header);
 		for (Constructor<?> constructor : this.constructorSupplier.getConstructors(config, this.getCls(config))) {
@@ -199,20 +166,6 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return this.cached;
 	}
 
-	public String classSignature(AbstracterConfig config, TypeVariable<?>[] variables, Type superClass, Collection<Type> interfaces) {
-		SignatureWriter writer = new SignatureWriter();
-		if (variables.length == 0 && (superClass instanceof Class || superClass == null) && interfaces.stream().allMatch(t -> t instanceof Class)) {
-			return null;
-		}
-
-		AsmUtil.visit(config, writer, variables);
-		AsmUtil.visit(config, writer.visitSuperclass(), superClass);
-		for (Type iface : interfaces) {
-			AsmUtil.visit(config, writer.visitInterface(), iface);
-		}
-		return writer.toString();
-	}
-
 	protected void preProcess(ClassNode node) {
 		MethodNode init = new MethodNode(ACC_STATIC | ACC_PUBLIC, "astrarre_artificial_clinit", "()V", null, null);
 		node.methods.add(init);
@@ -264,6 +217,16 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return 'L' + this.name + ';';
 	}
 
+	/**
+	 * do not visit end
+	 * @return true if the type parameters should be visited
+	 */
+	public boolean visitSign(Location location, SignatureVisitor visitor) {
+		String desc = this.getDesc(location);
+		visitor.visitClassType(desc.substring(1, desc.length()-1));
+		return true;
+	}
+
 	public AbstractAbstracter name(String name) {
 		this.name = name;
 		return this;
@@ -306,17 +269,6 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return this;
 	}
 
-	/**
-	 * attaches an extension method to the class in post-process the method must be refered to by a method reference, and must be static
-	 */
-	public <A> AbstractAbstracter extension(SConsumer<A> consumer) {
-		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
-	}
-
-	public AbstractAbstracter extension(Method method) {
-		return this.post(new ExtensionMethodPostProcessor(method));
-	}
-
 	public AbstractAbstracter post(PostProcessor processor) {
 		if (this.processor == null) {
 			this.processor = processor;
@@ -325,34 +277,6 @@ public abstract class AbstractAbstracter implements Opcodes {
 		}
 		return this;
 	}
-
-	public <A, B> AbstractAbstracter extension(SBiConsumer<A, B> consumer) {
-		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
-	}
-
-	public <A, B, C> AbstractAbstracter extension(STriConsumer<A, B, C> consumer) {
-		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
-	}
-
-	public <A, B, C, D> AbstractAbstracter extension(SQuadConsumer<A, B, C, D> consumer) {
-		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
-	}
-
-	public <A, B, C, D, E> AbstractAbstracter extension(SPentaConsumer<A, B, C, D, E> consumer) {
-		return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));
-	}
-
-	public AbstractAbstracter extension(Serializable consumer) {return this.extension(ExtensionMethodPostProcessor.reverseReference(consumer));}
-
-	public AbstractAbstracter attach(TypeToken<?> token) {return this.attach(token.getType());}
-
-	public AbstractAbstracter attach(Type type) {return this.post(new AttachPostProcessor(type));}
-
-	/**
-	 * attaches an interface to the class in post-process. The interface signature and class is the first class the passed class implements, this is
-	 * useful for making interfaces that use the attached class's generic variables.
-	 */
-	public AbstractAbstracter attachFirstInterface(Class<?> cls) {return this.attach(cls.getGenericInterfaces()[0]);}
 
 	public AbstractAbstracter addInner(AbstractAbstracter abstracter) {
 		if (abstracter.outer != null) {

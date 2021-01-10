@@ -9,6 +9,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
+import io.github.astrarre.abstracter.abs.BaseAbstracter;
+import io.github.astrarre.abstracter.abs.InterfaceAbstracter;
 import io.github.astrarre.abstracter.abs.ManualAbstracter;
 import io.github.astrarre.abstracter.ex.InvalidClassException;
 import io.github.astrarre.abstracter.util.AbstracterLoader;
@@ -66,13 +68,21 @@ public class AbstracterConfig implements Opcodes {
 		return abstracter;
 	}
 
-	public AbstractAbstracter getInterfaceAbstraction(String internalName) {
-		return this.interfaceAbstractions.get(internalName);
-	}
-
 	public AbstractAbstracter registerBase(AbstractAbstracter abstracter) {
 		this.baseAbstractions.put(abstracter.cls, abstracter);
 		return abstracter;
+	}
+
+	public AbstractAbstracter registerInterface(Class<?> cls) {
+		return this.registerInterface(new InterfaceAbstracter(cls));
+	}
+
+	public AbstractAbstracter registerBase(Class<?> cls) {
+		return this.registerInterface(new BaseAbstracter(cls));
+	}
+
+	public AbstractAbstracter getInterfaceAbstraction(String internalName) {
+		return this.interfaceAbstractions.get(internalName);
 	}
 
 	public Class<?> getClass(String internalName) {

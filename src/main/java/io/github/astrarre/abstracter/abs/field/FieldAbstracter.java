@@ -34,7 +34,7 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 			if (this.getter()) {
 				Header header = this.getHeader(Abstraction.GETTER);
 				MethodNode getter = this.createGetter(header);
-				if (!AbstractAbstracter.conflicts(getter.name, getter.desc, node)) {
+				if (!AsmUtil.conflicts(getter.name, getter.desc, node)) {
 					node.methods.add(getter);
 				}
 			}
@@ -42,7 +42,7 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 			if (this.setter()) {
 				Header header = this.getHeader(Abstraction.SETTER);
 				MethodNode setter = this.createSetter(header);
-				if (!AbstractAbstracter.conflicts(setter.name, setter.desc, node)) {
+				if (!AsmUtil.conflicts(setter.name, setter.desc, node)) {
 					node.methods.add(setter);
 				}
 			}
@@ -60,7 +60,7 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 		Type reified = TypeMappingFunction.reify(this.abstracter.getCls(config), this.member.getGenericType());
 		Header header = new Header(this.member.getModifiers() & ~ACC_ENUM,
 				this.member.getName(),
-				this.abstracter.getInterfaceDesc(this.config, TypeMappingFunction.raw(this.abstracter.getCls(config), this.member.getGenericType())),
+				AsmUtil.getInterfaceDesc(this.config, TypeMappingFunction.raw(this.abstracter.getCls(config), this.member.getGenericType())),
 				AsmUtil.toSignature(this.config, reified));
 		if (header.desc.equals(header.sign)) {
 			header.sign = null;
@@ -74,7 +74,7 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 		FieldNode field = new FieldNode(header.access, header.name, header.desc, header.sign, null);
 
 		if (isStatic(field.access) && this.impl) {
-			MethodNode init = AbstractAbstracter.findMethod(node, "astrarre_artificial_clinit", "()V");
+			MethodNode init = AsmUtil.findMethod(node, "astrarre_artificial_clinit", "()V");
 			InsnList list = init.instructions;
 			InsnList insn = new InsnList();
 			insn.add(new FieldInsnNode(GETSTATIC,
@@ -120,7 +120,7 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 			org.objectweb.asm.Type actual = org.objectweb.asm.Type.getType(header.desc);
 			this.cast(AbstractAbstracter.Location.RETURN, ret, actual, node, v -> v.visitInsn(actual.getOpcode(IRETURN)));
 		} else {
-			AbstractAbstracter.visitStub(node);
+			AsmUtil.visitStub(node);
 		}
 
 		return node;
@@ -157,7 +157,7 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 				node.visitFieldInsn(PUTFIELD, owner, this.member.getName(), originalType.getDescriptor());
 			}
 		} else {
-			AbstractAbstracter.visitStub(node);
+			AsmUtil.visitStub(node);
 		}
 		node.visitInsn(RETURN);
 		node.visitParameter(header.name, 0);

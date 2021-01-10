@@ -18,14 +18,12 @@ public class InterfaceConstructorAbstracter extends MethodAbstracter<Constructor
 		super(config, abstracter, method, impl);
 	}
 
-	@Override
 	public String methodDescriptor(TypeToken<?>[] parameters, TypeToken<?> returnType) {
-		return super.methodDescriptor(parameters, this.ret);
+		return this.methodSignature(EMPTY, parameters, this.ret, TypeToken::getRawType);
 	}
 
-	@Override
 	public String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType) {
-		return super.methodSignature(variables, parameters, this.ret);
+		return this.methodSignature(variables, parameters, this.ret, TypeToken::getType);
 	}
 
 	@Override

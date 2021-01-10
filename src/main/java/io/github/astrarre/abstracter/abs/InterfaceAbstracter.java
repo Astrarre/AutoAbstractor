@@ -1,6 +1,5 @@
 package io.github.astrarre.abstracter.abs;
 
-import static io.github.astrarre.abstracter.util.ArrayUtil.map;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

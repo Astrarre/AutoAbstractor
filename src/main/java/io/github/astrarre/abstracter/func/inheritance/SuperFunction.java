@@ -22,7 +22,5 @@ public interface SuperFunction {
 		return TypeToken.of(c).resolveType(current).getType();
 	};
 
-	@Nullable
 	Type findValidSuper(AbstracterConfig config, Class<?> cls, boolean impl);
-
 }

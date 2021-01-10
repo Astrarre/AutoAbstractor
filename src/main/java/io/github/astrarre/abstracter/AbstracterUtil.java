@@ -67,7 +67,7 @@ public class AbstracterUtil {
 			try {
 				System.out.println("Writing impl...");
 				ZipOutputStream impl = new ZipOutputStream(new FileOutputStream(implFile));
-				AbstracterConfig.writeJar(impl, true);
+				config.writeJar(impl, true);
 				impl.close();
 				System.out.println("Impl finished!");
 				return null;

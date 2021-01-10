@@ -5,6 +5,7 @@ import java.lang.reflect.Modifier;
 
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
+import io.github.astrarre.abstracter.util.AsmUtil;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -24,7 +25,7 @@ public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 				this.visitBridge(header, this.member, node.desc);
 			}
 		} else {
-			AbstractAbstracter.visitStub(node);
+			AsmUtil.visitStub(node);
 		}
 		return node;
 	}

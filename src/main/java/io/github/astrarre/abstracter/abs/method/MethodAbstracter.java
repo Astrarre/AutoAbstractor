@@ -1,6 +1,7 @@
 package io.github.astrarre.abstracter.abs.method;
 
-import static io.github.astrarre.abstracter.util.ArrayUtil.map;
+
+import static io.github.astrarre.abstracter.util.AsmUtil.map;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -32,24 +33,15 @@ public abstract class MethodAbstracter<T extends Executable> extends MemberAbstr
 		super(config, abstracter, method, impl);
 	}
 
-	public String methodDescriptor(TypeToken<?>[] parameters, TypeToken<?> returnType) {
-		StringBuilder builder = new StringBuilder();
-		builder.append('(');
-		for (TypeToken<?> parameter : parameters) {
-			builder.append(AsmUtil.toSignature(this.config, parameter.getRawType()));
-		}
-		builder.append(')');
-		builder.append(AsmUtil.toSignature(this.config, returnType.getRawType()));
-		return builder.toString();
-	}
+	public static final TypeVariable<?>[] EMPTY = new TypeVariable[0];
 
-	public String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType) {
+	protected String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType, Function<TypeToken<?>, Type> function) {
 		SignatureWriter visitor = new SignatureWriter();
 		AsmUtil.visit(this.config, visitor, variables);
 		for (TypeToken<?> parameter : parameters) {
-			AsmUtil.visit(this.config, visitor.visitParameterType(), parameter.getType());
+			AsmUtil.visit(AbstractAbstracter.Location.PARAMETER, this.config, visitor.visitParameterType(), function.apply(parameter), true);
 		}
-		AsmUtil.visit(this.config, visitor.visitReturnType(), returnType.getType());
+		AsmUtil.visit(AbstractAbstracter.Location.RETURN, this.config, visitor.visitReturnType(), function.apply(returnType), true);
 		return visitor.toString();
 	}
 
@@ -72,7 +64,7 @@ public abstract class MethodAbstracter<T extends Executable> extends MemberAbstr
 				this.invokeTarget(node);
 			}
 		} else if (!Modifier.isAbstract(node.access)) {
-			AbstractAbstracter.visitStub(node);
+			AsmUtil.visitStub(node);
 		}
 
 		for (Parameter parameter : this.member.getParameters()) {
@@ -84,11 +76,11 @@ public abstract class MethodAbstracter<T extends Executable> extends MemberAbstr
 
 	// todo add Abstract for interface methods
 	public Header getHeader() {
-		Function<Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(this.abstracter.getCls(config));
+		Function<Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(this.abstracter.getCls(this.config));
 		TypeToken<?>[] params = map(this.member.getGenericParameterTypes(), resolve, TypeToken[]::new);
 		TypeToken<?> returnType = resolve.apply(this.member instanceof Constructor ? void.class : ((Method)this.member).getGenericReturnType());
-		String desc = this.methodDescriptor(params, returnType);
-		String sign = this.impl ? null : this.methodSignature(this.member.getTypeParameters(), params, returnType);
+		String desc = this.methodSignature(EMPTY, params, returnType, TypeToken::getRawType);
+		String sign = this.impl ? null : this.methodSignature(this.member.getTypeParameters(), params, returnType, TypeToken::getType);
 		if(desc.equals(sign)) sign = null;
 		int access = this.member.getModifiers();
 		return new Header(access, this.member instanceof Constructor ? "<init>" : this.member.getName(), desc, sign);
