@@ -8,6 +8,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.function.Consumer;
 
 import io.github.astrarre.abstracter.AbstracterConfig;
+import io.github.astrarre.abstracter.abs.method.BaseConstructorAbstracter;
 import io.github.astrarre.abstracter.abs.method.BaseMethodAbstracter;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import io.github.astrarre.abstracter.func.elements.ConstructorSupplier;
@@ -61,24 +62,12 @@ public class BaseAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public void abstractConstructor(ClassNode node, Constructor<?> constructor, boolean impl) {
-		String desc = Type.getConstructorDescriptor(constructor);
-		MethodNode method = new MethodNode(constructor.getModifiers(),
-				"<init>",
-				AbstractAbstracter.REMAPPER.mapSignature(desc, false),
-				impl ? null : AbstractAbstracter.REMAPPER.mapSignature(ReflectUtil.getSignature(constructor), false),
-				null);
-		if (impl) {
-			// fixme: this.invokeConstructor(method, constructor, false);
-		} else {
-			AbstractAbstracter.visitStub(method);
-		}
-		node.methods.add(method);
+	public MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl) {
+		return new BaseConstructorAbstracter(this, constructor, impl);
 	}
 
-
 	@Override
-	public MethodAbstracter abstractMethod(Method method, boolean impl) {
+	public MethodAbstracter<Method> abstractMethod(Method method, boolean impl) {
 		return new BaseMethodAbstracter(this, method, impl);
 	}
 

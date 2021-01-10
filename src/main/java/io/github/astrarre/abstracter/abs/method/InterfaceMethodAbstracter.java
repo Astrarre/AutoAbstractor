@@ -6,9 +6,7 @@ import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
-public class InterfaceMethodAbstracter extends MethodAbstracter {
-
-
+public class InterfaceMethodAbstracter extends MethodAbstracter<Method> {
 	public InterfaceMethodAbstracter(AbstractAbstracter abstracter, Method method, boolean impl) {
 		super(abstracter, method, impl);
 	}
@@ -16,7 +14,7 @@ public class InterfaceMethodAbstracter extends MethodAbstracter {
 	@Override
 	public Header getHeader() {
 		Header header = super.getHeader();
-		if (impl) {
+		if (this.impl) {
 			header.access &= ~ACC_ABSTRACT;
 		} else {
 			header.access |= ACC_ABSTRACT;

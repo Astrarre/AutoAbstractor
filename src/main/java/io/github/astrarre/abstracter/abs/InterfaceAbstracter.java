@@ -76,7 +76,7 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public void abstractConstructor(ClassNode node, Constructor<?> constructor, boolean impl) {
+	public MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl) {
 		Function<Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(this.cls);
 		TypeToken<?>[] params = map(constructor.getGenericParameterTypes(), resolve::apply, TypeToken[]::new);
 		TypeToken<?> returnType = resolve.apply(this.cls);
@@ -90,11 +90,10 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 		} else {
 			AbstractAbstracter.visitStub(method);
 		}
-		node.methods.add(method);
 	}
 
 	@Override
-	public MethodAbstracter abstractMethod(Method method, boolean impl) {
+	public MethodAbstracter<Method> abstractMethod(Method method, boolean impl) {
 		return new InterfaceMethodAbstracter(this, method, impl);
 	}
 

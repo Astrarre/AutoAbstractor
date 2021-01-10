@@ -5,6 +5,9 @@ import static org.objectweb.asm.Type.ARRAY;
 import static org.objectweb.asm.Type.OBJECT;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -23,12 +26,12 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-public abstract class MethodAbstracter implements Opcodes {
+public abstract class MethodAbstracter<T extends Executable> implements Opcodes {
 	protected final AbstractAbstracter abstracter;
-	protected final Method method;
+	protected final T method;
 	protected final boolean impl;
 
-	public MethodAbstracter(AbstractAbstracter abstracter, Method method, boolean impl) {
+	public MethodAbstracter(AbstractAbstracter abstracter, T method, boolean impl) {
 		this.abstracter = abstracter;
 		this.method = method;
 		this.impl = impl;
@@ -68,17 +71,17 @@ public abstract class MethodAbstracter implements Opcodes {
 	public Header getHeader() {
 		Function<Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(this.abstracter.cls);
 		TypeToken<?>[] params = map(this.method.getGenericParameterTypes(), resolve, TypeToken[]::new);
-		TypeToken<?> returnType = resolve.apply(this.method.getGenericReturnType());
+		TypeToken<?> returnType = resolve.apply(this.method instanceof Constructor ? void.class : ((Method)this.method).getGenericReturnType());
 		String desc = AbstractAbstracter.methodDescriptor(params, returnType);
 		String sign = this.impl ? null : AbstractAbstracter.methodSignature(this.method.getTypeParameters(), params, returnType);
 		if(desc.equals(sign)) sign = null;
 		int access = this.method.getModifiers();
-		return new Header(access, this.method.getName(), desc, sign);
+		return new Header(access, this.method instanceof Constructor ? "<init>" : this.method.getName(), desc, sign);
 	}
 
 	protected abstract void invokeTarget(MethodNode node);
 
-	public int getOpcode(Method target, int insn) {
+	public int getOpcode(Member target, int insn) {
 		int methodAccess = target.getModifiers();
 		if (Modifier.isStatic(methodAccess)) {
 			return INVOKESTATIC;

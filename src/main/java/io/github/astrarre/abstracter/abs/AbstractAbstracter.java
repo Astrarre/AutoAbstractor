@@ -24,7 +24,6 @@ import java.util.function.Consumer;
 import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.AbstracterUtil;
-import io.github.astrarre.abstracter.ConflictingDefault;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import io.github.astrarre.abstracter.func.elements.ConstructorSupplier;
 import io.github.astrarre.abstracter.func.elements.FieldSupplier;
@@ -350,11 +349,17 @@ public abstract class AbstractAbstracter implements Opcodes {
 
 		this.preProcess(header, impl);
 		for (Constructor<?> constructor : this.constructorSupplier.getConstructors(this.cls)) {
-			this.abstractConstructor(header, constructor, impl);
+			MethodAbstracter<Constructor<?>> abstracter = this.abstractConstructor(constructor, impl);
+			if (abstracter != null) {
+				abstracter.abstractMethod(header);
+			}
 		}
 
 		for (Method method : this.methodSupplier.getMethods(this.cls)) {
-			this.abstractMethod(method, impl).abstractMethod(header);
+			MethodAbstracter<Method> abstracter = this.abstractMethod(method, impl);
+			if (abstracter != null) {
+				abstracter.abstractMethod(header);
+			}
 		}
 
 		for (Field field : this.fieldSupplier.getFields(this.cls)) {
@@ -377,9 +382,9 @@ public abstract class AbstractAbstracter implements Opcodes {
 		}
 	}
 
-	public abstract void abstractConstructor(ClassNode node, Constructor<?> constructor, boolean impl);
+	public abstract MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl);
 
-	public abstract MethodAbstracter abstractMethod(Method method, boolean impl);
+	public abstract MethodAbstracter<Method> abstractMethod(Method method, boolean impl);
 
 	public abstract void abstractField(ClassNode node, Field field, boolean impl);
 

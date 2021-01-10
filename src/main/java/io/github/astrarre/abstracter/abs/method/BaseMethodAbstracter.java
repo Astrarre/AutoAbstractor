@@ -8,7 +8,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-public class BaseMethodAbstracter extends MethodAbstracter {
+public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 
 	public BaseMethodAbstracter(AbstractAbstracter abstracter, Method method, boolean impl) {
 		super(abstracter, method, impl);
