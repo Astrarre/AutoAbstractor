@@ -8,6 +8,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.function.Consumer;
 
+import io.github.astrarre.abstracter.abs.field.FieldAbstracter;
+import io.github.astrarre.abstracter.abs.field.InterfaceFieldAbstracter;
 import io.github.astrarre.abstracter.abs.method.InterfaceConstructorAbstracter;
 import io.github.astrarre.abstracter.abs.method.InterfaceMethodAbstracter;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
@@ -83,25 +85,9 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public void abstractField(ClassNode node, Field field, boolean impl) {
-		int access = field.getModifiers();
-		if (Modifier.isFinal(access) && Modifier.isStatic(access)) {
-			this.createConstant(node, this.cls, field, impl);
-		} else {
-			if (!Modifier.isFinal(access)) {
-				MethodNode setter = this.createSetter(this.cls, field, impl, true);
-				if (!AbstractAbstracter.conflicts(setter.name, setter.desc, node)) {
-					setter.access &= ~ACC_FINAL;
-					node.methods.add(setter);
-				}
-			}
-
-			MethodNode getter = this.createGetter(this.cls, field, impl, true);
-			if (!AbstractAbstracter.conflicts(getter.name, getter.desc, node)) {
-				getter.access &= ~ACC_FINAL;
-				node.methods.add(getter);
-			}
-		}
+	public FieldAbstracter abstractField(Field field, boolean impl) {
+		return new InterfaceFieldAbstracter(this, field, impl);
 	}
+
 
 }

@@ -11,10 +11,8 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.AbstracterUtil;
 import io.github.astrarre.abstracter.Access;
@@ -71,7 +69,7 @@ public class AbstractTest {
 
 		registerInterface(new InterfaceAbstracter(Item.class)).addInner(registerInterface(new InterfaceAbstracter(Item.Settings.class)));
 		registerInterface(new InterfaceAbstracter(Block.class)).addInner(registerInterface(new InterfaceAbstracter(AbstractBlock.Settings.class,
-				"io/github/astrarre/v0/block/Block$Settings")/*.extension(AbstractTest::test)*/.attach(new TypeToken<Consumer<String>>() {})));
+				"io/github/astrarre/v0/block/Block$Settings")));
 
 		registerDefaultInterface(EntityPose.class,
 				EnchantmentTarget.class,

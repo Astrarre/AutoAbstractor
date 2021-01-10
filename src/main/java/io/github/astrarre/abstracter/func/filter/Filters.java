@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.util.function.Predicate;
 
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
+import io.github.astrarre.abstracter.abs.member.MemberAbstracter;
 import io.github.astrarre.abstracter.ex.InvalidClassException;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.SignatureRemapper;
@@ -14,7 +15,7 @@ public interface Filters extends Opcodes {
 	Predicate<Type> IS_VALID = t -> {
 		SignatureRemapper remapper = new SignatureRemapper(EMPTY_VISITOR, AbstractAbstracter.REMAPPER);
 		try {
-			AbstractAbstracter.visit(remapper, t, false);
+			MemberAbstracter.visit(remapper, t, false);
 			return true;
 		} catch (InvalidClassException e) {
 			return false;

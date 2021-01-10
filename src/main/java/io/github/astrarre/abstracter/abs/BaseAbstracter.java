@@ -3,11 +3,12 @@ package io.github.astrarre.abstracter.abs;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
 import java.util.function.Consumer;
 
 import io.github.astrarre.abstracter.AbstracterConfig;
+import io.github.astrarre.abstracter.abs.field.BaseFieldAbstracter;
+import io.github.astrarre.abstracter.abs.field.FieldAbstracter;
 import io.github.astrarre.abstracter.abs.method.BaseConstructorAbstracter;
 import io.github.astrarre.abstracter.abs.method.BaseMethodAbstracter;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
@@ -16,7 +17,6 @@ import io.github.astrarre.abstracter.func.elements.FieldSupplier;
 import io.github.astrarre.abstracter.func.elements.MethodSupplier;
 import io.github.astrarre.abstracter.func.inheritance.InterfaceFunction;
 import io.github.astrarre.abstracter.func.inheritance.SuperFunction;
-import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -70,24 +70,9 @@ public class BaseAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public void abstractField(ClassNode node, Field field, boolean impl) {
-		if (AbstracterConfig.isMinecraft(TypeMappingFunction.raw(this.cls, field.getGenericType()))) {
-			if (!Modifier.isFinal(field.getModifiers())) {
-				MethodNode setter = this.createSetter(this.cls, field, impl, false);
-				if (!AbstractAbstracter.conflicts(setter.name, setter.desc, node)) {
-					node.methods.add(setter);
-				}
-			}
-			MethodNode getter = this.createGetter(this.cls, field, impl, false);
-			if (!AbstractAbstracter.conflicts(getter.name, getter.desc, node)) {
-				node.methods.add(getter);
-			}
-		} else if (!impl || Modifier.isStatic(field.getModifiers())) {
-			this.createConstant(node, this.cls, field, impl);
-		}
+	public FieldAbstracter abstractField(Field field, boolean impl) {
+		return new BaseFieldAbstracter(this, field, impl);
 	}
-
-
 
 	@Override
 	public void postProcess(ClassNode node, boolean impl) {

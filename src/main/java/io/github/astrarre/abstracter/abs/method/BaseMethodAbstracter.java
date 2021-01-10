@@ -18,9 +18,9 @@ public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 	public MethodNode abstractMethod(ClassNode header) {
 		MethodNode node = super.abstractMethod(header);
 		if (this.impl) {
-			int access = this.method.getModifiers();
+			int access = this.member.getModifiers();
 			if (!Modifier.isFinal(access) && !Modifier.isStatic(access)) {
-				this.visitBridge(header, this.method, node.desc);
+				this.visitBridge(header, this.member, node.desc);
 			}
 		} else {
 			AbstractAbstracter.visitStub(node);
@@ -31,17 +31,17 @@ public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 	@Override
 	protected void invokeTarget(MethodNode node) {
 		Class<?> target;
-		if (Modifier.isStatic(this.method.getModifiers())) {
-			target = this.method.getDeclaringClass();
+		if (Modifier.isStatic(this.member.getModifiers())) {
+			target = this.member.getDeclaringClass();
 		} else {
 			target = this.abstracter.cls;
 		}
 
 		this.invoke(node,
 				Type.getInternalName(target),
-				this.method.getName(),
-				Type.getMethodDescriptor(this.method),
-				this.getOpcode(this.method, INVOKESPECIAL));
+				this.member.getName(),
+				Type.getMethodDescriptor(this.member),
+				this.getOpcode(this.member, INVOKESPECIAL));
 	}
 
 	private MethodNode visitBridge(ClassNode header, Method method, String targetDesc) {
@@ -53,7 +53,7 @@ public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 				null);
 
 		// triangular method
-		this.invoke(node, header.name, node.name, targetDesc, this.getOpcode(this.method, INVOKEVIRTUAL));
+		this.invoke(node, header.name, node.name, targetDesc, this.getOpcode(this.member, INVOKEVIRTUAL));
 		header.methods.add(node);
 		return node;
 	}

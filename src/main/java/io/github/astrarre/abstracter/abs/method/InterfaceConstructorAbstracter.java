@@ -11,8 +11,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
 public class InterfaceConstructorAbstracter extends MethodAbstracter<Constructor<?>> {
-	private final String internalName = Type.getInternalName(this.method.getDeclaringClass());
-	private final TypeToken<?> ret = TypeToken.of(this.method.getDeclaringClass());
+	private final String internalName = Type.getInternalName(this.member.getDeclaringClass());
+	private final TypeToken<?> ret = TypeToken.of(this.member.getDeclaringClass());
 	public InterfaceConstructorAbstracter(AbstractAbstracter abstracter, Constructor<?> method, boolean impl) {
 		super(abstracter, method, impl);
 	}
@@ -39,8 +39,8 @@ public class InterfaceConstructorAbstracter extends MethodAbstracter<Constructor
 	protected void invokeTarget(MethodNode node) {
 		this.invoke(node, this.internalName,
 				"<init>",
-				Type.getConstructorDescriptor(this.method),
-				this.getOpcode(this.method, INVOKESPECIAL));
+				Type.getConstructorDescriptor(this.member),
+				this.getOpcode(this.member, INVOKESPECIAL));
 	}
 
 	@Override

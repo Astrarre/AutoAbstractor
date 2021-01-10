@@ -20,6 +20,7 @@ import java.util.function.Function;
 import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
+import io.github.astrarre.abstracter.abs.member.MemberAbstracter;
 import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
 import io.github.astrarre.abstracter.util.AnnotationReader;
 import org.intellij.lang.annotations.MagicConstant;
@@ -28,25 +29,19 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-public abstract class MethodAbstracter<T extends Executable> implements Opcodes {
-	protected final AbstractAbstracter abstracter;
-	protected final T method;
-	protected final boolean impl;
-
+public abstract class MethodAbstracter<T extends Executable> extends MemberAbstracter<T> {
 	public MethodAbstracter(AbstractAbstracter abstracter, T method, boolean impl) {
-		this.abstracter = abstracter;
-		this.method = method;
-		this.impl = impl;
+		super(abstracter, method, impl);
 	}
 
 	public String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType) {
-		StringBuilder builder = AbstractAbstracter.typeVarsAsString(variables);
+		StringBuilder builder = MemberAbstracter.typeVarsAsString(variables);
 		builder.append('(');
 		for (TypeToken<?> parameter : parameters) {
-			builder.append(AbstractAbstracter.toSignature(parameter.getType()));
+			builder.append(MemberAbstracter.toSignature(parameter.getType()));
 		}
 		builder.append(')');
-		builder.append(AbstractAbstracter.toSignature(returnType.getType()));
+		builder.append(MemberAbstracter.toSignature(returnType.getType()));
 		return builder.toString();
 	}
 
@@ -54,10 +49,10 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 		StringBuilder builder = new StringBuilder();
 		builder.append('(');
 		for (TypeToken<?> parameter : parameters) {
-			builder.append(AbstractAbstracter.toSignature(parameter.getRawType()));
+			builder.append(MemberAbstracter.toSignature(parameter.getRawType()));
 		}
 		builder.append(')');
-		builder.append(AbstractAbstracter.toSignature(returnType.getRawType()));
+		builder.append(MemberAbstracter.toSignature(returnType.getRawType()));
 		return builder.toString();
 	}
 
@@ -67,7 +62,7 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 		String desc = methodHeader.desc;
 		String sign = methodHeader.sign;
 		MethodNode node = new MethodNode(methodHeader.access, methodHeader.name, desc, sign, null);
-		for (Annotation annotation : this.method.getAnnotations()) {
+		for (Annotation annotation : this.member.getAnnotations()) {
 			if (node.visibleAnnotations == null) {
 				node.visibleAnnotations = new ArrayList<>();
 			}
@@ -84,7 +79,7 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 			AbstractAbstracter.visitStub(node);
 		}
 
-		for (Parameter parameter : this.method.getParameters()) {
+		for (Parameter parameter : this.member.getParameters()) {
 			node.visitParameter(parameter.getName(), 0);
 		}
 		header.methods.add(node);
@@ -94,13 +89,13 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 	// todo add Abstract for interface methods
 	public Header getHeader() {
 		Function<Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(this.abstracter.cls);
-		TypeToken<?>[] params = map(this.method.getGenericParameterTypes(), resolve, TypeToken[]::new);
-		TypeToken<?> returnType = resolve.apply(this.method instanceof Constructor ? void.class : ((Method)this.method).getGenericReturnType());
+		TypeToken<?>[] params = map(this.member.getGenericParameterTypes(), resolve, TypeToken[]::new);
+		TypeToken<?> returnType = resolve.apply(this.member instanceof Constructor ? void.class : ((Method)this.member).getGenericReturnType());
 		String desc = this.methodDescriptor(params, returnType);
-		String sign = this.impl ? null : this.methodSignature(this.method.getTypeParameters(), params, returnType);
+		String sign = this.impl ? null : this.methodSignature(this.member.getTypeParameters(), params, returnType);
 		if(desc.equals(sign)) sign = null;
-		int access = this.method.getModifiers();
-		return new Header(access, this.method instanceof Constructor ? "<init>" : this.method.getName(), desc, sign);
+		int access = this.member.getModifiers();
+		return new Header(access, this.member instanceof Constructor ? "<init>" : this.member.getName(), desc, sign);
 	}
 
 	protected abstract void invokeTarget(MethodNode node);
@@ -166,71 +161,4 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 		return 1;
 	}
 
-	public void cast(AbstractAbstracter.Location location,
-			org.objectweb.asm.Type fromType,
-			org.objectweb.asm.Type toType,
-			MethodNode visitor,
-			Consumer<MethodVisitor> apply) {
-		if (fromType.equals(toType)) {
-			apply.accept(visitor);
-			return;
-		}
-
-		if (fromType.getSort() == OBJECT) {
-			String internalName = fromType.getInternalName();
-			AbstractAbstracter abstracter = AbstracterConfig.getInterfaceAbstraction(internalName);
-			if (abstracter != null) {
-				if (toType.getDescriptor().equals(abstracter.getDesc(location))) {
-					abstracter.castToMinecraft(visitor, apply, location);
-					return;
-				} else {
-					throw new IllegalStateException(toType + " --/--> " + abstracter.getDesc(location));
-				}
-			}
-		}
-
-		if (toType.getSort() == OBJECT) {
-			AbstractAbstracter abstracter = AbstracterConfig.getInterfaceAbstraction(toType.getInternalName());
-			if (abstracter != null) {
-				if (fromType.getDescriptor().equals(abstracter.getDesc(location))) {
-					abstracter.castToCurrent(visitor, apply, location);
-					return;
-				} else {
-					throw new IllegalStateException(toType + " --/--> " + abstracter.getDesc(location));
-				}
-			}
-		}
-
-		if ((toType.getSort() & fromType.getSort()) == OBJECT) {
-			Class<?> from = AbstracterConfig.getClass(fromType.getInternalName()), to = AbstracterConfig.getClass(toType.getInternalName());
-			if (!to.isAssignableFrom(from)) {
-				apply.accept(visitor);
-				visitor.visitTypeInsn(CHECKCAST, org.objectweb.asm.Type.getInternalName(to));
-			}
-		}
-
-		if(fromType.getSort() == ARRAY && toType.getSort() == ARRAY) {
-			try {
-				String name = fromType.getInternalName();
-				AbstracterConfig.getClass(name);
-				visitor.visitTypeInsn(CHECKCAST, name);
-				return;
-			} catch (IllegalArgumentException e) {
-			}
-		}
-
-		throw new IllegalStateException(this.method + " " + toType + " --/--> " + fromType);
-	}
-
-	public static final class Header {
-		public int access;
-		public String name, desc, sign;
-
-		public Header(int access, String name, String desc, String sign) {
-			this.access = access;
-			this.name = name;
-			this.desc = desc;
-			this.sign = sign;
-		}
-	}
 }

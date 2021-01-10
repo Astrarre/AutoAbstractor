@@ -28,9 +28,9 @@ public class InterfaceMethodAbstracter extends MethodAbstracter<Method> {
 	@Override
 	protected void invokeTarget(MethodNode node) {
 		this.invoke(node,
-				Type.getInternalName(this.method.getDeclaringClass()),
-				this.method.getName(),
-				Type.getMethodDescriptor(this.method),
-				this.getOpcode(this.method, INVOKEVIRTUAL));
+				Type.getInternalName(this.member.getDeclaringClass()),
+				this.member.getName(),
+				Type.getMethodDescriptor(this.member),
+				this.getOpcode(this.member, INVOKEVIRTUAL));
 	}
 }

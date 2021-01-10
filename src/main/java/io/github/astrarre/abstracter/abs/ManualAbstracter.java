@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.function.Consumer;
 
+import io.github.astrarre.abstracter.abs.field.FieldAbstracter;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.tree.ClassNode;
@@ -26,10 +27,12 @@ public class ManualAbstracter extends AbstractAbstracter {
 	public MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl) {return null;}
 
 	@Override
-	public void abstractField(ClassNode node, Field field, boolean impl) {}
+	public MethodAbstracter<Method> abstractMethod(Method method, boolean impl) {
+		return null;
+	}
 
 	@Override
-	public MethodAbstracter abstractMethod(Method method, boolean impl) {
+	public FieldAbstracter abstractField(Field field, boolean impl) {
 		return null;
 	}
 
