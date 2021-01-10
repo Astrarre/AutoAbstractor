@@ -45,7 +45,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 /**
@@ -61,7 +60,6 @@ public abstract class AbstractAbstracter implements Opcodes {
 		}
 	};
 	private static final String RUNTIME_EXCEPTION = getInternalName(RuntimeException.class);
-	private List<AbstractAbstracter> innerClasses = new ArrayList<>();
 	public final Class<?> cls;
 	public String name;
 	protected InterfaceFunction interfaces;
@@ -70,6 +68,8 @@ public abstract class AbstractAbstracter implements Opcodes {
 	protected FieldSupplier fieldSupplier;
 	protected MethodSupplier methodSupplier;
 	protected PostProcessor processor;
+	private AbstractAbstracter outer;
+	private List<AbstractAbstracter> innerClasses = new ArrayList<>();
 
 	protected AbstractAbstracter(Class<?> cls,
 			String name,
@@ -346,6 +346,19 @@ public abstract class AbstractAbstracter implements Opcodes {
 			this.abstractField(header, field, impl);
 		}
 
+		for (AbstractAbstracter abstracter : this.innerClasses) {
+			String name = abstracter.name;
+			int split = name.lastIndexOf('$');
+			if (split == -1) {
+				throw new IllegalArgumentException(abstracter.name + " does not have $, and cannot be an inner class!");
+			}
+			header.visitInnerClass(name, name.substring(0, split), name.substring(split + 1), abstracter.getAccess(abstracter.cls.getModifiers()));
+		}
+
+		if (this.outer != null) {
+			header.visitOuterClass(this.outer.name, null, null);
+		}
+
 		this.postProcess(header, impl);
 		return header;
 	}
@@ -356,10 +369,8 @@ public abstract class AbstractAbstracter implements Opcodes {
 	public abstract int getAccess(int modifiers);
 
 	protected void preProcess(ClassNode node, boolean impl) {
-		if (impl) {
-			MethodNode init = new MethodNode(ACC_STATIC | ACC_PUBLIC, "astrarre_artificial_clinit", "()V", null, null);
-			node.methods.add(init);
-		}
+		MethodNode init = new MethodNode(ACC_STATIC | ACC_PUBLIC, "astrarre_artificial_clinit", "()V", null, null);
+		node.methods.add(init);
 	}
 
 	public abstract MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl);
@@ -373,12 +384,16 @@ public abstract class AbstractAbstracter implements Opcodes {
 			this.processor.process(this.cls, node, impl);
 		}
 
-		if (impl) {
-			for (MethodNode method : node.methods) {
-				if ("astrarre_artificial_clinit".equals(method.name)) {
+		Iterator<MethodNode> iterator = node.methods.iterator();
+		while (iterator.hasNext()) {
+			MethodNode method = iterator.next();
+			if ("astrarre_artificial_clinit".equals(method.name)) {
+				if (method.instructions.size() > 0) {
 					method.visitInsn(RETURN);
-					return;
+				} else {
+					iterator.remove();
 				}
+				return;
 			}
 		}
 	}
@@ -498,8 +513,16 @@ public abstract class AbstractAbstracter implements Opcodes {
 	 */
 	public AbstractAbstracter attachFirstInterface(Class<?> cls) {return this.attach(cls.getGenericInterfaces()[0]);}
 
+	public AbstractAbstracter addInner(AbstractAbstracter abstracter) {
+		if (abstracter.outer != null) {
+			throw new IllegalArgumentException("abstracter already has outer class");
+		}
+		this.innerClasses.add(abstracter);
+		return this;
+	}
+
 	// todo annotations
-	public MethodNode createGetter(String abstractedName, Class<?> cls, Field field, boolean impl, boolean iface) {
+	public MethodNode createGetter(Class<?> cls, Field field, boolean impl, boolean iface) {
 		int access = field.getModifiers();
 		access &= ~ACC_ENUM;
 		String owner = getInternalName(field.getDeclaringClass());
@@ -542,7 +565,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return node;
 	}
 
-	public MethodNode createSetter(String abstractedName, Class<?> cls, Field field, boolean impl, boolean iface) {
+	public MethodNode createSetter(Class<?> cls, Field field, boolean impl, boolean iface) {
 		int access = field.getModifiers();
 		access &= ~ACC_ENUM;
 		String owner = getInternalName(field.getDeclaringClass());
@@ -593,14 +616,9 @@ public abstract class AbstractAbstracter implements Opcodes {
 				toSignature(reified),
 				null);
 
-		// these actually exist
 		if (Modifier.isStatic(node.access)) {
-			MethodNode init = this.findOrCreateMethod(ACC_STATIC | ACC_PUBLIC, header, "astrarre_artificial_clinit", "()V");
+			MethodNode init = this.findMethod(header, "astrarre_artificial_clinit", "()V");
 			InsnList list = init.instructions;
-			if (list.getLast() == null) {
-				list.insert(new InsnNode(RETURN));
-			}
-
 			if (impl) {
 				InsnList insn = new InsnList();
 				insn.add(new FieldInsnNode(GETSTATIC,
@@ -614,15 +632,13 @@ public abstract class AbstractAbstracter implements Opcodes {
 		header.fields.add(node);
 	}
 
-	public MethodNode findOrCreateMethod(int access, ClassNode node, String name, String desc) {
+	public MethodNode findMethod(ClassNode node, String name, String desc) {
 		for (MethodNode method : node.methods) {
 			if (name.equals(method.name) && desc.equals(method.desc)) {
 				return method;
 			}
 		}
-		MethodNode method = new MethodNode(access, name, desc, null, null);
-		node.methods.add(method);
-		return method;
+		throw new IllegalArgumentException("unable to find " + name + desc + " in " + node.name);
 	}
 
 	public enum Location {

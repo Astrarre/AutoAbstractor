@@ -63,13 +63,15 @@ public class AbstractTest {
 		     .forEach(AbstracterConfig.CLASSPATH::addURL);
 		AbstracterConfig.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
-		registerInterface(new InterfaceAbstracter(AbstractBlock.Settings.class,
-				"io/github/astrarre/v0/block/Block$Settings")/*.extension(AbstractTest::test)*/.attach(new TypeToken<Consumer<String>>() {}));
 
 		//registerInnerOverride(Block.class, AbstractBlock.Settings.class);
 
 		// attachment interfaces > extension methods, cus no javadoc
 		AbstracterConfig.registerInterface(new InterfaceAbstracter(Material.class, "io/github/astrarre/v0/block/Materials"));
+
+		registerInterface(new InterfaceAbstracter(Item.class)).addInner(registerInterface(new InterfaceAbstracter(Item.Settings.class)));
+		registerInterface(new InterfaceAbstracter(Block.class)).addInner(registerInterface(new InterfaceAbstracter(AbstractBlock.Settings.class,
+				"io/github/astrarre/v0/block/Block$Settings")/*.extension(AbstractTest::test)*/.attach(new TypeToken<Consumer<String>>() {})));
 
 		registerDefaultInterface(EntityPose.class,
 				EnchantmentTarget.class,
@@ -78,8 +80,6 @@ public class AbstractTest {
 				Items.class,
 				Block.class,
 				ItemStack.class,
-				Item.class,
-				Item.Settings.class,
 				BlockState.class,
 				BlockPos.class,
 				World.class,

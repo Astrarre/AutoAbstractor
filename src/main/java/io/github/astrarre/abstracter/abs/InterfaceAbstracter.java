@@ -6,11 +6,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.abs.method.InterfaceConstructorAbstracter;
 import io.github.astrarre.abstracter.abs.method.InterfaceMethodAbstracter;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
@@ -19,7 +16,6 @@ import io.github.astrarre.abstracter.func.elements.FieldSupplier;
 import io.github.astrarre.abstracter.func.elements.MethodSupplier;
 import io.github.astrarre.abstracter.func.inheritance.InterfaceFunction;
 import io.github.astrarre.abstracter.func.inheritance.SuperFunction;
-import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -93,14 +89,14 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 			this.createConstant(node, this.cls, field, impl);
 		} else {
 			if (!Modifier.isFinal(access)) {
-				MethodNode setter = this.createSetter(this.name, this.cls, field, impl, true);
+				MethodNode setter = this.createSetter(this.cls, field, impl, true);
 				if (!AbstractAbstracter.conflicts(setter.name, setter.desc, node)) {
 					setter.access &= ~ACC_FINAL;
 					node.methods.add(setter);
 				}
 			}
 
-			MethodNode getter = this.createGetter(this.name, this.cls, field, impl, true);
+			MethodNode getter = this.createGetter(this.cls, field, impl, true);
 			if (!AbstractAbstracter.conflicts(getter.name, getter.desc, node)) {
 				getter.access &= ~ACC_FINAL;
 				node.methods.add(getter);
