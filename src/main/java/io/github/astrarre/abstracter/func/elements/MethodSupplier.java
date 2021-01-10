@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Collections2;
@@ -22,8 +23,9 @@ import io.github.astrarre.abstracter.func.filter.MemberFilter;
 		"rawtypes"
 })
 public interface MethodSupplier {
-	MethodSupplier EMPTY = c -> Collections.emptySet();
+	MethodSupplier EMPTY = (config, c) -> Collections.emptySet();
 	// todo check formal parameters
+	// todo this needs upgrading to respect filtered methods, if a method is left unexposed
 	MethodSupplier BASE_DEFAULT = create(AbstracterConfig::isMinecraft)
 			                              // neither bridge nor synthetic
 			                              .filtered(VALID_PARAMS_VARS_AND_RETURN.and((MemberFilter) (PUBLIC.and(STATIC.negate())).or(PROTECTED)));
@@ -34,10 +36,10 @@ public interface MethodSupplier {
 	MethodSupplier INTERFACE_DEFAULT =
 			create(AbstracterConfig::isUnabstractedClass).filtered(VALID_PARAMS_VARS_AND_RETURN.and((MemberFilter) ACCESSIBLE));
 
-	static MethodSupplier create(Predicate<Class<?>> filter) {
-		return c -> {
+	static MethodSupplier create(BiPredicate<AbstracterConfig, Class<?>> filter) {
+		return (config, c) -> {
 			Map<String, Method> map = new HashMap<>();
-			walk(filter, c, map);
+			walk(config, filter, c, map);
 			return map.values();
 		};
 	}
@@ -46,18 +48,18 @@ public interface MethodSupplier {
 	 * @deprecated internal
 	 */
 	@Deprecated
-	static void walk(Predicate<Class<?>> filter, Class<?> cls, Map<String, Method> map) {
+	static void walk(AbstracterConfig config, BiPredicate<AbstracterConfig, Class<?>> filter, Class<?> cls, Map<String, Method> map) {
 
 		// inverse virtual order, interface -> super -> this
 		for (Class<?> iface : cls.getInterfaces()) {
-			if (filter.test(iface)) {
-				walk(filter, iface, map);
+			if (filter.test(config, iface)) {
+				walk(config, filter, iface, map);
 			}
 		}
 
 		Class<?> sup = cls.getSuperclass();
-		if (filter.test(sup)) {
-			walk(filter, sup, map);
+		if (filter.test(config, sup)) {
+			walk(config, filter, sup, map);
 		}
 
 		for (Method method : cls.getDeclaredMethods()) {
@@ -67,8 +69,8 @@ public interface MethodSupplier {
 	}
 
 	default MethodSupplier filtered(MemberFilter<Method> filter) {
-		return c -> Collections2.filter(this.getMethods(c), m -> filter.test(c, m));
+		return (config, c) -> Collections2.filter(this.getMethods(config, c), m -> filter.test(config, c, m));
 	}
 
-	Collection<Method> getMethods(Class<?> cls);
+	Collection<Method> getMethods(AbstracterConfig config, Class<?> cls);
 }

@@ -5,9 +5,9 @@ import static io.github.astrarre.abstracter.util.ArrayUtil.map;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.function.Consumer;
 
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.field.FieldAbstracter;
 import io.github.astrarre.abstracter.abs.field.InterfaceFieldAbstracter;
 import io.github.astrarre.abstracter.abs.method.InterfaceConstructorAbstracter;
@@ -19,8 +19,6 @@ import io.github.astrarre.abstracter.func.elements.MethodSupplier;
 import io.github.astrarre.abstracter.func.inheritance.InterfaceFunction;
 import io.github.astrarre.abstracter.func.inheritance.SuperFunction;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
 
 @SuppressWarnings ("UnstableApiUsage")
 public class InterfaceAbstracter extends AbstractAbstracter {
@@ -70,23 +68,23 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public int getAccess(int modifiers) {
+	public int getAccess(AbstracterConfig config, int modifiers) {
 		return (modifiers & ~REMOVE_FLAGS) | ADD_FLAGS;
 	}
 
 	@Override
-	public MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl) {
-		return new InterfaceConstructorAbstracter(this, constructor, impl);
+	public MethodAbstracter<Constructor<?>> abstractConstructor(AbstracterConfig config, Constructor<?> constructor, boolean impl) {
+		return new InterfaceConstructorAbstracter(config, this, constructor, impl);
 	}
 
 	@Override
-	public MethodAbstracter<Method> abstractMethod(Method method, boolean impl) {
-		return new InterfaceMethodAbstracter(this, method, impl);
+	public MethodAbstracter<Method> abstractMethod(AbstracterConfig config, Method method, boolean impl) {
+		return new InterfaceMethodAbstracter(config, this, method, impl);
 	}
 
 	@Override
-	public FieldAbstracter abstractField(Field field, boolean impl) {
-		return new InterfaceFieldAbstracter(this, field, impl);
+	public FieldAbstracter abstractField(AbstracterConfig config, Field field, boolean impl) {
+		return new InterfaceFieldAbstracter(config, this, field, impl);
 	}
 
 

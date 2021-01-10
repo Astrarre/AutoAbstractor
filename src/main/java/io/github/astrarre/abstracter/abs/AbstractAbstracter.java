@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -20,25 +21,21 @@ import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.AbstracterUtil;
 import io.github.astrarre.abstracter.abs.field.FieldAbstracter;
-import io.github.astrarre.abstracter.abs.member.MemberAbstracter;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import io.github.astrarre.abstracter.func.elements.ConstructorSupplier;
 import io.github.astrarre.abstracter.func.elements.FieldSupplier;
 import io.github.astrarre.abstracter.func.elements.MethodSupplier;
 import io.github.astrarre.abstracter.func.inheritance.InterfaceFunction;
 import io.github.astrarre.abstracter.func.inheritance.SuperFunction;
-import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
 import io.github.astrarre.abstracter.func.post.AttachPostProcessor;
 import io.github.astrarre.abstracter.func.post.ExtensionMethodPostProcessor;
 import io.github.astrarre.abstracter.func.post.PostProcessor;
 import io.github.astrarre.abstracter.util.AnnotationReader;
+import io.github.astrarre.abstracter.util.AsmUtil;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.Remapper;
+import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
 /**
@@ -46,15 +43,8 @@ import org.objectweb.asm.tree.MethodNode;
  */
 @SuppressWarnings ("UnstableApiUsage")
 public abstract class AbstractAbstracter implements Opcodes {
-	public static final Remapper REMAPPER = new Remapper() {
-		@Override
-		public String map(String internalName) {
-			Class<?> cls = AbstracterConfig.getClass(internalName);
-			return AbstracterConfig.getInterfaceName(cls);
-		}
-	};
 	private static final String RUNTIME_EXCEPTION = getInternalName(RuntimeException.class);
-	public final Class<?> cls;
+	public final String cls;
 	public String name;
 	protected InterfaceFunction interfaces;
 	protected SuperFunction superFunction;
@@ -64,6 +54,8 @@ public abstract class AbstractAbstracter implements Opcodes {
 	protected PostProcessor processor;
 	private AbstractAbstracter outer;
 	private List<AbstractAbstracter> innerClasses = new ArrayList<>();
+	private AbstracterConfig last;
+	private Class<?> cached;
 
 	protected AbstractAbstracter(Class<?> cls,
 			String name,
@@ -72,7 +64,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 			ConstructorSupplier supplier,
 			FieldSupplier fieldSupplier,
 			MethodSupplier methodSupplier) {
-		this.cls = AbstracterConfig.getClass(org.objectweb.asm.Type.getInternalName(cls));
+		this.cls = org.objectweb.asm.Type.getInternalName(cls);
 		this.name = name;
 		this.interfaces = interfaces;
 		this.superFunction = function;
@@ -106,60 +98,69 @@ public abstract class AbstractAbstracter implements Opcodes {
 		}
 	}
 
-	public String getInterfaceDesc(Class<?> cls) {
+	public static MethodNode findMethod(ClassNode node, String name, String desc) {
+		for (MethodNode method : node.methods) {
+			if (name.equals(method.name) && desc.equals(method.desc)) {
+				return method;
+			}
+		}
+		throw new IllegalArgumentException("unable to find " + name + desc + " in " + node.name);
+	}
+
+	public String getInterfaceDesc(AbstracterConfig config, Class<?> cls) {
 		if (cls.isPrimitive()) {
 			return org.objectweb.asm.Type.getDescriptor(cls);
 		} else if (cls.isArray()) {
-			return '[' + this.getInterfaceDesc(cls.getComponentType());
+			return '[' + this.getInterfaceDesc(config, cls.getComponentType());
 		} else {
-			return "L" + AbstracterConfig.getInterfaceName(cls) + ";";
+			return "L" + config.getInterfaceName(cls) + ";";
 		}
 	}
 
 	/**
 	 * Create the abstracted classnode
 	 */
-	public ClassNode apply(boolean impl) {
+	public ClassNode apply(AbstracterConfig config, boolean impl) {
 		ClassNode header = new ClassNode();
 		header.version = V1_8;
-		header.access = this.getAccess(this.cls.getModifiers());
+		header.access = this.getAccess(config, this.getCls(config).getModifiers());
 		header.name = this.name;
-		for (Annotation annotation : this.cls.getAnnotations()) {
+		for (Annotation annotation : this.getCls(config).getAnnotations()) {
 			if (header.visibleAnnotations == null) {
 				header.visibleAnnotations = new ArrayList<>();
 			}
 			header.visibleAnnotations.add(AnnotationReader.accept(annotation));
 		}
 
-		Collection<Type> interfaces = this.interfaces.getInterfaces(this.cls);
+		Collection<Type> interfaces = this.interfaces.getInterfaces(config, this.getCls(config));
 		for (Type iface : interfaces) {
-			header.interfaces.add(AbstracterConfig.getInterfaceName(MemberAbstracter.raw(iface)));
+			header.interfaces.add(config.getInterfaceName(AsmUtil.raw(iface)));
 		}
 
-		Type sup = this.superFunction.findValidSuper(this.cls, impl);
+		Type sup = this.superFunction.findValidSuper(config, this.getCls(config), impl);
 		if (sup != null) {
-			header.superName = MemberAbstracter.getRawName(sup);
+			header.superName = getInternalName(AsmUtil.raw(sup));
 		}
 
-		header.signature = MemberAbstracter.classSignature(this.cls.getTypeParameters(), sup, interfaces);
+		header.signature = this.classSignature(config, this.getCls(config).getTypeParameters(), sup, interfaces);
 
 		this.preProcess(header);
-		for (Constructor<?> constructor : this.constructorSupplier.getConstructors(this.cls)) {
-			MethodAbstracter<Constructor<?>> abstracter = this.abstractConstructor(constructor, impl);
+		for (Constructor<?> constructor : this.constructorSupplier.getConstructors(config, this.getCls(config))) {
+			MethodAbstracter<Constructor<?>> abstracter = this.abstractConstructor(config, constructor, impl);
 			if (abstracter != null) {
 				abstracter.abstractMethod(header);
 			}
 		}
 
-		for (Method method : this.methodSupplier.getMethods(this.cls)) {
-			MethodAbstracter<Method> abstracter = this.abstractMethod(method, impl);
+		for (Method method : this.methodSupplier.getMethods(config, this.getCls(config))) {
+			MethodAbstracter<Method> abstracter = this.abstractMethod(config, method, impl);
 			if (abstracter != null) {
 				abstracter.abstractMethod(header);
 			}
 		}
 
-		for (Field field : this.fieldSupplier.getFields(this.cls)) {
-			FieldAbstracter abstracter = this.abstractField(field, impl);
+		for (Field field : this.fieldSupplier.getFields(config, this.getCls(config))) {
+			FieldAbstracter abstracter = this.abstractField(config, field, impl);
 			if (abstracter != null) {
 				abstracter.abstractField(header);
 			}
@@ -171,36 +172,61 @@ public abstract class AbstractAbstracter implements Opcodes {
 			if (split == -1) {
 				throw new IllegalArgumentException(abstracter.name + " does not have $, and cannot be an inner class!");
 			}
-			header.visitInnerClass(name, name.substring(0, split), name.substring(split + 1), abstracter.getAccess(abstracter.cls.getModifiers()));
+			header.visitInnerClass(name,
+					name.substring(0, split),
+					name.substring(split + 1),
+					abstracter.getAccess(config, abstracter.getCls(config).getModifiers()));
 		}
 
 		if (this.outer != null) {
 			header.visitOuterClass(this.outer.name, null, null);
 		}
 
-		this.postProcess(header, impl);
+		this.postProcess(config, header, impl);
 		return header;
 	}
 
 	/**
 	 * @return get a class's access flags
 	 */
-	public abstract int getAccess(int modifiers);
+	public abstract int getAccess(AbstracterConfig config, int modifiers);
+
+	public Class<?> getCls(AbstracterConfig config) {
+		if (this.last != config) {
+			this.last = config;
+			return this.cached = config.getClass(this.cls);
+		}
+		return this.cached;
+	}
+
+	public String classSignature(AbstracterConfig config, TypeVariable<?>[] variables, Type superClass, Collection<Type> interfaces) {
+		SignatureWriter writer = new SignatureWriter();
+		if (variables.length == 0 && (superClass instanceof Class || superClass == null) && interfaces.stream().allMatch(t -> t instanceof Class)) {
+			return null;
+		}
+
+		AsmUtil.visit(config, writer, variables);
+		AsmUtil.visit(config, writer.visitSuperclass(), superClass);
+		for (Type iface : interfaces) {
+			AsmUtil.visit(config, writer.visitInterface(), iface);
+		}
+		return writer.toString();
+	}
 
 	protected void preProcess(ClassNode node) {
 		MethodNode init = new MethodNode(ACC_STATIC | ACC_PUBLIC, "astrarre_artificial_clinit", "()V", null, null);
 		node.methods.add(init);
 	}
 
-	public abstract MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl);
+	public abstract MethodAbstracter<Constructor<?>> abstractConstructor(AbstracterConfig config, Constructor<?> constructor, boolean impl);
 
-	public abstract MethodAbstracter<Method> abstractMethod(Method method, boolean impl);
+	public abstract MethodAbstracter<Method> abstractMethod(AbstracterConfig config, Method method, boolean impl);
 
-	public abstract FieldAbstracter abstractField(Field field, boolean impl);
+	public abstract FieldAbstracter abstractField(AbstracterConfig config, Field field, boolean impl);
 
-	protected void postProcess(ClassNode node, boolean impl) {
+	protected void postProcess(AbstracterConfig config, ClassNode node, boolean impl) {
 		if (this.processor != null) {
-			this.processor.process(this.cls, node, impl);
+			this.processor.process(config, this.getCls(config), node, impl);
 		}
 
 		Iterator<MethodNode> iterator = node.methods.iterator();
@@ -238,10 +264,6 @@ public abstract class AbstractAbstracter implements Opcodes {
 		return 'L' + this.name + ';';
 	}
 
-	public Class<?> getCls() {
-		return this.cls;
-	}
-
 	public AbstractAbstracter name(String name) {
 		this.name = name;
 		return this;
@@ -273,14 +295,14 @@ public abstract class AbstractAbstracter implements Opcodes {
 	}
 
 	public AbstractAbstracter filterMethod(String name, String desc) {
-		this.methodSupplier = this.methodSupplier.filtered((abstracting, method) -> method.getName()
-		                                                                                  .equals(name) && org.objectweb.asm.Type.getMethodDescriptor(
+		this.methodSupplier = this.methodSupplier.filtered((config, abstracting, method) -> method.getName()
+		                                                                                          .equals(name) && org.objectweb.asm.Type.getMethodDescriptor(
 				method).equals(desc));
 		return this;
 	}
 
 	public AbstractAbstracter filterMethod(String name) {
-		this.methodSupplier = this.methodSupplier.filtered((abstracting, method) -> method.getName().equals(name));
+		this.methodSupplier = this.methodSupplier.filtered((config, abstracting, method) -> method.getName().equals(name));
 		return this;
 	}
 
@@ -335,18 +357,11 @@ public abstract class AbstractAbstracter implements Opcodes {
 	public AbstractAbstracter addInner(AbstractAbstracter abstracter) {
 		if (abstracter.outer != null) {
 			throw new IllegalArgumentException("abstracter already has outer class");
-		} else abstracter.outer = this;
+		} else {
+			abstracter.outer = this;
+		}
 		this.innerClasses.add(abstracter);
 		return this;
-	}
-
-	public static MethodNode findMethod(ClassNode node, String name, String desc) {
-		for (MethodNode method : node.methods) {
-			if (name.equals(method.name) && desc.equals(method.desc)) {
-				return method;
-			}
-		}
-		throw new IllegalArgumentException("unable to find " + name + desc + " in " + node.name);
 	}
 
 	public enum Location {

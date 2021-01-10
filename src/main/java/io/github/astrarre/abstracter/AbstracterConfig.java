@@ -19,32 +19,32 @@ import org.objectweb.asm.tree.ClassNode;
 
 public class AbstracterConfig implements Opcodes {
 	// isolated classloader
-	public static final AbstracterLoader CLASSPATH = new AbstracterLoader(ClassLoader.getSystemClassLoader().getParent());
-	public static final AbstracterLoader INSTANCE = new AbstracterLoader(CLASSPATH);
-	private static final Map<String, AbstractAbstracter> INTERFACE_ABSTRACTION = new HashMap<>();
-	private static final Map<String, AbstractAbstracter> BASE_ABSTRACTION = new HashMap<>();
+	public final AbstracterLoader classpath = new AbstracterLoader(ClassLoader.getSystemClassLoader().getParent());
+	public final AbstracterLoader minecraft = new AbstracterLoader(this.classpath);
+	private final Map<String, AbstractAbstracter> interfaceAbstractions = new HashMap<>();
+	private final Map<String, AbstractAbstracter> baseAbstractions = new HashMap<>();
 
-	public static void writeManifest(OutputStream stream) throws IOException {
+	public void writeManifest(OutputStream stream) throws IOException {
 		Properties properties = new Properties();
-		INTERFACE_ABSTRACTION.forEach((c, a) -> properties.setProperty(c, a.name));
+		this.interfaceAbstractions.forEach((c, a) -> properties.setProperty(c, a.name));
 		properties.store(stream, "F2bb Interface Manifest");
-		// todo store licence or something
 		// todo remap
 	}
-	public static void writeJar(ZipOutputStream out, boolean impl) throws IOException {
-		write(out, INTERFACE_ABSTRACTION, impl);
-		write(out, BASE_ABSTRACTION, impl);
+
+	public void writeJar(ZipOutputStream out, boolean impl) throws IOException {
+		this.write(out, this.interfaceAbstractions, impl);
+		this.write(out, this.baseAbstractions, impl);
 		if (impl) {
 			out.putNextEntry(new ZipEntry("intr_manifest.properties"));
-			writeManifest(out);
+			this.writeManifest(out);
 			out.closeEntry();
 		}
 	}
 
-	private static void write(ZipOutputStream out, Map<String, AbstractAbstracter> abstraction, boolean impl) {
+	private void write(ZipOutputStream out, Map<String, AbstractAbstracter> abstraction, boolean impl) {
 		Map<String, ClassNode> cache = new HashMap<>();
 		abstraction.forEach((cls, abs) -> {
-			ClassNode node = cache.computeIfAbsent(cls, c -> abstraction.get(c).apply(impl));
+			ClassNode node = cache.computeIfAbsent(cls, c -> abstraction.get(c).apply(this, impl));
 			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 			node.accept(writer);
 			try {
@@ -57,76 +57,74 @@ public class AbstracterConfig implements Opcodes {
 		});
 	}
 
-	public static void manualInterface(Class<?> mcClass, String abstraction) {
-		registerInterface(new ManualAbstracter(mcClass, abstraction));
+	public void manualInterface(Class<?> mcClass, String abstraction) {
+		this.registerInterface(new ManualAbstracter(mcClass, abstraction));
 	}
 
-	public static AbstractAbstracter registerInterface(AbstractAbstracter abstracter) {
-		INTERFACE_ABSTRACTION.put(Type.getInternalName(abstracter.getCls()), abstracter);
+	public AbstractAbstracter registerInterface(AbstractAbstracter abstracter) {
+		this.interfaceAbstractions.put(abstracter.cls, abstracter);
 		return abstracter;
 	}
 
-	public static AbstractAbstracter getInterfaceAbstraction(String internalName) {
-		return INTERFACE_ABSTRACTION.get(internalName);
+	public AbstractAbstracter getInterfaceAbstraction(String internalName) {
+		return this.interfaceAbstractions.get(internalName);
 	}
 
-	public static AbstractAbstracter registerBase(AbstractAbstracter abstracter) {
-		BASE_ABSTRACTION.put(Type.getInternalName(abstracter.getCls()), abstracter);
+	public AbstractAbstracter registerBase(AbstractAbstracter abstracter) {
+		this.baseAbstractions.put(abstracter.cls, abstracter);
 		return abstracter;
 	}
 
-	public static Class<?> getClass(String internalName) {
+	public Class<?> getClass(String internalName) {
 		try {
-			return Class.forName(internalName.replace('/', '.'), false, INSTANCE);
+			return Class.forName(internalName.replace('/', '.'), false, this.minecraft);
 		} catch (ClassNotFoundException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}
 
-	public static String getInterfaceName(Class<?> cls) {
-		return getInterfaceName(Type.getInternalName(cls));
-	}
-
-	public static String getInterfaceName(String cls) {
-		AbstractAbstracter abstraction = INTERFACE_ABSTRACTION.get(cls);
+	public String getInterfaceName(Class<?> cls) {
+		String cls1 = Type.getInternalName(cls);
+		AbstractAbstracter abstraction = this.interfaceAbstractions.get(cls1);
 		if (abstraction == null) {
-			Class<?> c = getClass(cls);
-			if (isMinecraft(c)) {
+			Class<?> c = this.getClass(cls1);
+			if (this.isMinecraft(c)) {
 				throw new InvalidClassException(c);
 			} else {
-				return cls;
+				return cls1;
 			}
 		}
 
 		return abstraction.name;
 	}
 
-	public static boolean isMinecraft(Class<?> cls) {
-		return cls != null && cls.getClassLoader() == INSTANCE;
+	public boolean isMinecraft(Class<?> cls) {
+		return cls != null && cls.getClassLoader() == this.minecraft;
 	}
 
 	/**
 	 * @return abstracted class name -> minecraft class name
 	 */
-	public static Map<String, String> nameMap() {
+	public Map<String, String> nameMap() {
+		// todo reverse this, add custom mappings soon tm
 		Map<String, String> map = new HashMap<>();
-		BASE_ABSTRACTION.forEach((k, a) -> map.put(k, a.name));
-		INTERFACE_ABSTRACTION.forEach((k, a) -> map.put(k, a.name));
+		this.baseAbstractions.forEach((k, a) -> map.put(k, a.name));
+		this.interfaceAbstractions.forEach((k, a) -> map.put(k, a.name));
 		return map;
 	}
 
 	/**
 	 * @return true if the class is a minecraft class, but isn't supposed to be abstracted
 	 */
-	public static boolean isUnabstractedClass(Class<?> cls) {
-		return isMinecraft(cls) && !isInterfaceAbstracted(cls);
+	public boolean isUnabstractedClass(Class<?> cls) {
+		return this.isMinecraft(cls) && !this.isInterfaceAbstracted(cls);
 	}
 
-	public static boolean isInterfaceAbstracted(Class<?> cls) {
-		return isInterfaceAbstracted(Type.getInternalName(cls));
+	public boolean isInterfaceAbstracted(Class<?> cls) {
+		return this.isInterfaceAbstracted(Type.getInternalName(cls));
 	}
 
-	public static boolean isInterfaceAbstracted(String internalName) {
-		return INTERFACE_ABSTRACTION.containsKey(internalName);
+	public boolean isInterfaceAbstracted(String internalName) {
+		return this.interfaceAbstractions.containsKey(internalName);
 	}
 }

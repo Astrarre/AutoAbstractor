@@ -3,6 +3,7 @@ package io.github.astrarre.abstracter.abs.method;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
@@ -10,8 +11,8 @@ import org.objectweb.asm.tree.MethodNode;
 
 public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 
-	public BaseMethodAbstracter(AbstractAbstracter abstracter, Method method, boolean impl) {
-		super(abstracter, method, impl);
+	public BaseMethodAbstracter(AbstracterConfig config, AbstractAbstracter abstracter, Method method, boolean impl) {
+		super(config, abstracter, method, impl);
 	}
 
 	@Override
@@ -34,7 +35,7 @@ public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 		if (Modifier.isStatic(this.member.getModifiers())) {
 			target = this.member.getDeclaringClass();
 		} else {
-			target = this.abstracter.cls;
+			target = this.abstracter.getCls(config);
 		}
 
 		this.invoke(node,

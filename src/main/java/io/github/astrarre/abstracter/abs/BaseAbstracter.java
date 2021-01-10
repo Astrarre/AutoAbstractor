@@ -55,27 +55,27 @@ public class BaseAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public int getAccess(int modifiers) {
-		return this.cls.getModifiers();
+	public int getAccess(AbstracterConfig config, int modifiers) {
+		return this.getCls(config).getModifiers();
 	}
 
 	@Override
-	public MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl) {
-		return new BaseConstructorAbstracter(this, constructor, impl);
+	public MethodAbstracter<Constructor<?>> abstractConstructor(AbstracterConfig config, Constructor<?> constructor, boolean impl) {
+		return new BaseConstructorAbstracter(config, this, constructor, impl);
 	}
 
 	@Override
-	public MethodAbstracter<Method> abstractMethod(Method method, boolean impl) {
-		return new BaseMethodAbstracter(this, method, impl);
+	public MethodAbstracter<Method> abstractMethod(AbstracterConfig config, Method method, boolean impl) {
+		return new BaseMethodAbstracter(config, this, method, impl);
 	}
 
 	@Override
-	public FieldAbstracter abstractField(Field field, boolean impl) {
-		return new BaseFieldAbstracter(this, field, impl);
+	public FieldAbstracter abstractField(AbstracterConfig config, Field field, boolean impl) {
+		return new BaseFieldAbstracter(config, this, field, impl);
 	}
 
 	@Override
-	public void postProcess(ClassNode node, boolean impl) {
+	public void postProcess(AbstracterConfig config, ClassNode node, boolean impl) {
 		for (MethodNode method : node.methods) {
 			if (method.name.equals("<clinit>")) {
 				method.visitMethodInsn(INVOKESTATIC, node.name, "astrarre_artificial_clinit", "()V");
@@ -83,11 +83,11 @@ public class BaseAbstracter extends AbstractAbstracter {
 			}
 		}
 
-		node.interfaces.add(AbstracterConfig.getInterfaceName(this.cls));
+		node.interfaces.add(config.getInterfaceName(this.getCls(config)));
 		if (node.signature != null) {
 			// todo inner instance classes, god damnit
-			String name = AbstracterConfig.getInterfaceName(this.cls);
-			TypeVariable<?>[] variable = this.cls.getTypeParameters();
+			String name = config.getInterfaceName(this.getCls(config));
+			TypeVariable<?>[] variable = this.getCls(config).getTypeParameters();
 			StringBuilder signature = new StringBuilder(name.length() + 2 + variable.length * 3);
 			signature.append('L').append(name);
 			if (variable.length != 0) {
@@ -102,7 +102,7 @@ public class BaseAbstracter extends AbstractAbstracter {
 		}
 
 		// run post processors last
-		super.postProcess(node, impl);
+		super.postProcess(config, node, impl);
 	}
 
 

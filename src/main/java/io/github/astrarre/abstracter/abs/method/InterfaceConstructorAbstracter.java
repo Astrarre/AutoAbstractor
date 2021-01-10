@@ -5,6 +5,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.function.Consumer;
 
 import com.google.common.reflect.TypeToken;
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
@@ -13,8 +14,8 @@ import org.objectweb.asm.tree.MethodNode;
 public class InterfaceConstructorAbstracter extends MethodAbstracter<Constructor<?>> {
 	private final String internalName = Type.getInternalName(this.member.getDeclaringClass());
 	private final TypeToken<?> ret = TypeToken.of(this.member.getDeclaringClass());
-	public InterfaceConstructorAbstracter(AbstractAbstracter abstracter, Constructor<?> method, boolean impl) {
-		super(abstracter, method, impl);
+	public InterfaceConstructorAbstracter(AbstracterConfig config, AbstractAbstracter abstracter, Constructor<?> method, boolean impl) {
+		super(config, abstracter, method, impl);
 	}
 
 	@Override

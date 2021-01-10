@@ -3,13 +3,14 @@ package io.github.astrarre.abstracter.abs.method;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
 
 public class InterfaceMethodAbstracter extends MethodAbstracter<Method> {
-	public InterfaceMethodAbstracter(AbstractAbstracter abstracter, Method method, boolean impl) {
-		super(abstracter, method, impl);
+	public InterfaceMethodAbstracter(AbstracterConfig config, AbstractAbstracter abstracter, Method method, boolean impl) {
+		super(config, abstracter, method, impl);
 	}
 
 	@Override

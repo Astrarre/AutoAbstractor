@@ -22,10 +22,4 @@ public class ArrayUtil {
 		}
 		return array;
 	}
-
-	public static <A> A[] add(A[] as, A a) {
-		A[] bs = Arrays.copyOf(as, as.length + 1);
-		bs[as.length] = a;
-		return bs;
-	}
 }

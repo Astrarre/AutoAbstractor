@@ -8,21 +8,21 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings ("UnstableApiUsage")
 public interface SuperFunction {
-	SuperFunction EMPTY = (c, i) -> Object.class;
+	SuperFunction EMPTY = (config, c, i) -> Object.class;
 
-	SuperFunction BASE_DEFAULT = (c, i) -> {
+	SuperFunction BASE_DEFAULT = (config, c, i) -> {
 		if(i) {
 			return c;
 		}
 
 		Class<?> current = c;
-		while (AbstracterConfig.isMinecraft(current)) {
+		while (config.isMinecraft(current)) {
 			current = current.getSuperclass();
 		}
 		return TypeToken.of(c).resolveType(current).getType();
 	};
 
 	@Nullable
-	Type findValidSuper(Class<?> cls, boolean impl);
+	Type findValidSuper(AbstracterConfig config, Class<?> cls, boolean impl);
 
 }

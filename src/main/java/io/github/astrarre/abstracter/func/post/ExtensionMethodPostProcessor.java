@@ -11,9 +11,9 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 import com.google.common.reflect.TypeToken;
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.Access;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
-import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import io.github.astrarre.abstracter.util.ArrayUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -27,7 +27,7 @@ public class ExtensionMethodPostProcessor implements PostProcessor {
 	public ExtensionMethodPostProcessor(Method method) {this.method = method;}
 
 	@Override
-	public void process(Class<?> cls, ClassNode node, boolean impl) {
+	public void process(AbstracterConfig config, Class<?> cls, ClassNode node, boolean impl) {
 		Access annotation = this.method.getAnnotation(Access.class);
 		int access = annotation != null ? annotation.value() : this.method.getModifiers() & ~STATIC;
 		TypeToken<?>[] parameters = ArrayUtil.map(this.method.getGenericParameterTypes(), TypeToken::of, TypeToken[]::new);

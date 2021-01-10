@@ -1,8 +1,6 @@
 package io.github.astrarre.abstracter.abs.method;
 
 import static io.github.astrarre.abstracter.util.ArrayUtil.map;
-import static org.objectweb.asm.Type.ARRAY;
-import static org.objectweb.asm.Type.OBJECT;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -14,7 +12,6 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.reflect.TypeToken;
@@ -23,39 +20,38 @@ import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import io.github.astrarre.abstracter.abs.member.MemberAbstracter;
 import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
 import io.github.astrarre.abstracter.util.AnnotationReader;
+import io.github.astrarre.abstracter.util.AsmUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public abstract class MethodAbstracter<T extends Executable> extends MemberAbstracter<T> {
-	public MethodAbstracter(AbstractAbstracter abstracter, T method, boolean impl) {
-		super(abstracter, method, impl);
-	}
-
-	public String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType) {
-		StringBuilder builder = MemberAbstracter.typeVarsAsString(variables);
-		builder.append('(');
-		for (TypeToken<?> parameter : parameters) {
-			builder.append(MemberAbstracter.toSignature(parameter.getType()));
-		}
-		builder.append(')');
-		builder.append(MemberAbstracter.toSignature(returnType.getType()));
-		return builder.toString();
+	public MethodAbstracter(AbstracterConfig config, AbstractAbstracter abstracter, T method, boolean impl) {
+		super(config, abstracter, method, impl);
 	}
 
 	public String methodDescriptor(TypeToken<?>[] parameters, TypeToken<?> returnType) {
 		StringBuilder builder = new StringBuilder();
 		builder.append('(');
 		for (TypeToken<?> parameter : parameters) {
-			builder.append(MemberAbstracter.toSignature(parameter.getRawType()));
+			builder.append(AsmUtil.toSignature(this.config, parameter.getRawType()));
 		}
 		builder.append(')');
-		builder.append(MemberAbstracter.toSignature(returnType.getRawType()));
+		builder.append(AsmUtil.toSignature(this.config, returnType.getRawType()));
 		return builder.toString();
 	}
 
+	public String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType) {
+		SignatureWriter visitor = new SignatureWriter();
+		AsmUtil.visit(this.config, visitor, variables);
+		for (TypeToken<?> parameter : parameters) {
+			AsmUtil.visit(this.config, visitor.visitParameterType(), parameter.getType());
+		}
+		AsmUtil.visit(this.config, visitor.visitReturnType(), returnType.getType());
+		return visitor.toString();
+	}
 
 	public MethodNode abstractMethod(ClassNode header) {
 		Header methodHeader = this.getHeader();
@@ -88,7 +84,7 @@ public abstract class MethodAbstracter<T extends Executable> extends MemberAbstr
 
 	// todo add Abstract for interface methods
 	public Header getHeader() {
-		Function<Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(this.abstracter.cls);
+		Function<Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(this.abstracter.getCls(config));
 		TypeToken<?>[] params = map(this.member.getGenericParameterTypes(), resolve, TypeToken[]::new);
 		TypeToken<?> returnType = resolve.apply(this.member instanceof Constructor ? void.class : ((Method)this.member).getGenericReturnType());
 		String desc = this.methodDescriptor(params, returnType);

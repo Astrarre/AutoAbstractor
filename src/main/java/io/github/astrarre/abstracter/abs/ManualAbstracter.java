@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.function.Consumer;
 
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.field.FieldAbstracter;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import org.objectweb.asm.MethodVisitor;
@@ -16,28 +17,28 @@ public class ManualAbstracter extends AbstractAbstracter {
 	}
 
 	@Override
-	public ClassNode apply(boolean impl) {
+	public ClassNode apply(AbstracterConfig config, boolean impl) {
 		return null;
 	}
 
 	@Override
-	public int getAccess(int modifiers) {return 0;}
+	public int getAccess(AbstracterConfig config, int modifiers) {return 0;}
 
 	@Override
-	public MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl) {return null;}
+	public MethodAbstracter<Constructor<?>> abstractConstructor(AbstracterConfig config, Constructor<?> constructor, boolean impl) {return null;}
 
 	@Override
-	public MethodAbstracter<Method> abstractMethod(Method method, boolean impl) {
+	public MethodAbstracter<Method> abstractMethod(AbstracterConfig config, Method method, boolean impl) {
 		return null;
 	}
 
 	@Override
-	public FieldAbstracter abstractField(Field field, boolean impl) {
+	public FieldAbstracter abstractField(AbstracterConfig config, Field field, boolean impl) {
 		return null;
 	}
 
 	@Override
-	public void postProcess(ClassNode node, boolean impl) {}
+	public void postProcess(AbstracterConfig config, ClassNode node, boolean impl) {}
 
 	@Override
 	public void castToMinecraft(MethodVisitor visitor, Consumer<MethodVisitor> apply, Location parameter) {

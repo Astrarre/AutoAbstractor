@@ -3,7 +3,8 @@ package io.github.astrarre.abstracter.func.post;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-import io.github.astrarre.abstracter.abs.member.MemberAbstracter;
+import io.github.astrarre.abstracter.AbstracterConfig;
+import io.github.astrarre.abstracter.util.AsmUtil;
 import org.objectweb.asm.tree.ClassNode;
 
 public class AttachPostProcessor implements PostProcessor {
@@ -13,7 +14,7 @@ public class AttachPostProcessor implements PostProcessor {
 	public AttachPostProcessor(Type type) {this.type = type;}
 
 	@Override
-	public void process(Class<?> cls, ClassNode node, boolean impl) {
+	public void process(AbstracterConfig config, Class<?> cls, ClassNode node, boolean impl) {
 		// append to signature
 		if(this.type instanceof ParameterizedType) {
 			// if no signature to append to
@@ -24,9 +25,9 @@ public class AttachPostProcessor implements PostProcessor {
 				}
 			}
 
-			node.signature += MemberAbstracter.toSignature(this.type);
+			node.signature += AsmUtil.toSignature(config, this.type);
 		}
 
-		node.interfaces.add(org.objectweb.asm.Type.getInternalName(MemberAbstracter.raw(this.type)));
+		node.interfaces.add(org.objectweb.asm.Type.getInternalName(AsmUtil.raw(this.type)));
 	}
 }

@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import com.google.common.collect.Collections2;
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.func.filter.MemberFilter;
 
 @SuppressWarnings ({
@@ -18,17 +19,17 @@ import io.github.astrarre.abstracter.func.filter.MemberFilter;
 		"rawtypes"
 })
 public interface ConstructorSupplier {
-	ConstructorSupplier EMPTY = c -> Collections.emptySet();
-	ConstructorSupplier INTERFACE_DEFAULT = ((ConstructorSupplier) cls -> Arrays.asList(cls.getConstructors()))
+	ConstructorSupplier EMPTY = (config, c) -> Collections.emptySet();
+	ConstructorSupplier INTERFACE_DEFAULT = ((ConstructorSupplier) (config, cls) -> Arrays.asList(cls.getConstructors()))
 			                                        .filter(VALID_PARAMETERS.and((MemberFilter) ACCESSIBLE));
 
-	ConstructorSupplier BASE_DEFAULT = ((ConstructorSupplier) cls -> Arrays.asList(cls.getDeclaredConstructors()))
+	ConstructorSupplier BASE_DEFAULT = ((ConstructorSupplier) (config, cls) -> Arrays.asList(cls.getDeclaredConstructors()))
 			                                   .filter(VALID_PARAMETERS.and((MemberFilter) VISIBLE));
 
 	default ConstructorSupplier filter(MemberFilter<Executable> filter) {
-		return c -> Collections2.filter(this.getConstructors(c), ctor -> filter.test(c, ctor));
+		return (config, c) -> Collections2.filter(this.getConstructors(config, c), ctor -> filter.test(config, c, ctor));
 	}
 
-	Collection<Constructor<?>> getConstructors(Class<?> cls);
+	Collection<Constructor<?>> getConstructors(AbstracterConfig config, Class<?> cls);
 
 }

@@ -1,17 +1,19 @@
 package io.github.astrarre.abstracter.abs.field;
 
+import static java.lang.reflect.Modifier.*;
 import static org.objectweb.asm.Type.getInternalName;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import io.github.astrarre.abstracter.abs.member.MemberAbstracter;
 import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
 import io.github.astrarre.abstracter.util.AnnotationReader;
+import io.github.astrarre.abstracter.util.AsmUtil;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -19,12 +21,13 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
 public abstract class FieldAbstracter extends MemberAbstracter<Field> {
-	public FieldAbstracter(AbstractAbstracter abstracter, Field member, boolean impl) {
-		super(abstracter, member, impl);
+	public FieldAbstracter(AbstracterConfig config, AbstractAbstracter abstracter, Field member, boolean impl) {
+		super(config, abstracter, member, impl);
 	}
 
 	public void abstractField(ClassNode node) {
 		Header constantHeader = this.getHeader(Abstraction.CONSTANT);
+		// todo if RETURN and PARMETER descriptors are different, use getter/setter model
 		if (this.isConstant(constantHeader)) {
 			this.createConstant(constantHeader, node);
 		} else {
@@ -54,11 +57,11 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 
 	protected Header getHeader(Abstraction abstraction) {
 		// todo change the descriptor to instead use return and get
-		Type reified = TypeMappingFunction.reify(this.abstracter.cls, this.member.getGenericType());
+		Type reified = TypeMappingFunction.reify(this.abstracter.getCls(config), this.member.getGenericType());
 		Header header = new Header(this.member.getModifiers() & ~ACC_ENUM,
 				this.member.getName(),
-				this.abstracter.getInterfaceDesc(TypeMappingFunction.raw(this.abstracter.cls, this.member.getGenericType())),
-				toSignature(reified));
+				this.abstracter.getInterfaceDesc(this.config, TypeMappingFunction.raw(this.abstracter.getCls(config), this.member.getGenericType())),
+				AsmUtil.toSignature(this.config, reified));
 		if (header.desc.equals(header.sign)) {
 			header.sign = null;
 		}
@@ -70,7 +73,7 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 	public FieldNode createConstant(Header header, ClassNode node) {
 		FieldNode field = new FieldNode(header.access, header.name, header.desc, header.sign, null);
 
-		if (Modifier.isStatic(field.access) && this.impl) {
+		if (isStatic(field.access) && this.impl) {
 			MethodNode init = AbstractAbstracter.findMethod(node, "astrarre_artificial_clinit", "()V");
 			InsnList list = init.instructions;
 			InsnList insn = new InsnList();
@@ -107,7 +110,7 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 
 		if (this.impl) {
 			org.objectweb.asm.Type ret = org.objectweb.asm.Type.getType(this.member.getType());
-			if (Modifier.isStatic(access)) {
+			if (isStatic(access)) {
 				node.visitFieldInsn(GETSTATIC, owner, this.member.getName(), ret.getDescriptor());
 			} else {
 				this.abstracter.castToMinecraft(node, visitor -> visitor.visitVarInsn(ALOAD, 0), AbstractAbstracter.Location.THIS);
@@ -124,7 +127,7 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 	}
 
 	protected boolean setter() {
-		return !Modifier.isFinal(this.member.getModifiers());
+		return !isFinal(this.member.getModifiers());
 	}
 
 	public MethodNode createSetter(Header header) {
@@ -145,7 +148,7 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 		org.objectweb.asm.Type originalType = org.objectweb.asm.Type.getType(this.member.getType());
 
 		if (this.impl) {
-			if (Modifier.isStatic(node.access)) {
+			if (isStatic(node.access)) {
 				node.visitVarInsn(createdType.getOpcode(ILOAD), 0);
 				node.visitFieldInsn(PUTSTATIC, owner, this.member.getName(), originalType.getDescriptor());
 			} else {

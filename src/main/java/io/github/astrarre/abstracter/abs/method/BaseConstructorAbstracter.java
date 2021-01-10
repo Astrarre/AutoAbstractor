@@ -3,6 +3,7 @@ package io.github.astrarre.abstracter.abs.method;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodNode;
@@ -12,8 +13,8 @@ import org.objectweb.asm.tree.MethodNode;
 // todo then add the super class at runtime
 // todo this way TR does not accidentally remap the bridge and crash with duplicates
 public class BaseConstructorAbstracter extends MethodAbstracter<Constructor<?>> {
-	public BaseConstructorAbstracter(AbstractAbstracter abstracter, Constructor<?> method, boolean impl) {
-		super(abstracter, method, impl);
+	public BaseConstructorAbstracter(AbstracterConfig config, AbstractAbstracter abstracter, Constructor<?> method, boolean impl) {
+		super(config, abstracter, method, impl);
 	}
 
 
@@ -29,7 +30,7 @@ public class BaseConstructorAbstracter extends MethodAbstracter<Constructor<?>> 
 		if (Modifier.isStatic(this.member.getModifiers())) {
 			target = this.member.getDeclaringClass();
 		} else {
-			target = this.abstracter.cls;
+			target = this.abstracter.getCls(config);
 		}
 
 		this.invoke(node,

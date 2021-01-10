@@ -3,14 +3,15 @@ package io.github.astrarre.abstracter.abs.field;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 
 public class BaseFieldAbstracter extends FieldAbstracter {
-	public BaseFieldAbstracter(AbstractAbstracter abstracter, Field member, boolean impl) {
-		super(abstracter, member, impl);
+	public BaseFieldAbstracter(AbstracterConfig config, AbstractAbstracter abstracter, Field member, boolean impl) {
+		super(config, abstracter, member, impl);
 	}
 
 	@Override

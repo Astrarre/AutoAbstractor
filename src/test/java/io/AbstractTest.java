@@ -58,8 +58,8 @@ public class AbstractTest {
 		     .map(File::new)
 		     .map(File::toURI)
 		     .map((TFunction<URI, URL>) URI::toURL)
-		     .forEach(AbstracterConfig.CLASSPATH::addURL);
-		AbstracterConfig.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
+		     .forEach(AbstracterConfig.classpath::addURL);
+		AbstracterConfig.minecraft.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
 
 		//registerInnerOverride(Block.class, AbstractBlock.Settings.class);
