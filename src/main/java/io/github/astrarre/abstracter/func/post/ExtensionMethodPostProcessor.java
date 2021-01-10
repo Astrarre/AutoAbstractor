@@ -13,6 +13,7 @@ import java.util.Arrays;
 import com.google.common.reflect.TypeToken;
 import io.github.astrarre.abstracter.Access;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
+import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import io.github.astrarre.abstracter.util.ArrayUtil;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -38,8 +39,8 @@ public class ExtensionMethodPostProcessor implements PostProcessor {
 
 		TypeToken<?> returnType = TypeToken.of(this.method.getGenericReturnType());
 		String name = this.method.getName();
-		String desc = AbstractAbstracter.methodDescriptor(parameters, returnType);
-		String sign = AbstractAbstracter.methodSignature(this.method.getTypeParameters(), parameters, returnType);
+		String desc = null; // todo MethodAbstracter.methodDescriptor(parameters, returnType);
+		String sign = null; // todo MethodAbstracter.methodSignature(this.method.getTypeParameters(), parameters, returnType);
 
 		MethodNode method = new MethodNode(access, name, desc, sign, null);
 

@@ -23,10 +23,10 @@ public class ManualAbstracter extends AbstractAbstracter {
 	public int getAccess(int modifiers) {return 0;}
 
 	@Override
-	public void abstractField(ClassNode node, Field field, boolean impl) {}
+	public MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl) {return null;}
 
 	@Override
-	public void abstractConstructor(ClassNode node, Constructor<?> constructor, boolean impl) {}
+	public void abstractField(ClassNode node, Field field, boolean impl) {}
 
 	@Override
 	public MethodAbstracter abstractMethod(Method method, boolean impl) {

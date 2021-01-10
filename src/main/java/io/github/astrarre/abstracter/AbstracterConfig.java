@@ -12,15 +12,11 @@ import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import io.github.astrarre.abstracter.abs.ManualAbstracter;
 import io.github.astrarre.abstracter.ex.InvalidClassException;
 import io.github.astrarre.abstracter.util.AbstracterLoader;
-import org.intellij.lang.annotations.Identifier;
-import org.intellij.lang.annotations.Language;
-import org.intellij.lang.annotations.Pattern;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
-@SuppressWarnings ("unchecked")
 public class AbstracterConfig implements Opcodes {
 	// isolated classloader
 	public static final AbstracterLoader CLASSPATH = new AbstracterLoader(ClassLoader.getSystemClassLoader().getParent());

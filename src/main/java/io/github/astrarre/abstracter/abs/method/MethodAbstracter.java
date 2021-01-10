@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -21,6 +22,7 @@ import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
 import io.github.astrarre.abstracter.func.map.TypeMappingFunction;
 import io.github.astrarre.abstracter.util.AnnotationReader;
+import org.intellij.lang.annotations.MagicConstant;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
@@ -37,12 +39,38 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 		this.impl = impl;
 	}
 
+	public String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType) {
+		StringBuilder builder = AbstractAbstracter.typeVarsAsString(variables);
+		builder.append('(');
+		for (TypeToken<?> parameter : parameters) {
+			builder.append(AbstractAbstracter.toSignature(parameter.getType()));
+		}
+		builder.append(')');
+		builder.append(AbstractAbstracter.toSignature(returnType.getType()));
+		return builder.toString();
+	}
+
+	public String methodDescriptor(TypeToken<?>[] parameters, TypeToken<?> returnType) {
+		StringBuilder builder = new StringBuilder();
+		builder.append('(');
+		for (TypeToken<?> parameter : parameters) {
+			builder.append(AbstractAbstracter.toSignature(parameter.getRawType()));
+		}
+		builder.append(')');
+		builder.append(AbstractAbstracter.toSignature(returnType.getRawType()));
+		return builder.toString();
+	}
+
+	protected int getAccess() {
+		return this.method.getModifiers();
+	}
+
 	public MethodNode abstractMethod(ClassNode header) {
 		Header methodHeader = this.getHeader();
 		String desc = methodHeader.desc;
 		String sign = methodHeader.sign;
-		int access = this.method.getModifiers();
-		MethodNode node = new MethodNode(access, this.method.getName(), desc, sign, null);
+		int access = this.getAccess();
+		MethodNode node = new MethodNode(access, methodHeader.name, desc, sign, null);
 		for (Annotation annotation : this.method.getAnnotations()) {
 			if (node.visibleAnnotations == null) {
 				node.visibleAnnotations = new ArrayList<>();
@@ -72,8 +100,8 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 		Function<Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(this.abstracter.cls);
 		TypeToken<?>[] params = map(this.method.getGenericParameterTypes(), resolve, TypeToken[]::new);
 		TypeToken<?> returnType = resolve.apply(this.method instanceof Constructor ? void.class : ((Method)this.method).getGenericReturnType());
-		String desc = AbstractAbstracter.methodDescriptor(params, returnType);
-		String sign = this.impl ? null : AbstractAbstracter.methodSignature(this.method.getTypeParameters(), params, returnType);
+		String desc = this.methodDescriptor(params, returnType);
+		String sign = this.impl ? null : this.methodSignature(this.method.getTypeParameters(), params, returnType);
 		if(desc.equals(sign)) sign = null;
 		int access = this.method.getModifiers();
 		return new Header(access, this.method instanceof Constructor ? "<init>" : this.method.getName(), desc, sign);
@@ -81,7 +109,8 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 
 	protected abstract void invokeTarget(MethodNode node);
 
-	public int getOpcode(Member target, int insn) {
+	@MagicConstant(flagsFromClass = Opcodes.class)
+	public int getOpcode(Member target, @MagicConstant(flagsFromClass = Opcodes.class) int insn) {
 		int methodAccess = target.getModifiers();
 		if (Modifier.isStatic(methodAccess)) {
 			return INVOKESTATIC;
@@ -100,9 +129,9 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 	/**
 	 * invoke a method (api facing) invoke virtual from another method with the same parameter types
 	 */
-	public void invoke(MethodNode from, String owner, String name, String desc, int opcode) {
+	public void invoke(MethodNode from, String owner, String name, String desc, @MagicConstant(flagsFromClass = Opcodes.class) int opcode) {
 		int index = 0;
-		if (!Modifier.isStatic(from.access)) {
+		if (opcode != INVOKESTATIC) {
 			index = this.loadThis(from);
 		}
 
@@ -123,15 +152,13 @@ public abstract class MethodAbstracter<T extends Executable> implements Opcodes 
 		from.visitMethodInsn(opcode, owner, name, desc);
 		org.objectweb.asm.Type originReturn = originType.getReturnType();
 
-		// cast if non-minecraft or generics
 		org.objectweb.asm.Type targetReturn = targetType.getReturnType();
 
 		this.cast(AbstractAbstracter.Location.RETURN,
 				targetReturn,
 				originReturn,
 				from,
-				visitor -> visitor.visitInsn(targetReturn.getOpcode(IRETURN)));
-		from.visitInsn(targetReturn.getOpcode(IRETURN));
+				visitor -> visitor.visitInsn(originReturn.getOpcode(IRETURN)));
 	}
 
 	protected int loadThis(MethodNode node) {

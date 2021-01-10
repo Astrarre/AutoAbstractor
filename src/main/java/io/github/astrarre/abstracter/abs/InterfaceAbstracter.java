@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.reflect.TypeToken;
+import io.github.astrarre.abstracter.abs.method.InterfaceConstructorAbstracter;
 import io.github.astrarre.abstracter.abs.method.InterfaceMethodAbstracter;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
 import io.github.astrarre.abstracter.func.elements.ConstructorSupplier;
@@ -77,19 +78,7 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 
 	@Override
 	public MethodAbstracter<Constructor<?>> abstractConstructor(Constructor<?> constructor, boolean impl) {
-		Function<Type, TypeToken<?>> resolve = TypeMappingFunction.resolve(this.cls);
-		TypeToken<?>[] params = map(constructor.getGenericParameterTypes(), resolve::apply, TypeToken[]::new);
-		TypeToken<?> returnType = resolve.apply(this.cls);
-		MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC,
-				"newInstance",
-				AbstractAbstracter.methodDescriptor(params, returnType),
-				AbstractAbstracter.methodSignature(constructor.getTypeParameters(), params, returnType),
-				null);
-		if (impl) {
-			// fixme: AbstractAbstracter.invokeConstructor(this.name, method, constructor, true);
-		} else {
-			AbstractAbstracter.visitStub(method);
-		}
+		return new InterfaceConstructorAbstracter(this, constructor, impl);
 	}
 
 	@Override
@@ -100,7 +89,7 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 	@Override
 	public void abstractField(ClassNode node, Field field, boolean impl) {
 		int access = field.getModifiers();
-		if ((access & ACC_ENUM) != 0) {
+		if (Modifier.isFinal(access) && Modifier.isStatic(access)) {
 			this.createConstant(node, this.cls, field, impl);
 		} else {
 			if (!Modifier.isFinal(access)) {

@@ -16,6 +16,13 @@ public class BaseConstructorAbstracter extends MethodAbstracter<Constructor<?>> 
 		super(abstracter, method, impl);
 	}
 
+
+	@Override
+	public Header getHeader() {
+		Header header = super.getHeader();
+		header.name = "<init>";
+		return header;
+	}
 	@Override
 	protected void invokeTarget(MethodNode node) {
 		Class<?> target;
@@ -27,8 +34,8 @@ public class BaseConstructorAbstracter extends MethodAbstracter<Constructor<?>> 
 
 		this.invoke(node,
 				Type.getInternalName(target),
-				this.method.getName(),
 				"<init>",
+				Type.getConstructorDescriptor(this.method),
 				this.getOpcode(this.method, INVOKESPECIAL));
 	}
 }

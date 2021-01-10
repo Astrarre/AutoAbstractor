@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -60,6 +61,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 		}
 	};
 	private static final String RUNTIME_EXCEPTION = getInternalName(RuntimeException.class);
+	private List<AbstractAbstracter> innerClasses = new ArrayList<>();
 	public final Class<?> cls;
 	public String name;
 	protected InterfaceFunction interfaces;
@@ -252,28 +254,6 @@ public abstract class AbstractAbstracter implements Opcodes {
 			return builder;
 		}
 		return new StringBuilder();
-	}
-
-	public static String methodSignature(TypeVariable<?>[] variables, TypeToken<?>[] parameters, TypeToken<?> returnType) {
-		StringBuilder builder = typeVarsAsString(variables);
-		builder.append('(');
-		for (TypeToken<?> parameter : parameters) {
-			builder.append(toSignature(parameter.getType()));
-		}
-		builder.append(')');
-		builder.append(toSignature(returnType.getType()));
-		return builder.toString();
-	}
-
-	public static String methodDescriptor(TypeToken<?>[] parameters, TypeToken<?> returnType) {
-		StringBuilder builder = new StringBuilder();
-		builder.append('(');
-		for (TypeToken<?> parameter : parameters) {
-			builder.append(toSignature(parameter.getRawType()));
-		}
-		builder.append(')');
-		builder.append(toSignature(returnType.getRawType()));
-		return builder.toString();
 	}
 
 	public static String getRawName(Type type) {

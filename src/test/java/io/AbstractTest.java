@@ -64,7 +64,7 @@ public class AbstractTest {
 		AbstracterConfig.INSTANCE.addURL(new File("fodder.jar").toURI().toURL());
 		// settings
 		registerInterface(new InterfaceAbstracter(AbstractBlock.Settings.class,
-				"io/github/astrarre/v0/block/Block$Settings").extension(AbstractTest::test).attach(new TypeToken<Consumer<String>>() {}));
+				"io/github/astrarre/v0/block/Block$Settings")/*.extension(AbstractTest::test)*/.attach(new TypeToken<Consumer<String>>() {}));
 
 		//registerInnerOverride(Block.class, AbstractBlock.Settings.class);
 
