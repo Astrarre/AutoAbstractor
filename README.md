@@ -1,0 +1,2 @@
+# AutoAbstractor
+Automated abstraction
