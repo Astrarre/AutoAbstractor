@@ -11,14 +11,14 @@ public interface SuperFunction {
 	SuperFunction EMPTY = (config, c, i) -> Object.class;
 
 	SuperFunction BASE_DEFAULT = (config, c, i) -> {
-		if(i) {
-			return c;
-		}
-
 		Class<?> current = c;
 		while (config.isMinecraft(current)) {
 			current = current.getSuperclass();
+			if(current == null) {
+				return null;
+			}
 		}
+
 		return TypeToken.of(c).resolveType(current).getType();
 	};
 

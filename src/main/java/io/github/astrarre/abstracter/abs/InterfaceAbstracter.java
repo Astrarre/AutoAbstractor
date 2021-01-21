@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.field.FieldAbstracter;
-import io.github.astrarre.abstracter.abs.field.InterfaceFieldAbstracter;
 import io.github.astrarre.abstracter.abs.method.InterfaceConstructorAbstracter;
 import io.github.astrarre.abstracter.abs.method.InterfaceMethodAbstracter;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
@@ -83,7 +82,7 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 
 	@Override
 	public FieldAbstracter abstractField(AbstracterConfig config, Field field, boolean impl) {
-		return new InterfaceFieldAbstracter(config, this, field, impl);
+		return new FieldAbstracter(config, this, field, impl);
 	}
 
 

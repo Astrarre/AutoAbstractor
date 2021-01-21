@@ -26,15 +26,8 @@ public class BaseConstructorAbstracter extends MethodAbstracter<Constructor<?>> 
 	}
 	@Override
 	protected void invokeTarget(MethodNode node) {
-		Class<?> target;
-		if (Modifier.isStatic(this.member.getModifiers())) {
-			target = this.member.getDeclaringClass();
-		} else {
-			target = this.abstracter.getCls(config);
-		}
-
 		this.invoke(node,
-				Type.getInternalName(target),
+				Type.getInternalName(this.member.getDeclaringClass()),
 				"<init>",
 				Type.getConstructorDescriptor(this.member),
 				this.getOpcode(this.member, INVOKESPECIAL));

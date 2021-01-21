@@ -2,18 +2,14 @@ package io.github.astrarre.abstracter.abs.member;
 
 import static org.objectweb.asm.Type.ARRAY;
 import static org.objectweb.asm.Type.OBJECT;
-import static org.objectweb.asm.Type.getInternalName;
 
 import java.lang.reflect.Member;
-import java.lang.reflect.Type;
 import java.util.function.Consumer;
 
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.AbstractAbstracter;
-import io.github.astrarre.abstracter.util.AsmUtil;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.MethodNode;
 
 public abstract class MemberAbstracter<T extends Member> implements Opcodes {
@@ -64,8 +60,9 @@ public abstract class MemberAbstracter<T extends Member> implements Opcodes {
 			}
 		}
 
-		if ((toType.getSort() & fromType.getSort()) == OBJECT) {
+		if (toType.getSort() == OBJECT && fromType.getSort() == OBJECT) {
 			Class<?> from = this.config.getClass(fromType.getInternalName()), to = this.config.getClass(toType.getInternalName());
+
 			if (!to.isAssignableFrom(from)) {
 				apply.accept(visitor);
 				visitor.visitTypeInsn(CHECKCAST, org.objectweb.asm.Type.getInternalName(to));
@@ -82,7 +79,7 @@ public abstract class MemberAbstracter<T extends Member> implements Opcodes {
 			}
 		}
 
-		throw new IllegalStateException(this.member + " " + toType + " --/--> " + fromType);
+		throw new IllegalStateException(this.member + " " + fromType + " --/--> " + toType + " in " + this.abstracter.name);
 	}
 
 	public static final class Header {

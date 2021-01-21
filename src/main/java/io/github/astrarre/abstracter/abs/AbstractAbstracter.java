@@ -82,26 +82,28 @@ public abstract class AbstractAbstracter implements Opcodes {
 	public ClassNode apply(AbstracterConfig config, boolean impl) {
 		ClassNode header = new ClassNode();
 		header.version = V1_8;
-		header.access = this.getAccess(config, this.getCls(config).getModifiers());
+		Class<?> cls = this.getCls(config);
+		header.access = this.getAccess(config, cls.getModifiers());
 		header.name = this.name;
-		for (Annotation annotation : this.getCls(config).getAnnotations()) {
+		for (Annotation annotation : cls.getAnnotations()) {
 			if (header.visibleAnnotations == null) {
 				header.visibleAnnotations = new ArrayList<>();
 			}
 			header.visibleAnnotations.add(AnnotationReader.accept(annotation));
 		}
 
-		Collection<Type> interfaces = this.interfaces.getInterfaces(config, this.getCls(config));
+		Collection<Type> interfaces = this.interfaces.getInterfaces(config, cls);
 		for (Type iface : interfaces) {
 			header.interfaces.add(config.getInterfaceName(AsmUtil.raw(iface)));
 		}
 
-		Type sup = this.superFunction.findValidSuper(config, this.getCls(config), impl);
+		Type sup = this.superFunction.findValidSuper(config, cls, impl);
 		header.superName = getInternalName(AsmUtil.raw(sup));
 
-		TypeVariable<?>[] variables = this.getCls(config).getTypeParameters();
-		SignatureWriter writer = new SignatureWriter();
+		TypeVariable<?>[] variables = cls.getTypeParameters();
+
 		if (!(variables.length == 0 && sup instanceof Class && interfaces.stream().allMatch(t -> t instanceof Class))) {
+			SignatureWriter writer = new SignatureWriter();
 			AsmUtil.visit(config, writer, variables);
 			AsmUtil.visit(config, writer.visitSuperclass(), sup);
 			for (Type iface : interfaces) {
@@ -112,21 +114,21 @@ public abstract class AbstractAbstracter implements Opcodes {
 
 
 		this.preProcess(header);
-		for (Constructor<?> constructor : this.constructorSupplier.getConstructors(config, this.getCls(config))) {
+		for (Constructor<?> constructor : this.constructorSupplier.getConstructors(config, cls)) {
 			MethodAbstracter<Constructor<?>> abstracter = this.abstractConstructor(config, constructor, impl);
 			if (abstracter != null) {
 				abstracter.abstractMethod(header);
 			}
 		}
 
-		for (Method method : this.methodSupplier.getMethods(config, this.getCls(config))) {
+		for (Method method : this.methodSupplier.getMethods(config, cls)) {
 			MethodAbstracter<Method> abstracter = this.abstractMethod(config, method, impl);
 			if (abstracter != null) {
 				abstracter.abstractMethod(header);
 			}
 		}
 
-		for (Field field : this.fieldSupplier.getFields(config, this.getCls(config))) {
+		for (Field field : this.fieldSupplier.getFields(config, cls)) {
 			FieldAbstracter abstracter = this.abstractField(config, field, impl);
 			if (abstracter != null) {
 				abstracter.abstractField(header);
@@ -158,10 +160,10 @@ public abstract class AbstractAbstracter implements Opcodes {
 	 */
 	public abstract int getAccess(AbstracterConfig config, int modifiers);
 
-	public Class<?> getCls(AbstracterConfig config) {
+	public synchronized Class<?> getCls(AbstracterConfig config) {
 		if (this.last != config) {
 			this.last = config;
-			return this.cached = config.getClass(this.cls);
+			this.cached = config.getClass(this.cls);
 		}
 		return this.cached;
 	}

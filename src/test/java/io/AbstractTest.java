@@ -35,6 +35,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -47,11 +48,10 @@ import net.minecraft.world.WorldAccess;
 		"UnstableApiUsage"
 })
 public class AbstractTest {
-
 	public static void main(String[] args) throws IOException, InterruptedException {
 		// todo wait for player's TR patch to go on maven
 
-		AbstracterConfig config = new AbstracterConfig();
+		AbstracterConfig config = new AbstracterConfig(Paths.get("mappings.tiny"));
 		Files.newBufferedReader(Paths.get("classpath.txt"))
 		     .lines()
 		     .map(File::new)
@@ -65,6 +65,10 @@ public class AbstractTest {
 
 		// attachment interfaces > extension methods, cus no javadoc
 		config.registerInterface(new InterfaceAbstracter(Material.class, "io/github/astrarre/v0/block/Materials"));
+
+		// in the dev env at runtime, we delete duplicates
+		config.registerInterface(ServerPlayerEntity.class);
+		config.registerBase(ServerPlayerEntity.class);
 
 		config.registerInterface(Item.class).addInner(config.registerInterface(Item.Settings.class));
 

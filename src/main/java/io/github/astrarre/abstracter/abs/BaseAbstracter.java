@@ -7,7 +7,6 @@ import java.lang.reflect.TypeVariable;
 import java.util.function.Consumer;
 
 import io.github.astrarre.abstracter.AbstracterConfig;
-import io.github.astrarre.abstracter.abs.field.BaseFieldAbstracter;
 import io.github.astrarre.abstracter.abs.field.FieldAbstracter;
 import io.github.astrarre.abstracter.abs.method.BaseConstructorAbstracter;
 import io.github.astrarre.abstracter.abs.method.BaseMethodAbstracter;
@@ -71,7 +70,7 @@ public class BaseAbstracter extends AbstractAbstracter {
 
 	@Override
 	public FieldAbstracter abstractField(AbstracterConfig config, Field field, boolean impl) {
-		return new BaseFieldAbstracter(config, this, field, impl);
+		return new FieldAbstracter(config, this, field, impl);
 	}
 
 	@Override

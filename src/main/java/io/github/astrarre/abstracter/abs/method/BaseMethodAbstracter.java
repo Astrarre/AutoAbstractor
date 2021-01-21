@@ -10,6 +10,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import net.fabricmc.mapping.tree.MethodDef;
+
 public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 
 	public BaseMethodAbstracter(AbstracterConfig config, AbstractAbstracter abstracter, Method method, boolean impl) {
@@ -22,7 +24,7 @@ public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 		if (this.impl) {
 			int access = this.member.getModifiers();
 			if (!Modifier.isFinal(access) && !Modifier.isStatic(access)) {
-				this.visitBridge(header, this.member, node.desc);
+				this.visitBridge(header, this.member, node.name, node.desc);
 			}
 		} else {
 			AsmUtil.visitStub(node);
@@ -46,18 +48,29 @@ public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 				this.getOpcode(this.member, INVOKESPECIAL));
 	}
 
-	private MethodNode visitBridge(ClassNode header, Method method, String targetDesc) {
+	@Override
+	protected int loadThis(MethodNode node) {
+		node.visitVarInsn(ALOAD, 0);
+		return 1;
+	}
+
+	private MethodNode visitBridge(ClassNode header, Method method, String targetName, String targetDesc) {
 		int access = method.getModifiers();
+		MethodDef mappings = this.config.getMethod(method);
 		MethodNode node = new MethodNode((access & ~ACC_ABSTRACT) | ACC_FINAL | ACC_BRIDGE | ACC_SYNTHETIC,
-				method.getName(),
-				org.objectweb.asm.Type.getMethodDescriptor(method),
+				targetName,
+				targetDesc,
 				null /*sign*/,
 				null);
 
 		// triangular method
-		this.invoke(node, header.name, node.name, targetDesc, this.getOpcode(this.member, INVOKEVIRTUAL));
-		header.methods.add(node);
+		this.invoke(node, header.name, targetName, targetDesc, this.getOpcode(this.member, INVOKEVIRTUAL));
+		node.name = mappings.getName("intermediary");
+		node.desc = mappings.getDescriptor("intermediary");
+
+		if (!(node.name.equals(targetName) && node.desc.equals(targetDesc))) {
+			header.methods.add(node);
+		}
 		return node;
 	}
-
 }

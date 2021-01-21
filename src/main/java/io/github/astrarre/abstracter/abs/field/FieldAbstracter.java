@@ -5,6 +5,7 @@ import static org.objectweb.asm.Type.getInternalName;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
@@ -20,7 +21,7 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
-public abstract class FieldAbstracter extends MemberAbstracter<Field> {
+public class FieldAbstracter extends MemberAbstracter<Field> {
 	public FieldAbstracter(AbstracterConfig config, AbstractAbstracter abstracter, Field member, boolean impl) {
 		super(config, abstracter, member, impl);
 	}
@@ -68,7 +69,10 @@ public abstract class FieldAbstracter extends MemberAbstracter<Field> {
 		return header;
 	}
 
-	protected abstract boolean isConstant(Header header);
+	protected boolean isConstant(Header header) {
+		int access = header.access;
+		return Modifier.isStatic(access) && Modifier.isFinal(access);
+	}
 
 	public FieldNode createConstant(Header header, ClassNode node) {
 		FieldNode field = new FieldNode(header.access, header.name, header.desc, header.sign, null);
