@@ -79,7 +79,7 @@ public class AbstracterConfig implements Opcodes {
 	public void writeManifest(OutputStream stream) throws IOException {
 		Properties properties = new Properties();
 		this.interfaceAbstractions.forEach((c, a) -> properties.setProperty(c, a.name));
-		this.baseAbstractions.forEach((c, a) -> properties.setProperty(a.name, c));
+		this.baseAbstractions.forEach((c, a) -> properties.setProperty(c, a.name));
 		properties.store(stream, "F2bb Interface Manifest");
 		// todo remap
 	}
