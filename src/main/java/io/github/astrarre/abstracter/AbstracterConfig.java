@@ -44,12 +44,14 @@ public class AbstracterConfig implements Opcodes {
 	private final Map<String, AbstractAbstracter> baseAbstractions = new HashMap<>();
 	private final Map<String, ClassDef> classes = new HashMap<>();
 	private final Map<Entry, Optional<MethodDef>> cache = new HashMap<>();
+	public final String manifestDir;
 
-	public AbstracterConfig(Path mappings) throws IOException {
-		this(TinyMappingFactory.loadWithDetection(Files.newBufferedReader(mappings)));
+	public AbstracterConfig(String manifestDir, Path mappings) throws IOException {
+		this(manifestDir, TinyMappingFactory.loadWithDetection(Files.newBufferedReader(mappings)));
 	}
 
-	public AbstracterConfig(TinyTree mappings) {
+	public AbstracterConfig(String manifestDir, TinyTree mappings) {
+		this.manifestDir = manifestDir;
 		for (ClassDef cls : mappings.getClasses()) {
 			this.classes.put(cls.getName("named"), cls);
 		}
@@ -70,18 +72,36 @@ public class AbstracterConfig implements Opcodes {
 		}
 
 		if (impl) {
-			out.putNextEntry(new ZipEntry("intr_manifest.properties"));
-			this.writeManifest(out);
+			out.putNextEntry(new ZipEntry(this.manifestDir + "/interface.properties"));
+			this.writeInterfaceManifest(out);
+			out.closeEntry();
+
+			out.putNextEntry(new ZipEntry(this.manifestDir + "/base_impl.properties"));
+			this.writeBaseManifest(out);
 			out.closeEntry();
 		}
 	}
 
-	public void writeManifest(OutputStream stream) throws IOException {
+	public void writeInterfaceManifest(OutputStream stream) throws IOException {
 		Properties properties = new Properties();
-		this.interfaceAbstractions.forEach((c, a) -> properties.setProperty(c, a.name));
-		this.baseAbstractions.forEach((c, a) -> properties.setProperty(c, a.name));
+		this.interfaceAbstractions.forEach((c, a) -> properties.setProperty(this.intermediary(c), a.name));
 		properties.store(stream, "F2bb Interface Manifest");
 		// todo remap
+	}
+
+	public void writeBaseManifest(OutputStream stream) throws IOException {
+		Properties properties = new Properties();
+		this.baseAbstractions.forEach((c, a) -> properties.setProperty(a.name, this.intermediary(c)));
+		properties.store(stream, "F2bb Interface Manifest");
+	}
+
+	private String intermediary(String name) {
+		ClassDef def = this.classes.get(name);
+		if(def == null) {
+			System.out.println("no mappings (" + name + ")");
+			return name;
+		}
+		return def.getName("intermediary");
 	}
 
 	public void manualInterface(Class<?> mcClass, String abstraction) {
@@ -143,8 +163,8 @@ public class AbstracterConfig implements Opcodes {
 	public Map<String, String> nameMap() {
 		// todo reverse this, add custom mappings soon tm
 		Map<String, String> map = new HashMap<>();
-		this.baseAbstractions.forEach((k, a) -> map.put(k, a.name));
-		this.interfaceAbstractions.forEach((k, a) -> map.put(k, a.name));
+		this.baseAbstractions.forEach((k, a) -> map.put(a.name, k));
+		this.interfaceAbstractions.forEach((k, a) -> map.put(a.name, k));
 		return map;
 	}
 

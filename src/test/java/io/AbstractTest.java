@@ -43,6 +43,8 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 
+import net.fabricmc.mapping.tree.TinyMappingFactory;
+
 @SuppressWarnings ({
 		"ConstantConditions",
 		"UnstableApiUsage"
@@ -51,7 +53,7 @@ public class AbstractTest {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		// todo wait for player's TR patch to go on maven
 
-		AbstracterConfig config = new AbstracterConfig(Paths.get("mappings.tiny"));
+		AbstracterConfig config = new AbstracterConfig("main", Paths.get("mappings.tiny"));
 		Files.newBufferedReader(Paths.get("classpath.txt"))
 		     .lines()
 		     .map(File::new)
@@ -114,7 +116,7 @@ public class AbstractTest {
 				LivingEntity.class);
 		// base
 		registerDefaultBase(config, Block.class, Entity.class, Enchantment.class, Item.class, Material.class);
-		AbstracterUtil.applyParallel(config, "api.jar", "api_sources.jar", "impl.jar", "mappings.tiny");
+		new AbstracterUtil( "api.jar", "api_sources.jar", "impl.jar", TinyMappingFactory.loadWithDetection(Files.newBufferedReader(new File("mappings.tiny").toPath())), null, null).write(config);
 	}
 
 	public static void registerDefaultInterface(AbstracterConfig config, Class<?>... classes) {

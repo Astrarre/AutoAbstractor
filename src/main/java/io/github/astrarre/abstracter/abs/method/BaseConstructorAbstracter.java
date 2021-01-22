@@ -24,6 +24,7 @@ public class BaseConstructorAbstracter extends MethodAbstracter<Constructor<?>> 
 		header.name = "<init>";
 		return header;
 	}
+
 	@Override
 	protected void invokeTarget(MethodNode node) {
 		this.invoke(node,

@@ -141,6 +141,7 @@ public abstract class AbstractAbstracter implements Opcodes {
 			if (split == -1) {
 				throw new IllegalArgumentException(abstracter.name + " does not have $, and cannot be an inner class!");
 			}
+
 			header.visitInnerClass(name,
 					name.substring(0, split),
 					name.substring(split + 1),
@@ -148,17 +149,12 @@ public abstract class AbstractAbstracter implements Opcodes {
 		}
 
 		if (this.outer != null) {
-			header.visitOuterClass(this.outer.name, null, null);
+			//header.visitOuterClass(this.outer.name, null, null);
 		}
 
 		this.postProcess(config, header, impl);
 		return header;
 	}
-
-	/**
-	 * @return get a class's access flags
-	 */
-	public abstract int getAccess(AbstracterConfig config, int modifiers);
 
 	public synchronized Class<?> getCls(AbstracterConfig config) {
 		if (this.last != config) {
@@ -167,6 +163,11 @@ public abstract class AbstractAbstracter implements Opcodes {
 		}
 		return this.cached;
 	}
+
+	/**
+	 * @return get a class's access flags
+	 */
+	public abstract int getAccess(AbstracterConfig config, int modifiers);
 
 	protected void preProcess(ClassNode node) {
 		MethodNode init = new MethodNode(ACC_STATIC | ACC_PUBLIC, "astrarre_artificial_clinit", "()V", null, null);
@@ -184,15 +185,9 @@ public abstract class AbstractAbstracter implements Opcodes {
 			this.processor.process(config, this.getCls(config), node, impl);
 		}
 
-		Iterator<MethodNode> iterator = node.methods.iterator();
-		while (iterator.hasNext()) {
-			MethodNode method = iterator.next();
+		for (MethodNode method : node.methods) {
 			if ("astrarre_artificial_clinit".equals(method.name)) {
-				if (method.instructions.size() > 0) {
-					method.visitInsn(RETURN);
-				} else {
-					iterator.remove();
-				}
+				method.visitInsn(RETURN);
 				return;
 			}
 		}
@@ -215,18 +210,19 @@ public abstract class AbstractAbstracter implements Opcodes {
 	 */
 	public abstract void castToCurrent(MethodVisitor visitor, Consumer<MethodVisitor> apply, Location parameter);
 
-	public String getDesc(Location location) {
-		return 'L' + this.name + ';';
-	}
-
 	/**
 	 * do not visit end
+	 *
 	 * @return true if the type parameters should be visited
 	 */
 	public boolean visitSign(Location location, SignatureVisitor visitor) {
 		String desc = this.getDesc(location);
-		visitor.visitClassType(desc.substring(1, desc.length()-1));
+		visitor.visitClassType(desc.substring(1, desc.length() - 1));
 		return true;
+	}
+
+	public String getDesc(Location location) {
+		return 'L' + this.name + ';';
 	}
 
 	public AbstractAbstracter name(String name) {

@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 
 import io.github.astrarre.abstracter.AbstracterConfig;
 import io.github.astrarre.abstracter.abs.field.FieldAbstracter;
+import io.github.astrarre.abstracter.abs.field.InterfaceFieldAbstracter;
 import io.github.astrarre.abstracter.abs.method.InterfaceConstructorAbstracter;
 import io.github.astrarre.abstracter.abs.method.InterfaceMethodAbstracter;
 import io.github.astrarre.abstracter.abs.method.MethodAbstracter;
@@ -57,7 +58,7 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 	@Override
 	public void castToMinecraft(MethodVisitor visitor, Consumer<MethodVisitor> apply, Location parameter) {
 		apply.accept(visitor);
-		visitor.visitTypeInsn(CHECKCAST, this.name);
+		visitor.visitTypeInsn(CHECKCAST, this.cls);
 	}
 
 	@Override
@@ -67,6 +68,8 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 
 	@Override
 	public int getAccess(AbstracterConfig config, int modifiers) {
+		// Caused by: java.lang.ClassFormatError: Method getDefaultMaxHealth in class io/github/astrarre/v0/entity/LivingEntity has illegal
+		// modifiers: 0x11
 		return (modifiers & ~REMOVE_FLAGS) | ADD_FLAGS;
 	}
 
@@ -82,7 +85,7 @@ public class InterfaceAbstracter extends AbstractAbstracter {
 
 	@Override
 	public FieldAbstracter abstractField(AbstracterConfig config, Field field, boolean impl) {
-		return new FieldAbstracter(config, this, field, impl);
+		return new InterfaceFieldAbstracter(config, this, field, impl);
 	}
 
 

@@ -66,7 +66,6 @@ public class BaseMethodAbstracter extends MethodAbstracter<Method> {
 		// triangular method
 		this.invoke(node, header.name, targetName, targetDesc, this.getOpcode(this.member, INVOKEVIRTUAL));
 		node.name = mappings.getName("intermediary");
-		node.desc = mappings.getDescriptor("intermediary");
 
 		if (!(node.name.equals(targetName) && node.desc.equals(targetDesc))) {
 			header.methods.add(node);

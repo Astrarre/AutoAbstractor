@@ -40,7 +40,7 @@ public abstract class MemberAbstracter<T extends Member> implements Opcodes {
 			AbstractAbstracter abstracter = this.config.getInterfaceAbstraction(internalName);
 			if (abstracter != null) {
 				if (toType.getDescriptor().equals(abstracter.getDesc(location))) {
-					abstracter.castToMinecraft(visitor, apply, location);
+					abstracter.castToCurrent(visitor, apply, location);
 					return;
 				} else {
 					throw new IllegalStateException(toType + " --/--> " + abstracter.getDesc(location));
@@ -52,7 +52,7 @@ public abstract class MemberAbstracter<T extends Member> implements Opcodes {
 			AbstractAbstracter abstracter = this.config.getInterfaceAbstraction(toType.getInternalName());
 			if (abstracter != null) {
 				if (fromType.getDescriptor().equals(abstracter.getDesc(location))) {
-					abstracter.castToCurrent(visitor, apply, location);
+					abstracter.castToMinecraft(visitor, apply, location);
 					return;
 				} else {
 					throw new IllegalStateException(toType + " --/--> " + abstracter.getDesc(location));
@@ -73,6 +73,7 @@ public abstract class MemberAbstracter<T extends Member> implements Opcodes {
 			try {
 				String name = fromType.getInternalName();
 				this.config.getClass(name);
+				apply.accept(visitor);
 				visitor.visitTypeInsn(CHECKCAST, name);
 				return;
 			} catch (IllegalArgumentException e) {

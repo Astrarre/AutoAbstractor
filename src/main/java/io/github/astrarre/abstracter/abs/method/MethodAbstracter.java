@@ -122,9 +122,8 @@ public abstract class MethodAbstracter<T extends Executable> extends MemberAbstr
 		for (int i = 0; i < targetArgs.length; i++) {
 			org.objectweb.asm.Type targetArg = targetArgs[i];
 			org.objectweb.asm.Type originArg = originArgs[i];
-			int finalIndex = index;
-			this.cast(AbstractAbstracter.Location.PARAMETER, originArg, targetArg, from, v -> v.visitVarInsn(originArg.getOpcode(ILOAD),
-					finalIndex));
+			int fi = index;
+			this.cast(AbstractAbstracter.Location.PARAMETER, originArg, targetArg, from, v -> v.visitVarInsn(originArg.getOpcode(ILOAD), fi));
 			index += originArg.getSize();
 		}
 
